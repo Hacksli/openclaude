@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { join } from 'node:path'
 
 const originalEnv = { ...process.env }
 const originalPlatform = process.platform
+const mockedClipboardPath = join(process.cwd(), 'openclaude-clipboard.txt')
 
-const generateTempFilePathMock = mock(() => '/tmp/openclaude-clipboard.txt')
+const generateTempFilePathMock = mock(() => mockedClipboardPath)
 
 const execFileNoThrowMock = mock(
   async () => ({ code: 0, stdout: '', stderr: '' }),
@@ -36,7 +38,6 @@ describe('Windows clipboard fallback', () => {
   })
 
   afterEach(() => {
-    mock.restore()
     process.env = { ...originalEnv }
     Object.defineProperty(process, 'platform', { value: originalPlatform })
   })
@@ -75,7 +76,7 @@ describe('Windows clipboard fallback', () => {
       }),
     })
     expect(windowsCall?.[1]).toContain(
-      "$text = [System.IO.File]::ReadAllText('/tmp/openclaude-clipboard.txt', [System.Text.Encoding]::UTF8); Set-Clipboard -Value $text",
+      `$text = [System.IO.File]::ReadAllText('${mockedClipboardPath.replace(/'/g, "''")}', [System.Text.Encoding]::UTF8); Set-Clipboard -Value $text`,
     )
   })
 })
@@ -89,7 +90,6 @@ describe('clipboard path behavior remains stable', () => {
   })
 
   afterEach(() => {
-    mock.restore()
     process.env = { ...originalEnv }
     Object.defineProperty(process, 'platform', { value: originalPlatform })
   })
