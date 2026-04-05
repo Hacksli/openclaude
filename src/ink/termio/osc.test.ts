@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 const originalEnv = { ...process.env }
 const originalPlatform = process.platform
 
+const generateTempFilePathMock = mock(() => '/tmp/openclaude-clipboard.txt')
+
 const execFileNoThrowMock = mock(
   async () => ({ code: 0, stdout: '', stderr: '' }),
 )
@@ -11,13 +13,22 @@ mock.module('../../utils/execFileNoThrow.js', () => ({
   execFileNoThrow: execFileNoThrowMock,
 }))
 
+mock.module('../../utils/tempfile.js', () => ({
+  generateTempFilePath: generateTempFilePathMock,
+}))
+
 async function importFreshOscModule() {
   return import(`./osc.ts?ts=${Date.now()}-${Math.random()}`)
+}
+
+async function flushClipboardCopy(): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, 0))
 }
 
 describe('Windows clipboard fallback', () => {
   beforeEach(() => {
     execFileNoThrowMock.mockClear()
+    generateTempFilePathMock.mockClear()
     process.env = { ...originalEnv }
     delete process.env['SSH_CONNECTION']
     delete process.env['TMUX']
@@ -34,6 +45,7 @@ describe('Windows clipboard fallback', () => {
     const { setClipboard } = await importFreshOscModule()
 
     await setClipboard('Привет мир')
+    await flushClipboardCopy()
 
     expect(execFileNoThrowMock.mock.calls.some(([cmd]) => cmd === 'clip')).toBe(
       false,
@@ -43,16 +55,28 @@ describe('Windows clipboard fallback', () => {
     ).toBe(true)
   })
 
-  test('passes the original Unicode text to the Windows copy command', async () => {
+  test('passes Windows clipboard text through a UTF-8 temp file instead of stdin', async () => {
     const { setClipboard } = await importFreshOscModule()
 
     await setClipboard('Привет мир')
+    await flushClipboardCopy()
 
     const windowsCall = execFileNoThrowMock.mock.calls.find(
       ([cmd]) => cmd === 'powershell',
     )
 
-    expect(windowsCall?.[2]).toMatchObject({ input: 'Привет мир' })
+    expect(windowsCall?.[2]).toMatchObject({
+      stdin: 'ignore',
+    })
+    expect(windowsCall?.[2]).not.toMatchObject({ input: 'Привет мир' })
+    expect(windowsCall?.[2]).not.toMatchObject({
+      env: expect.objectContaining({
+        OPENCLAUDE_CLIPBOARD_TEXT_B64: expect.any(String),
+      }),
+    })
+    expect(windowsCall?.[1]).toContain(
+      "$text = [System.IO.File]::ReadAllText('/tmp/openclaude-clipboard.txt', [System.Text.Encoding]::UTF8); Set-Clipboard -Value $text",
+    )
   })
 })
 

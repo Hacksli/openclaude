@@ -3,8 +3,10 @@
  */
 
 import { Buffer } from 'buffer'
+import { unlink, writeFile } from 'node:fs/promises'
 import { env } from '../../utils/env.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { generateTempFilePath } from '../../utils/tempfile.js'
 import { BEL, ESC, ESC_TYPE, SEP } from './ansi.js'
 import type { Action, Color, TabStatusAction } from './types.js'
 
@@ -211,18 +213,32 @@ function copyNative(text: string): void {
       return
     }
     case 'win32':
-      // PowerShell's Set-Clipboard preserves Unicode text more reliably than
-      // clip.exe, which can mangle non-ASCII text under some Windows locales.
-      void execFileNoThrow(
-        'powershell',
-        [
-          '-NoProfile',
-          '-NonInteractive',
-          '-Command',
-          '$text = [Console]::In.ReadToEnd(); Set-Clipboard -Value $text',
-        ],
-        opts,
-      )
+      // Avoid piping non-ASCII text through the Windows stdin/codepage
+      // boundary. Write UTF-8 text to a temp file and let PowerShell read it
+      // directly as UTF-8 before calling Set-Clipboard.
+      void (async () => {
+        const tempPath = generateTempFilePath('openclaude-clipboard', '.txt')
+        const escapedTempPath = tempPath.replace(/'/g, "''")
+        try {
+          await writeFile(tempPath, text, { encoding: 'utf8' })
+          await execFileNoThrow(
+            'powershell',
+            [
+              '-NoProfile',
+              '-NonInteractive',
+              '-Command',
+              `$text = [System.IO.File]::ReadAllText('${escapedTempPath}', [System.Text.Encoding]::UTF8); Set-Clipboard -Value $text`,
+            ],
+            {
+              useCwd: false,
+              timeout: opts.timeout,
+              stdin: 'ignore',
+            },
+          )
+        } finally {
+          await unlink(tempPath).catch(() => {})
+        }
+      })().catch(() => {})
       return
   }
 }
