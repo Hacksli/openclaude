@@ -25,14 +25,42 @@ async function runCommand(
   signal?: AbortSignal,
 ): Promise<{ stdout: string; stderr: string; exitCode: number; timedOut: boolean }> {
   return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve({ stdout: '', stderr: 'Aborted', exitCode: 1, timedOut: false })
+      return
+    }
+
     let timedOut = false
     let stdout = ''
     let stderr = ''
 
-    const proc = spawn('bash', ['-c', command], {
+    const isWindows = process.platform === 'win32'
+    const proc = spawn(command, [], {
       cwd,
       env: { ...process.env },
+      shell: true,
+      windowsHide: true,
+      // On Unix, create a process group so we can kill child processes on timeout/abort
+      detached: !isWindows,
     })
+
+    const killTree = () => {
+      try {
+        if (!isWindows && proc.pid) {
+          // Kill the entire process group
+          process.kill(-proc.pid, 'SIGTERM')
+        } else {
+          proc.kill('SIGTERM')
+        }
+      } catch {
+        // Process may have already exited
+      }
+    }
+
+    const onAbort = () => {
+      killTree()
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
 
     proc.stdout?.on('data', (data: Buffer) => {
       stdout += data.toString()
@@ -43,11 +71,12 @@ async function runCommand(
 
     const timer = setTimeout(() => {
       timedOut = true
-      proc.kill('SIGTERM')
+      killTree()
     }, timeout)
 
     proc.on('close', (code) => {
       clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
       resolve({
         stdout: stdout.slice(0, 10000),
         stderr: stderr.slice(0, 10000),
@@ -58,6 +87,7 @@ async function runCommand(
 
     proc.on('error', () => {
       clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
       resolve({
         stdout,
         stderr: stderr || 'Command failed to start',
@@ -91,6 +121,10 @@ export async function runAutoFixCheck(
   const { lint, test, timeout, cwd, signal } = options
 
   if (!lint && !test) {
+    return { hasErrors: false }
+  }
+
+  if (signal?.aborted) {
     return { hasErrors: false }
   }
 

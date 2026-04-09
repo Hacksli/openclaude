@@ -10,6 +10,7 @@ describe('runAutoFixCheck', () => {
     const result = await runAutoFixCheck({
       lint: 'echo "all clean"',
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(false)
@@ -21,6 +22,7 @@ describe('runAutoFixCheck', () => {
     const result = await runAutoFixCheck({
       lint: 'echo "error: unused var" && exit 1',
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(true)
@@ -32,6 +34,7 @@ describe('runAutoFixCheck', () => {
     const result = await runAutoFixCheck({
       test: 'echo "FAIL test_foo" && exit 1',
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(true)
@@ -44,6 +47,7 @@ describe('runAutoFixCheck', () => {
       lint: 'echo "lint ok"',
       test: 'echo "test ok"',
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(false)
@@ -56,6 +60,7 @@ describe('runAutoFixCheck', () => {
       lint: 'echo "lint error" && exit 1',
       test: 'echo "should not run"',
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(true)
@@ -67,6 +72,7 @@ describe('runAutoFixCheck', () => {
     const result = await runAutoFixCheck({
       lint: 'sleep 10',
       timeout: 100,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(true)
@@ -76,6 +82,7 @@ describe('runAutoFixCheck', () => {
   test('returns success with no commands configured', async () => {
     const result = await runAutoFixCheck({
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(false)
@@ -85,6 +92,7 @@ describe('runAutoFixCheck', () => {
     const result = await runAutoFixCheck({
       lint: 'echo "src/foo.ts:10:5 error no-unused-vars" && exit 1',
       timeout: 5000,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(true)

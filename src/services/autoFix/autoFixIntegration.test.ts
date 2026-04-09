@@ -18,6 +18,7 @@ describe('autoFix end-to-end flow', () => {
       lint: config!.lint,
       test: config!.test,
       timeout: config!.timeout,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(true)
@@ -37,6 +38,7 @@ describe('autoFix end-to-end flow', () => {
     const result = await runAutoFixCheck({
       lint: config!.lint,
       timeout: config!.timeout,
+
       cwd: '/tmp',
     })
     expect(result.hasErrors).toBe(false)
