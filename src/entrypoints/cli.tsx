@@ -136,14 +136,10 @@ async function main(): Promise<void> {
     // Apply env vars to the current process so startup sees the new provider
     Object.assign(process.env, result.envVars)
 
-    // Persist to ~/.claude/settings.json env field
-    const { updateSettingsForSource } = await import('../utils/settings/settings.js')
-    const { getSettingsForSource } = await import('../utils/settings/settings.js')
-    const existing = getSettingsForSource('userSettings') ?? {}
-    updateSettingsForSource('userSettings', {
-      ...existing,
-      env: { ...(existing.env ?? {}), ...result.envVars },
-    })
+    // Persist to GlobalConfig via provider profiles (no chokidar watcher —
+    // other running sessions won't pick up the change, preserving session isolation)
+    const { addRecentModel } = await import('../utils/model/modelHistory.js')
+    addRecentModel(result.model)
 
     // biome-ignore lint/suspicious/noConsole:: intentional
     console.log(`Provider: ${result.provider}  Model: ${result.model}`)

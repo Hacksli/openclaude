@@ -8,6 +8,7 @@ import {
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { toError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
+import { addRecentModel } from '../utils/model/modelHistory.js'
 import { applyConfigEnvironmentVariables } from '../utils/managedEnv.js'
 import { persistActiveProviderProfileModel } from '../utils/providerProfiles.js'
 import {
@@ -111,6 +112,10 @@ export function onChangeAppState({
     // Save to settings
     updateSettingsForSource('userSettings', { model: newState.mainLoopModel })
     setMainLoopModelOverride(newState.mainLoopModel)
+
+    // Record in recently-used models (GlobalConfig, no chokidar watcher —
+    // safe for session isolation)
+    addRecentModel(newState.mainLoopModel)
 
     // Keep active provider profiles in sync with /model choices so restarts
     // keep using the last selected model instead of the profile's old default.

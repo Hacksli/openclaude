@@ -4,7 +4,6 @@ import * as React from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import { ModelPicker } from '../../components/ModelPicker.js';
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';
-import { fetchBootstrapData } from '../../services/api/bootstrap.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
 import { useAppState, useSetAppState } from '../../state/AppState.js';
 import type { LocalJSXCommandCall } from '../../types/command.js';
@@ -15,12 +14,14 @@ import { MODEL_ALIASES } from '../../utils/model/aliases.js';
 import { checkOpus1mAccess, checkSonnet1mAccess } from '../../utils/model/check1mAccess.js';
 import type { ModelOption } from '../../utils/model/modelOptions.js';
 import { discoverOpenAICompatibleModelOptions } from '../../utils/model/openaiModelDiscovery.js';
-import { getAPIProvider } from '../../utils/model/providers.js';
 import { getActiveOpenAIModelOptionsCache, setActiveOpenAIModelOptionsCache } from '../../utils/providerProfiles.js';
 import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting } from '../../utils/model/model.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
 import { getAdditionalModelOptionsCacheScope } from '../../services/api/providerConfig.js';
+import { applyProviderProfileToProcessEnv } from '../../utils/providerProfiles.js';
+import { ProviderPicker } from './ProviderPicker.js';
+import { Box, Text } from '../../ink.js';
 function ModelPickerWrapper(t0) {
   const $ = _c(17);
   const {
@@ -301,6 +302,40 @@ async function refreshOpenAIModelOptionsCache(): Promise<void> {
     // Keep /model usable even if endpoint discovery fails.
   }
 }
+function renderModelLabel(model: string | null): string {
+  const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting());
+  return model === null ? `${rendered} (default)` : rendered;
+}
+
+function ModelPickerWithProvider({ onDone }: {
+  onDone: (result?: string, options?: { display?: CommandResultDisplay }) => void
+}) {
+  const [showProviderPicker, setShowProviderPicker] = React.useState(false)
+
+  if (showProviderPicker) {
+    return <ProviderPicker
+      onSelect={(profile) => {
+        applyProviderProfileToProcessEnv(profile)
+        logEvent('tengu_model_provider_changed', {
+          provider: profile.provider as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: profile.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
+        onDone(`Provider switched to ${chalk.bold(profile.name)}`)
+      }}
+      onCancel={() => setShowProviderPicker(false)}
+    />
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>
+        <Text color="subtle">/model --provider</Text> to change API provider
+      </Text>
+      <ModelPickerWrapper onDone={onDone} />
+    </Box>
+  )
+}
+
 export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
   args = args?.trim() || '';
   if (COMMON_INFO_ARGS.includes(args)) {
@@ -310,10 +345,24 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     return <ShowModelAndClose onDone={onDone} />;
   }
   if (COMMON_HELP_ARGS.includes(args)) {
-    onDone('Run /model to open the model selection menu, or /model [modelName] to set the model.', {
+    onDone('Run /model to open the model selection menu, /model --provider to switch API provider, or /model [modelName] to set the model.', {
       display: 'system'
     });
     return;
+  }
+  if (args === '--provider' || args === '-p') {
+    logEvent('tengu_model_command_provider_menu', {});
+    return <ProviderPicker
+      onSelect={(profile) => {
+        applyProviderProfileToProcessEnv(profile)
+        logEvent('tengu_model_provider_changed', {
+          provider: profile.provider as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: profile.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
+        onDone(`Provider switched to ${chalk.bold(profile.name)}`)
+      }}
+      onCancel={() => onDone('Cancelled provider switch')}
+    />;
   }
   if (args) {
     logEvent('tengu_model_command_inline', {
@@ -324,9 +373,5 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
   if (getAdditionalModelOptionsCacheScope()?.startsWith('openai:')) {
     void refreshOpenAIModelOptionsCache();
   }
-  return <ModelPickerWrapper onDone={onDone} />;
+  return <ModelPickerWithProvider onDone={onDone} />;
 };
-function renderModelLabel(model: string | null): string {
-  const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting());
-  return model === null ? `${rendered} (default)` : rendered;
-}

@@ -190,6 +190,13 @@ export type ProviderProfile = {
   apiKey?: string
 }
 
+export type RecentlyUsedModel = {
+  model: string
+  /** Provider identifier (e.g., 'anthropic', 'openai:openrouter', 'ollama') */
+  provider: string
+  lastUsedAt: number
+}
+
 export type GlobalConfig = {
   /**
    * @deprecated Use settings.apiKeyHelper instead.
@@ -594,6 +601,11 @@ export type GlobalConfig = {
   // Keyed by provider profile id.
   openaiAdditionalModelOptionsCacheByProfile?: Record<string, ModelOption[]>
 
+  // Recently used models across providers — sorted by lastUsedAt desc.
+  // Capped at 30 entries. Stored in GlobalConfig (no chokidar watcher),
+  // so changes in one session don't disrupt other running sessions.
+  recentlyUsedModels: RecentlyUsedModel[]
+
   // Disk cache for /api/claude_code/organizations/metrics_enabled.
   // Org-level settings change rarely; persisting across processes avoids a
   // cold API call on every `claude -p` invocation.
@@ -663,6 +675,7 @@ function createDefaultGlobalConfig(): GlobalConfig {
     copyFullResponse: false,
     providerProfiles: [],
     openaiAdditionalModelOptionsCacheByProfile: {},
+    recentlyUsedModels: [],
   }
 }
 
