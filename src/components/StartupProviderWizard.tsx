@@ -179,7 +179,7 @@ function ProviderScreen({
   return (
     <Box flexDirection="column" padding={1}>
       <Box marginBottom={1}>
-        <Text bold color="claude">Choose provider</Text>
+        <Text bold color="claude">Оберіть постачальника</Text>
       </Box>
       {PROVIDERS.map((p, i) => {
         const active = i === cursor
@@ -200,7 +200,7 @@ function ProviderScreen({
         )
       })}
       <Box marginTop={1}>
-        <Text dimColor>↑↓ navigate · Enter select · Esc cancel</Text>
+        <Text dimColor>↑↓ навігація · Enter вибрати · Esc скасувати</Text>
       </Box>
     </Box>
   )
@@ -231,15 +231,15 @@ function ApiKeyScreen({
   return (
     <Box flexDirection="column" padding={1}>
       <Box marginBottom={1}>
-        <Text bold color="claude">API key  </Text>
+        <Text bold color="claude">API ключ  </Text>
         <Text dimColor>· {provider.label}</Text>
       </Box>
       <Box marginBottom={1}>
-        <Text dimColor>Get key at: </Text>
+        <Text dimColor>Отримати ключ на: </Text>
         <Text>{provider.keyHint}</Text>
       </Box>
       <Box marginBottom={1}>
-        <Text dimColor>Key: </Text>
+        <Text dimColor>Ключ: </Text>
         {apiKey.length === 0 ? (
           <Text dimColor>{provider.keyPlaceholder}▌</Text>
         ) : (
@@ -247,7 +247,7 @@ function ApiKeyScreen({
         )}
       </Box>
       <Box>
-        <Text dimColor>Type key · Enter confirm · Esc back</Text>
+        <Text dimColor>Введіть ключ · Enter підтвердити · Esc назад</Text>
       </Box>
     </Box>
   )
@@ -283,7 +283,7 @@ function KeySelectScreen({
   return (
     <Box flexDirection="column" padding={1}>
       <Box marginBottom={1}>
-        <Text bold color="claude">Saved API keys  </Text>
+        <Text bold color="claude">Збережені API ключі  </Text>
         <Text dimColor>· {providerLabel}</Text>
       </Box>
       {profiles.map((opt, i) => {
@@ -311,11 +311,11 @@ function KeySelectScreen({
           {cursor === addNewIdx ? '▶ ' : '  '}
         </Text>
         <Text color={cursor === addNewIdx ? 'claude' : 'green'} bold={cursor === addNewIdx}>
-          + Add new key
+          + Додати новий ключ
         </Text>
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>↑↓ navigate · Enter select</Text>
+        <Text dimColor>↑↓ навігація · Enter вибрати</Text>
       </Box>
     </Box>
   )
@@ -324,7 +324,7 @@ function KeySelectScreen({
 function LoadingScreen({ provider }: { provider: ProviderDef }) {
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="claude">Fetching models…</Text>
+      <Text bold color="claude">Завантаження моделей…</Text>
       <Text dimColor>{provider.label}</Text>
     </Box>
   )

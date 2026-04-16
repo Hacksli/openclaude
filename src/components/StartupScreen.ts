@@ -186,8 +186,17 @@ export function printStartupScreen(): void {
   // Provider info box
   out.push(`${rgb(...BORDER)}\u2554${'\u2550'.repeat(W - 2)}\u2557${RESET}`)
 
+  // Centered version header
+  const versionStr = `Neural Network v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}`
+  const innerW = W - 2
+  const vPad = Math.max(0, Math.floor((innerW - versionStr.length) / 2))
+  const vRow = `${' '.repeat(vPad)}${DIM}${rgb(...DIMCOL)}Neural Network ${RESET}${rgb(...ACCENT)}v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}${RESET}`
+  out.push(boxRow(vRow, W, vPad + versionStr.length))
+
+  out.push(`${rgb(...BORDER)}\u2560${'\u2550'.repeat(W - 2)}\u2563${RESET}`)
+
   const lbl = (k: string, v: string, c: RGB = CREAM): [string, number] => {
-    const padK = k.padEnd(9)
+    const padK = k.padEnd(10)
     return [` ${DIM}${rgb(...DIMCOL)}${padK}${RESET} ${rgb(...c)}${v}${RESET}`, ` ${padK} ${v}`.length]
   }
 
@@ -200,6 +209,13 @@ export function printStartupScreen(): void {
   ;[r, l] = lbl('Адреса', ep)
   out.push(boxRow(r, W, l))
 
+  // Current working directory (truncated from the left if too long)
+  const cwd = process.cwd()
+  const maxDirLen = W - 14  // W - 2 (borders) - 1 (space) - 10 (label) - 1 (space)
+  const dirDisplay = cwd.length > maxDirLen ? '\u2026' + cwd.slice(-(maxDirLen - 1)) : cwd
+  ;[r, l] = lbl('Директорія', dirDisplay)
+  out.push(boxRow(r, W, l))
+
   out.push(`${rgb(...BORDER)}\u2560${'\u2550'.repeat(W - 2)}\u2563${RESET}`)
 
   const sC: RGB = p.isLocal ? [130, 175, 130] : ACCENT
@@ -209,7 +225,6 @@ export function printStartupScreen(): void {
   out.push(boxRow(sRow, W, sLen))
 
   out.push(`${rgb(...BORDER)}\u255a${'\u2550'.repeat(W - 2)}\u255d${RESET}`)
-  out.push(`  ${DIM}${rgb(...DIMCOL)}Neural Network ${RESET}${rgb(...ACCENT)}v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}${RESET}`)
   out.push('')
 
   process.stdout.write(out.join('\n') + '\n')
