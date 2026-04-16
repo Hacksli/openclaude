@@ -4,19 +4,19 @@ import { getUserMessageText } from '../utils/messages.js'
 import { getCompanion } from './companion.js'
 
 const DIRECT_REPLIES = [
-  'I am observing.',
-  'I am helping from the corner.',
-  'I saw that.',
-  'Still here.',
-  'Watching closely.',
+  'Спостерігаю.',
+  'Допомагаю з кутка.',
+  'Я це бачив.',
+  'Все ще тут.',
+  'Уважно стежу.',
 ] as const
 
 const PET_REPLIES = [
-  'happy chirp',
-  'tiny victory dance',
-  'quietly approves',
-  'wiggles with joy',
-  'looks pleased',
+  'радісне пискання',
+  'маленький переможний танець',
+  'тихо схвалює',
+  'звивається від щастя',
+  'виглядає задоволеним',
 ] as const
 
 function hashString(s: string): number {

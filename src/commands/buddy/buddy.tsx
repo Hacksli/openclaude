@@ -4,30 +4,37 @@ import { companionUserId, getCompanion, rollWithSeed } from '../../buddy/compani
 import type { StoredCompanion } from '../../buddy/types.js'
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js'
 
-const NAME_PREFIXES = [
-  'Byte',
-  'Echo',
-  'Glint',
-  'Miso',
-  'Nova',
-  'Pixel',
-  'Rune',
-  'Static',
-  'Vector',
-  'Whisk',
-] as const
-
-const NAME_SUFFIXES = [
-  'bean',
-  'bit',
-  'bud',
-  'dot',
-  'ling',
-  'loop',
-  'moss',
-  'patch',
-  'puff',
-  'spark',
+const NAMES = [
+  'Хрумчик',
+  'Пухнастик',
+  'Буркотун',
+  'Шкряботун',
+  'Мурмуряка',
+  'Пельменчик',
+  'Вареничок',
+  'Галушка',
+  'Борщик',
+  'Пампушка',
+  'Пузанчик',
+  'Товстунець',
+  'Сопелько',
+  'Хитрунчик',
+  'Пищалик',
+  'Ричалик',
+  'Гризень',
+  'Кусака',
+  'Бурмило',
+  'Дракоша',
+  'Чмурик',
+  'Шмигалик',
+  'Буцик',
+  'Шкеребертик',
+  'Булочка',
+  'Цокотун',
+  'Сирник',
+  'Зозулик',
+  'Бабайчик',
+  'Смалько',
 ] as const
 
 const PERSONALITIES = [
@@ -39,11 +46,11 @@ const PERSONALITIES = [
 ] as const
 
 const PET_REACTIONS = [
-  'leans into the headpat',
-  'does a proud little bounce',
-  'emits a content beep',
-  'looks delighted',
-  'wiggles happily',
+  'мружиться від погладжування',
+  'задоволено підстрибує',
+  'щасливо пирхає',
+  'сяє від радості',
+  'радісно виляє хвостом',
 ] as const
 
 function hashString(s: string): number {
@@ -66,12 +73,11 @@ function titleCase(s: string): string {
 function createStoredCompanion(): StoredCompanion {
   const userId = companionUserId()
   const { bones } = rollWithSeed(`${userId}:buddy`)
-  const prefix = pickDeterministic(NAME_PREFIXES, `${userId}:prefix`)
-  const suffix = pickDeterministic(NAME_SUFFIXES, `${userId}:suffix`)
+  const name = pickDeterministic(NAMES, `${userId}:name`)
   const personality = pickDeterministic(PERSONALITIES, `${userId}:personality`)
 
   return {
-    name: `${prefix}${suffix}`,
+    name,
     personality: `${personality}.`,
     hatchedAt: Date.now(),
   }
