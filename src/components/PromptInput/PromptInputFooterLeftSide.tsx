@@ -158,7 +158,7 @@ export function PromptInputFooterLeftSide(t0) {
   if (exitMessage.show) {
     let t1;
     if ($[0] !== exitMessage.key) {
-      t1 = <Text dimColor={true} key="exit-message">Press {exitMessage.key} again to exit</Text>;
+      t1 = <Text dimColor={true} key="exit-message">Натисніть {exitMessage.key} ще раз для виходу</Text>;
       $[0] = exitMessage.key;
       $[1] = t1;
     } else {
@@ -169,7 +169,7 @@ export function PromptInputFooterLeftSide(t0) {
   if (isPasting) {
     let t1;
     if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true} key="pasting-message">Pasting text…</Text>;
+      t1 = <Text dimColor={true} key="pasting-message">Вставлення тексту…</Text>;
       $[2] = t1;
     } else {
       t1 = $[2];
@@ -199,7 +199,7 @@ export function PromptInputFooterLeftSide(t0) {
   }
   let t3;
   if ($[11] !== showVim) {
-    t3 = showVim ? <Text dimColor={true} key="vim-insert">-- INSERT --</Text> : null;
+    t3 = showVim ? <Text dimColor={true} key="vim-insert">-- ВСТАВЛЕННЯ --</Text> : null;
     $[11] = showVim;
     $[12] = t3;
   } else {
@@ -326,7 +326,7 @@ function ModeIndicator({
   // In-process mode uses Shift+Down/Up navigation, not footer teams menu
   const hasTeams = isAgentSwarmsEnabled() && !isInProcessEnabled() && teamContext !== undefined && count(Object.values(teamContext.teammates), t_0 => t_0.name !== 'team-lead') > 0;
   if (mode === 'bash') {
-    return <Text color="bashBorder">! for bash mode</Text>;
+    return <Text color="bashBorder">! для bash режиму</Text>;
   }
   const currentMode = toolPermissionContext?.mode;
   const hasActiveMode = !isDefaultMode(currentMode);
@@ -385,7 +385,7 @@ function ModeIndicator({
   const hintParts = showHint ? getSpinnerHintParts(isLoading, escShortcut, todosShortcut, killAgentsShortcut, hasTaskItems, expandedView, hasAnyInProcessTeammates, hasRunningAgentTasks, isKillAgentsConfirmShowing) : [];
   if (isViewingCompletedTeammate) {
     parts.push(<Text dimColor key="esc-return">
-        <KeyboardShortcutHint shortcut={escShortcut} action="return to team lead" />
+        <KeyboardShortcutHint shortcut={escShortcut} action="повернутися до team lead" />
       </Text>);
   } else if ((feature('PROACTIVE') || feature('KAIROS')) && hasNextTick) {
     parts.push(<ProactiveCountdown key="proactive" />);
@@ -418,7 +418,7 @@ function ModeIndicator({
   const tasksPart = hasBackgroundTasks && !hasTeammatePills && !shouldHideTasksFooter(tasks, showSpinnerTree) ? <BackgroundTaskStatus tasksSelected={tasksSelected} isViewingTeammate={isViewingTeammate} teammateFooterIndex={teammateFooterIndex} isLeaderIdle={!isLoading} onOpenDialog={onOpenTasksDialog} /> : null;
   if (parts.length === 0 && !tasksPart && !modePart && showHint) {
     parts.push(<Text dimColor key="shortcuts-hint">
-        ? for shortcuts
+        ? для ярликів
       </Text>);
   }
 
@@ -448,18 +448,18 @@ function ModeIndicator({
     const altClickFailed = isMac && (selGetState()?.lastPressHadAlt ?? false);
     parts.push(<Text dimColor key="selection-copy">
         <Byline>
-          {!copyOnSelect && <KeyboardShortcutHint shortcut="ctrl+c" action="copy" />}
-          {isXtermJs() && (altClickFailed ? <Text>set macOptionClickForcesSelection in VS Code settings</Text> : <KeyboardShortcutHint shortcut={isMac ? 'option+click' : 'shift+click'} action="native select" />)}
+          {!copyOnSelect && <KeyboardShortcutHint shortcut="ctrl+c" action="копіювати" />}
+          {isXtermJs() && (altClickFailed ? <Text>встановіть macOptionClickForcesSelection в налаштуваннях VS Code</Text> : <KeyboardShortcutHint shortcut={isMac ? 'option+click' : 'shift+click'} action="вибрати нативно" />)}
         </Byline>
       </Text>);
   } else if (feature('VOICE_MODE') && parts.length > 0 && showHint && voiceEnabled && voiceState === 'idle' && hintParts.length === 0 && voiceHintUnderCap) {
     parts.push(<Text dimColor key="voice-hint">
-        hold {voiceKeyShortcut} to speak
+        затисніть {voiceKeyShortcut} для розмови
       </Text>);
   }
   if ((tasksPart || hasCoordinatorTasks) && showHint && !hasTeams) {
     parts.push(<Text dimColor key="manage-tasks">
-        {tasksSelected ? <KeyboardShortcutHint shortcut="Enter" action="view tasks" /> : <KeyboardShortcutHint shortcut="↓" action="manage" />}
+        {tasksSelected ? <KeyboardShortcutHint shortcut="Enter" action="перегляд завдань" /> : <KeyboardShortcutHint shortcut="↓" action="керувати" />}
       </Text>);
   }
 
@@ -497,17 +497,17 @@ function getSpinnerHintParts(isLoading: boolean, escShortcut: string, todosShort
     // Cycling: none → tasks → teammates → none
     switch (expandedView) {
       case 'none':
-        toggleAction = 'show tasks';
+        toggleAction = 'показати завдання';
         break;
       case 'tasks':
-        toggleAction = 'show teammates';
+        toggleAction = 'показати команду';
         break;
       case 'teammates':
-        toggleAction = 'hide';
+        toggleAction = 'ховати';
         break;
     }
   } else {
-    toggleAction = expandedView === 'tasks' ? 'hide tasks' : 'show tasks';
+    toggleAction = expandedView === 'tasks' ? 'ховати завдання' : 'показати завдання';
   }
 
   // Show the toggle hint only when there are task items to display or

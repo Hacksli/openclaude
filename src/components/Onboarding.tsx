@@ -63,7 +63,7 @@ export function Onboarding({
     />
     </Box>;
   const securityStep = <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <Text bold>Security notes:</Text>
+      <Text bold>Зауваження з безпеки:</Text>
       <Box flexDirection="column" width={70}>
         {/**
          * OrderedList misnumbers items when rendering conditionally,
@@ -71,20 +71,20 @@ export function Onboarding({
          */}
         <OrderedList>
           <OrderedList.Item>
-            <Text>Neural Network can make mistakes</Text>
+            <Text>Нейромережі можуть помилятися</Text>
             <Text dimColor wrap="wrap">
-              You should always review responses, especially when
+              Ви завжди повинні перевіряти відповіді, особливо коли
               <Newline />
-              running code.
+              запускаєте код.
               <Newline />
             </Text>
           </OrderedList.Item>
           <OrderedList.Item>
             <Text>
-              Due to prompt injection risks, only use it with code you trust
+              Через ризики ін'єкцій промптів, використовуйте тільки з кодом, якому довіряєте
             </Text>
             <Text dimColor wrap="wrap">
-              For more details see:
+              Детальніше дивіться:
               <Newline />
               <Link url="https://code.claude.com/docs/en/security" />
             </Text>
@@ -146,19 +146,19 @@ export function Onboarding({
     steps.push({
       id: 'terminal-setup',
       component: <Box flexDirection="column" gap={1} paddingLeft={1}>
-          <Text bold>Use Neural Network&apos;s terminal setup?</Text>
+          <Text bold>Використати налаштування терміналу Нейромережі?</Text>
           <Box flexDirection="column" width={70} gap={1}>
             <Text>
-              For the optimal coding experience, enable the recommended settings
+              Для оптимального досвіду кодування увімкніть рекомендовані налаштування
               <Newline />
-              for your terminal:{' '}
-              {env.terminal === 'Apple_Terminal' ? 'Option+Enter for newlines and visual bell' : 'Shift+Enter for newlines'}
+              для вашого терміналу:{' '}
+              {env.terminal === 'Apple_Terminal' ? 'Option+Enter для нових рядків та візуальний дзвінок' : 'Shift+Enter для нових рядків'}
             </Text>
             <Select options={[{
-            label: 'Yes, use recommended settings',
+            label: 'Так, використати рекомендовані налаштування',
             value: 'install'
           }, {
-            label: 'No, maybe later with /terminal-setup',
+            label: 'Ні, можливо пізніше через /terminal-setup',
             value: 'no'
           }]} onChange={value => {
             if (value === 'install') {

@@ -101,9 +101,9 @@ export function StartupModelPicker({
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold color="claude">
-          Model List
+          Список моделей
         </Text>
-        <Text dimColor>Fetching models from {providerLabel}…</Text>
+        <Text dimColor>Завантаження моделей з {providerLabel}…</Text>
       </Box>
     )
   }
@@ -112,10 +112,10 @@ export function StartupModelPicker({
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold color="red">
-          Failed to fetch models
+          Не вдалося завантажити моделі
         </Text>
         <Text dimColor>{error}</Text>
-        <Text dimColor>Press Esc to cancel</Text>
+        <Text dimColor>Натисніть Esc для скасування</Text>
       </Box>
     )
   }
@@ -124,7 +124,7 @@ export function StartupModelPicker({
     <Box flexDirection="column" padding={1}>
       <Box marginBottom={1}>
         <Text bold color="claude">
-          Select model
+          Оберіть модель
         </Text>
         <Text dimColor> · {providerLabel}</Text>
         {filtered.length !== models.length && (
@@ -135,13 +135,13 @@ export function StartupModelPicker({
       </Box>
 
       <Box marginBottom={1}>
-        <Text dimColor>Filter: </Text>
+        <Text dimColor>Фільтр: </Text>
         <Text>{filter || ' '}</Text>
         <Text dimColor>▌</Text>
       </Box>
 
       {visible.length === 0 ? (
-        <Text dimColor>No models match "{filter}"</Text>
+        <Text dimColor>Не знайдено моделей, що відповідають "{filter}"</Text>
       ) : (
         visible.map((m, i) => {
           const absoluteIdx = pageStart + i
@@ -179,13 +179,13 @@ export function StartupModelPicker({
       {filtered.length > PAGE_SIZE && (
         <Box marginTop={1}>
           <Text dimColor>
-            {cursor + 1}/{filtered.length} · PgUp/PgDn to scroll
+            {cursor + 1}/{filtered.length} · PgUp/PgDn для прокрутки
           </Text>
         </Box>
       )}
 
       <Box marginTop={1}>
-        <Text dimColor>↑↓ navigate · Enter confirm · Esc cancel · type to filter</Text>
+        <Text dimColor>↑↓ навігація · Enter вибрати · Esc скасувати · ввод для фільтра</Text>
       </Box>
     </Box>
   )

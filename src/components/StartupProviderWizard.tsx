@@ -62,7 +62,7 @@ const PROVIDERS: ProviderDef[] = [
   {
     id: 'anthropic',
     label: 'Anthropic',
-    description: 'Anthropic models (claude-opus, sonnet, haiku) · requires API key',
+    description: 'Моделі Anthropic (claude-opus, sonnet, haiku) · потрібен API ключ',
     needsKey: true,
     keyPlaceholder: 'sk-ant-...',
     keyHint: 'console.anthropic.com → API Keys',
@@ -70,7 +70,7 @@ const PROVIDERS: ProviderDef[] = [
   {
     id: 'openrouter',
     label: 'OpenRouter',
-    description: 'openrouter.ai · 200+ models from many providers · requires API key',
+    description: 'openrouter.ai · 200+ моделей від різних постачальників · потрібен API ключ',
     needsKey: true,
     keyPlaceholder: 'sk-or-...',
     keyHint: 'openrouter.ai/keys',
@@ -78,22 +78,22 @@ const PROVIDERS: ProviderDef[] = [
   {
     id: 'openai',
     label: 'OpenAI',
-    description: 'GPT-4o, o1, o3-mini and more · requires API key',
+    description: 'GPT-4o, o1, o3-mini та інші · потрібен API ключ',
     needsKey: true,
     keyPlaceholder: 'sk-...',
     keyHint: 'platform.openai.com/api-keys',
   },
   {
     id: 'ollama',
-    label: 'Ollama  (local)',
-    description: 'localhost:11434 · run models locally · no key needed',
+    label: 'Ollama  (локально)',
+    description: 'localhost:11434 · локальний запуск моделей · ключ не потрібен',
     needsKey: false,
     baseUrl: 'http://localhost:11434/v1',
   },
   {
     id: 'lmstudio',
-    label: 'LM Studio  (local)',
-    description: 'localhost:1234 · run models locally · no key needed',
+    label: 'LM Studio  (локально)',
+    description: 'localhost:1234 · локальний запуск моделей · ключ не потрібен',
     needsKey: false,
     baseUrl: 'http://localhost:1234/v1',
   },
@@ -289,7 +289,7 @@ function KeySelectScreen({
       {profiles.map((opt, i) => {
         const active = i === cursor
         const maskedKey = opt.apiKey ? '•'.repeat(Math.min(opt.apiKey.length, 20)) : '••••••'
-        const sourceHint = opt.source === 'env' ? ' [env]' : ''
+        const sourceHint = opt.source === 'env' ? ' [змінні]' : ''
         return (
           <Box key={opt.id} flexDirection="column" marginBottom={active ? 1 : 0}>
             <Box>
@@ -363,8 +363,8 @@ export function StartupProviderWizard({ onSelect, onCancel }: Props) {
             apiKey: apiKey || undefined,
           })
           if (ids === null) {
-            const endpoint = selectedProvider.baseUrl ?? 'unknown'
-            setFetchError(`Could not reach ${endpoint}/models. Check connectivity.`)
+            const endpoint = selectedProvider.baseUrl ?? 'невідомо'
+            setFetchError(`Не вдалося з'єднати з ${endpoint}/models. Перевірте підключення.`)
             setScreen('model-select') // show error via StartupModelPicker
             return
           }
@@ -377,7 +377,7 @@ export function StartupProviderWizard({ onSelect, onCancel }: Props) {
         }
 
         if (fetched.length === 0) {
-          setFetchError('No models returned. Check API key and connectivity.')
+          setFetchError('Не отримано моделей. Перевірте API ключ та підключення.')
         }
         setModels(fetched)
         setScreen('model-select')
@@ -431,7 +431,7 @@ export function StartupProviderWizard({ onSelect, onCancel }: Props) {
         if (antKey && antKey.length > 0) {
           saved.push({
             id: 'env-anthropic',
-            name: 'From ANTHROPIC_API_KEY',
+            name: 'З ANTHROPIC_API_KEY',
             apiKey: antKey,
             source: 'env',
           })
@@ -455,7 +455,7 @@ export function StartupProviderWizard({ onSelect, onCancel }: Props) {
         if (openaiKey && openaiKey.length > 0 && matchesProvider) {
           saved.push({
             id: 'env-openai',
-            name: 'From OPENAI_API_KEY',
+            name: 'З OPENAI_API_KEY',
             apiKey: openaiKey,
             source: 'env',
           })

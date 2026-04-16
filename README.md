@@ -1,54 +1,51 @@
-# OpenClaude
+# Neural Network
 
-OpenClaude is an open-source coding-agent CLI for cloud and local model providers.
+Neural Network — це CLI з відкритим вихідним кодом для роботи з моделями в хмарі та локально.
 
-Use OpenAI-compatible APIs, Gemini, GitHub Models, Codex OAuth, Codex, Ollama, Atomic Chat, and other supported backends while keeping one terminal-first workflow: prompts, tools, agents, MCP, slash commands, and streaming output.
+Використовуй OpenAI-сумісні API, Gemini, GitHub Models, Codex OAuth, Codex, Ollama, Atomic Chat та інші підтримувані бекенди в єдиному термінальному робочому процесі: промпти, інструменти, агенти, MCP, slash-команди та стрімінговий вивід.
 
-[![PR Checks](https://github.com/Gitlawb/openclaude/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/Gitlawb/openclaude/actions/workflows/pr-checks.yml)
-[![Release](https://img.shields.io/github/v/tag/Gitlawb/openclaude?label=release&color=0ea5e9)](https://github.com/Gitlawb/openclaude/tags)
-[![Discussions](https://img.shields.io/badge/discussions-open-7c3aed)](https://github.com/Gitlawb/openclaude/discussions)
+[![PR Checks](https://github.com/Hacksli/openclaude/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/Hacksli/openclaude/actions/workflows/pr-checks.yml)
+[![Release](https://img.shields.io/github/v/tag/Hacksli/openclaude?label=release&color=0ea5e9)](https://github.com/Hacksli/openclaude/tags)
+[![Discussions](https://img.shields.io/badge/discussions-open-7c3aed)](https://github.com/Hacksli/openclaude/discussions)
 [![Security Policy](https://img.shields.io/badge/security-policy-0f766e)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-2563eb)](LICENSE)
 
-OpenClaude is also mirrored to GitLawb:
-[gitlawb.com/node/repos/z6MkqDnb/openclaude](https://gitlawb.com/node/repos/z6MkqDnb/openclaude)
+[Швидкий старт](#швидкий-старт) | [Налаштування](#інструкції-налаштування) | [Провайдери](#підтримувані-провайдери) | [Reжим undercover](#режим-undercover) | [Збірка з вихідного коду](#збірка-з-вихідного-коду-та-локальна-розробка) | [Розширення VS Code](#розширення-vs-code) | [Спільнота](#спільнота)
 
-[Quick Start](#quick-start) | [Setup Guides](#setup-guides) | [Providers](#supported-providers) | [Undercover Mode](#undercover-mode) | [Source Build](#source-build-and-local-development) | [VS Code Extension](#vs-code-extension) | [Community](#community)
+## Історія зірок
 
-## Star History
+[![Star History Chart](https://api.star-history.com/chart?repos=hacksli/openclaude&type=date&legend=top-left)](https://www.star-history.com/?repos=hacksli%2Fopenclaude&type=date&legend=top-left)
 
-[![Star History Chart](https://api.star-history.com/chart?repos=gitlawb/openclaude&type=date&legend=top-left)](https://www.star-history.com/?repos=gitlawb%2Fopenclaude&type=date&legend=top-left)
+## Чому Neural Network
 
-## Why OpenClaude
+- Один CLI для всіх хмарних API та локальних бекендів
+- Збереження профілів провайдерів у додатку через `/provider`
+- Робота з OpenAI-сумісними сервісами, Gemini, GitHub Models, Codex OAuth, Codex, Ollama, Atomic Chat та іншими провайдерами
+- Єдиний робочий процес для кодингу: bash, інструменти роботи з файлами, grep, glob, агенти, задачі, MCP та веб-інструменти
+- Вбудоване розширення VS Code для інтеграції запуску та підтримки тем
 
-- Use one CLI across cloud APIs and local model backends
-- Save provider profiles inside the app with `/provider`
-- Run with OpenAI-compatible services, Gemini, GitHub Models, Codex OAuth, Codex, Ollama, Atomic Chat, and other supported providers
-- Keep coding-agent workflows in one place: bash, file tools, grep, glob, agents, tasks, MCP, and web tools
-- Use the bundled VS Code extension for launch integration and theme support
+## Швидкий старт
 
-## Quick Start
-
-### Install
+### Встановлення
 
 ```bash
-npm install -g @gitlawb/openclaude
+npm install -g @hacksli/openclaude
 ```
 
-If the install later reports `ripgrep not found`, install ripgrep system-wide and confirm `rg --version` works in the same terminal before starting OpenClaude.
+Якщо після встановлення з'являється помилка `ripgrep not found`, встанови ripgrep системно та переконайся, що `rg --version` працює в тому ж терміналі перед запуском Neural Network.
 
-### Start
+### Запуск
 
 ```bash
 openclaude
 ```
 
-Inside OpenClaude:
+Усередині Neural Network:
 
-- run `/provider` for guided provider setup and saved profiles
-- run `/onboard-github` for GitHub Models onboarding
+- запусти `/provider` для налаштування провайдера та збереження профілів
+- запусти `/onboard-github` для налаштування GitHub Models
 
-### Fastest OpenAI setup
+### Найшвидший налаштування OpenAI
 
 macOS / Linux:
 
@@ -70,7 +67,7 @@ $env:OPENAI_MODEL="gpt-4o"
 openclaude
 ```
 
-### Fastest local Ollama setup
+### Найшвидший налаштування локального Ollama
 
 macOS / Linux:
 
@@ -92,67 +89,71 @@ $env:OPENAI_MODEL="qwen2.5-coder:7b"
 openclaude
 ```
 
-### Using Ollama's launch command
+### Використання команди запуску Ollama
 
-If you have [Ollama](https://ollama.com) installed, you can skip the env var setup entirely:
+Якщо у тебе встановлений [Ollama](https://ollama.com), можна взагалі не налаштовувати змінні оточення:
 
 ```bash
 ollama launch openclaude --model qwen2.5-coder:7b
 ```
 
-This automatically sets `ANTHROPIC_BASE_URL`, model routing, and auth so all API traffic goes through your local Ollama instance. Works with any model you have pulled — local or cloud.
+Це автоматично встановлює `ANTHROPIC_BASE_URL`, маршрутизацію моделей та авторизацію, щоб весь трафік API йшов через твій локальний екземпляр Ollama. Працює з будь-якою завантаженою моделлю — локальною або хмарною.
 
-## Setup Guides
+## Інструкції налаштування
 
-Beginner-friendly guides:
+Дружні інструкції для початківців:
 
-- [Non-Technical Setup](docs/non-technical-setup.md)
-- [Windows Quick Start](docs/quick-start-windows.md)
-- [macOS / Linux Quick Start](docs/quick-start-mac-linux.md)
+- [Налаштування для новачків](docs/non-technical-setup.md)
+- [Швидкий старт для Windows](docs/quick-start-windows.md)
+- [Швидкий старт для macOS / Linux](docs/quick-start-mac-linux.md)
 
-Advanced and source-build guides:
+Просунуті інструкції та збірка з вихідного коду:
 
-- [Advanced Setup](docs/advanced-setup.md)
-- [Android Install](ANDROID_INSTALL.md)
+- [Просунуте налаштування](docs/advanced-setup.md)
+- [Встановлення на Android](ANDROID_INSTALL.md)
+- [Remote Session (`/remote`)](docs/remote-session.md) — дзеркалювання активної сесії на телефон через HTTP + WebSocket
 
-## Supported Providers
+## Підтримувані провайдери
 
-| Provider | Setup Path | Notes |
+| Провайдер | Шлях налаштування | Примітки |
 | --- | --- | --- |
-| OpenAI-compatible | `/provider` or env vars | Works with OpenAI, OpenRouter, DeepSeek, Groq, Mistral, LM Studio, and other compatible `/v1` servers |
-| Gemini | `/provider` or env vars | Supports API key, access token, or local ADC workflow on current `main` |
-| GitHub Models | `/onboard-github` | Interactive onboarding with saved credentials |
-| Codex OAuth | `/provider` | Opens ChatGPT sign-in in your browser and stores Codex credentials securely |
-| Codex | `/provider` | Uses existing Codex CLI auth, OpenClaude secure storage, or env credentials |
-| Ollama | `/provider`, env vars, or `ollama launch` | Local inference with no API key |
-| Atomic Chat | advanced setup | Local Apple Silicon backend |
-| Bedrock / Vertex / Foundry | env vars | Additional provider integrations for supported environments |
+| OpenAI-сумісні | `/provider` або змінні оточення | Працює з OpenAI, OpenRouter, DeepSeek, Groq, Mistral, LM Studio та іншими сумісними `/v1` серверами |
+| Gemini | `/provider` або змінні оточення | Підтримує API ключ, access token або локальний ADC workflow на поточній `main` |
+| GitHub Models | `/onboard-github` | Іnteractive onboarding із збереженням облікових даних |
+| Codex OAuth | `/provider` | Відкриває вхід у ChatGPT у браузері та безпечно зберігає облікові дані Codex |
+| Codex | `/provider` | Використовує існуючу авторизацію Codex CLI, безпечне сховище Neural Network або змінні оточення |
+| Ollama | `/provider`, змінні оточення або `ollama launch` | Локальний інференс без API ключа |
+| Atomic Chat | просунуте налаштування | Локальний бекенд для Apple Silicon |
+| Bedrock / Vertex / Foundry | змінні оточення | Додаткові інтеграції провайдерів для підтримуваних середовищ |
+| OpenRouter | `/provider` або змінні оточення | Агрегатор моделей з підтримкою єдиного API |
+| NVIDIA NIM | `/provider` або змінні оточення | GPU-прискорені моделі NVIDIA |
+| MiniMax | `/provider` або змінні оточення | Китайський провайдер великих моделей |
 
-## What Works
+## Що працює
 
-- **Tool-driven coding workflows**: Bash, file read/write/edit, grep, glob, agents, tasks, MCP, and slash commands
-- **Streaming responses**: Real-time token output and tool progress
-- **Tool calling**: Multi-step tool loops with model calls, tool execution, and follow-up responses
-- **Images**: URL and base64 image inputs for providers that support vision
-- **Provider profiles**: Guided setup plus saved `.openclaude-profile.json` support
-- **Local and remote model backends**: Cloud APIs, local servers, and Apple Silicon local inference
+- **Робочі процеси з інструментами**: Bash, читання/запис/редагування файлів, grep, glob, агенти, задачі, MCP та slash-команди
+- **Стрімінг відповідей**: Вивід токенів у реальному часі та прогрес інструментів
+- **Виклик інструментів**: Багатокрокові цикли виклику інструментів з виконанням та подальшими відповідями
+- **Зображення**: URL та base64 зображення для провайдерів з підтримкою vision
+- **Профілі провайдерів**: Керівництво з налаштування та збереження в `.openclaude-profile.json`
+- **Локальні та віддалені бекенди**: Cloud API, локальні сервери та локальний інференс на Apple Silicon
 
-## Provider Notes
+## Примітки провайдерів
 
-OpenClaude supports multiple providers, but behavior is not identical across all of them.
+Neural Network підтримує кількох провайдерів, але поведінка може відрізнятися.
 
-- Anthropic-specific features may not exist on other providers
-- Tool quality depends heavily on the selected model
-- Smaller local models can struggle with long multi-step tool flows
-- Some providers impose lower output caps than the CLI defaults, and OpenClaude adapts where possible
+- Функції, специфічні для Anthropic, можуть відсутні на інших провайдерах
+- Якість роботи інструментів сильно залежить від обраної моделі
+- Менші локальні моделі можуть мати проблеми з довгими багатокрокovими циклами
+- Деякі провайдери мають нижчі ліміти виводу, ніж налаштування CLI за замовчуванням
 
-For best results, use models with strong tool/function calling support.
+Для найкращих результатів використовуй моделі з сильною підтримкою tool/function calling.
 
-## Agent Routing
+## Маршрутизація агентів
 
-OpenClaude can route different agents to different models through settings-based routing. This is useful for cost optimization or splitting work by model strength.
+Neural Network може маршрутизувати різних агентів до різних моделей через налаштування. Це корисно для оптимізації витрат або розподілу роботи за міцністю моделі.
 
-Add to `~/.claude/settings.json`:
+Додай у `~/.claude/settings.json`:
 
 ```json
 {
@@ -176,101 +177,101 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-When no routing match is found, the global provider remains the fallback.
+Якщо відповідності маршрутизації не знайдено, використовується глобальний провайдер.
 
-> **Note:** `api_key` values in `settings.json` are stored in plaintext. Keep this file private and do not commit it to version control.
+> **Примітка:** Значення `api_key` у `settings.json` зберігаються у відкритому тексті. Залиш цей файл приватним і не коміть у систему контролю версій.
 
-## Web Search and Fetch
+## Web Search та WebFetch
 
-By default, `WebSearch` works on non-Anthropic models using DuckDuckGo. This gives GPT-4o, DeepSeek, Gemini, Ollama, and other OpenAI-compatible providers a free web search path out of the box.
+За замовчуванням `WebSearch` працює на не-Anthropic моделях через DuckDuckGo. Це дає GPT-4o, DeepSeek, Gemini, Ollama та іншим OpenAI-сумісним провайдерам безкоштовний шлях пошуку в інтернеті.
 
-> **Note:** DuckDuckGo fallback works by scraping search results and may be rate-limited, blocked, or subject to DuckDuckGo's Terms of Service. If you want a more reliable supported option, configure Firecrawl.
+> **Примітка:** Резервний варіант DuckDuckGo працює через парсинг результатів пошуку і може бути обмежений rate-limit, заблокований або підпорядковуватися умовам використання DuckDuckGo. Для більш надійного варіанту налаштуй Firecrawl.
 
-For Anthropic-native backends and Codex responses, OpenClaude keeps the native provider web search behavior.
+Для нативних бекендів Anthropic та відповідей Codex Neural Network зберігає нативну пошукову поведінку провайдера.
 
-`WebFetch` works, but its basic HTTP plus HTML-to-markdown path can still fail on JavaScript-rendered sites or sites that block plain HTTP requests.
+`WebFetch` працює, але його базовий HTTP плюс шлях HTML-to-markdown може все ще не працювати на сайтах з JavaScript або сайтах, які блокують прості HTTP-запити.
 
-Set a [Firecrawl](https://firecrawl.dev) API key if you want Firecrawl-powered search/fetch behavior:
+Встанови API ключ [Firecrawl](https://firecrawl.dev) для пошуку/fetch через Firecrawl:
 
 ```bash
 export FIRECRAWL_API_KEY=your-key-here
 ```
 
-With Firecrawl enabled:
+З увімкненим Firecrawl:
 
-- `WebSearch` can use Firecrawl's search API while DuckDuckGo remains the default free path for non-Claude models
-- `WebFetch` uses Firecrawl's scrape endpoint instead of raw HTTP, handling JS-rendered pages correctly
+- `WebSearch` може використовувати пошук Firecrawl, а DuckDuckGo залишається безкоштовним варіантом за замовчуванням для не-Claude моделей
+- `WebFetch` використовує endpoint scrape Firecrawl замість сирого HTTP, коректно обробляючи сторінки з JavaScript
 
-Free tier at [firecrawl.dev](https://firecrawl.dev) includes 500 credits. The key is optional.
+Безкоштовний тариф на [firecrawl.dev](https://firecrawl.dev) включає 500 кредитів. Ключ необов'язковий.
 
 ---
 
-## Undercover Mode
+## Режим undercover
 
-OpenClaude ships with an **undercover mode** that makes the assistant write as an ordinary human developer: no AI self-identification, no model names in output, and no AI-authorship markers on commits or PRs.
+Neural Network має **режим undercover**, який змушує асистента писати як звичайний розробник: без ідентифікації AI, без назв моделей у виводі та без маркерів авторства AI в комітах або PR.
 
-When active, undercover mode:
+Коли активний, режим undercover:
 
-- Omits `You are powered by claude-…` lines and any Claude / OpenClaude / model-codename mentions from the system prompt
-- Prefixes commit and PR prompts with an instruction to avoid AI-authorship markers
-- Strips `Co-Authored-By:` trailers and `Generated with OpenClaude` attribution from commits and PRs
-- Shows an `undercover` indicator in the prompt footer
+- Пропускає рядки `You are powered by claude-...` та будь-які згадки Claude / OpenClaude / назв моделей із системного промпту
+- Додає інструкцію у промпти комітів та PR уникати маркерів авторства AI
+- Видаляє `Co-Authored-By:` та атрибуцію `Generated with OpenClaude` з комітів і PR
+- Показує індикатор `undercover` у футері промпту
 
-Undercover is **on by default**. Control it with:
+Undercover **увімкнено за замовчуванням**. Керуй ним через:
 
 ```bash
-# Launch with undercover off
+# Запуск з undercover вимкненим
 export OPENCLAUDE_UNDERCOVER=0
 openclaude
 ```
 
-Or toggle at runtime inside OpenClaude:
+Або перемкни під час роботи в Neural Network:
 
 ```
-/undercover           # show current status
-/undercover on        # enable
-/undercover off       # disable
-/undercover toggle    # flip the current state
+/undercover           # показати поточний стан
+/undercover on        # увімкнути
+/undercover off       # вимкнути
+/undercover toggle    # перемкнути поточний стан
 ```
 
-Runtime toggles take full effect on the next message (the current turn's system prompt may already be cached).
+Перемкнення набуває повної сили на наступному повідомленні (поточний промпт може вже бути кешованим).
 
 ---
 
-## Headless gRPC Server
+## Headless gRPC сервер
 
-OpenClaude can be run as a headless gRPC service, allowing you to integrate its agentic capabilities (tools, bash, file editing) into other applications, CI/CD pipelines, or custom user interfaces. The server uses bidirectional streaming to send real-time text chunks, tool calls, and request permissions for sensitive commands.
+Neural Network можна запустити як headless gRPC-сервіс, що дозволяє інтегрувати його агентні можливості (інструменти, bash, редагування файлів) в інші додатки, CI/CD пайплайни або користувацькі інтерфейси. Сервер використовує двонаправлений стрімінг для відправки чанків тексту в реальному часі, викликів інструментів та запиту дозволів на чутливі команди.
 
-### 1. Start the gRPC Server
+### 1. Запуск gRPC сервера
 
-Start the core engine as a gRPC service on `localhost:50051`:
+Запусти основний двигун як gRPC-сервіс на `localhost:50051`:
 
 ```bash
 npm run dev:grpc
 ```
 
-#### Configuration
+#### Налаштування
 
-| Variable | Default | Description |
+| Змінна | За замовчуванням | Опис |
 |-----------|-------------|------------------------------------------------|
-| `GRPC_PORT` | `50051` | Port the gRPC server listens on |
-| `GRPC_HOST` | `localhost` | Bind address. Use `0.0.0.0` to expose on all interfaces (not recommended without authentication) |
+| `GRPC_PORT` | `50051` | Порт, на якому слухає gRPC-сервер |
+| `GRPC_HOST` | `localhost` | Адреса прив'язки. Використовуй `0.0.0.0` для відкриття на всіх інтерфейсах (не рекомендується без автентифікації) |
 
-### 2. Run the Test CLI Client
+### 2. Запуск тестового CLI клієнта
 
-We provide a lightweight CLI client that communicates exclusively over gRPC. It acts just like the main interactive CLI, rendering colors, streaming tokens, and prompting you for tool permissions (y/n) via the gRPC `action_required` event.
+Ми надаємо легкий CLI клієнт, який спілкується виключно через gRPC. Він працює як основний інтерактивний CLI, відтворює кольори, стрімує токени та запитує дозвіл на інструменти через подію `action_required` gRPC.
 
-In a separate terminal, run:
+У окремому терміналі запусти:
 
 ```bash
 npm run dev:grpc:cli
 ```
 
-*Note: The gRPC definitions are located in `src/proto/openclaude.proto`. You can use this file to generate clients in Python, Go, Rust, or any other language.*
+*Примітка: gRPC визначення знаходяться у `src/proto/openclaude.proto`. Можна використовувати цей файл для генерації клієнтів у Python, Go, Rust або будь-якій іншій мові.*
 
 ---
 
-## Source Build And Local Development
+## Збірка з вихідного коду та локальна розробка
 
 ```bash
 bun install
@@ -278,7 +279,7 @@ bun run build
 node dist/cli.mjs
 ```
 
-Helpful commands:
+Корисні команди:
 
 - `bun run dev`
 - `bun test`
@@ -287,90 +288,91 @@ Helpful commands:
 - `bun run smoke`
 - `bun run doctor:runtime`
 - `bun run verify:privacy`
-- focused `bun test ...` runs for the areas you touch
+- Фocused `bun test ...` запуски для областей, яких торкнувсяся
 
-## Testing And Coverage
+## Тестування та покриття
 
-OpenClaude uses Bun's built-in test runner for unit tests.
+Neural Network використовує вбудований тестовий раннер Bun для юніт-тестів.
 
-Run the full unit suite:
+Запуск повної юніт-тестовоїsuite:
 
 ```bash
 bun test
 ```
 
-Generate unit test coverage:
+Генерація покриття юніт-тестів:
 
 ```bash
 bun run test:coverage
 ```
 
-Open the visual coverage report:
+Відкрити візуальний звіт про покриття:
 
 ```bash
 open coverage/index.html
 ```
 
-If you already have `coverage/lcov.info` and only want to rebuild the UI:
+Якщо вже є `coverage/lcov.info` і потрібно лише перестворити UI:
 
 ```bash
 bun run test:coverage:ui
 ```
 
-Use focused test runs when you only touch one area:
+Використовуй фокусовані запуски тестів, коли торкаєшся лише однієї області:
 
 - `bun run test:provider`
 - `bun run test:provider-recommendation`
 - `bun test path/to/file.test.ts`
 
-Recommended contributor validation before opening a PR:
+Рекомендована валідація контриб'ютора перед відкриттям PR:
 
 - `bun run build`
 - `bun run smoke`
-- `bun run test:coverage` for broader unit coverage when your change affects shared runtime or provider logic
-- focused `bun test ...` runs for the files and flows you changed
+- `bun run test:coverage` для ширшого покриття, коли зміни торкаються спільного runtime або логіки провайдерів
+- focused `bun test ...` запуски для файлів і потоків, які змінив
 
-Coverage output is written to `coverage/lcov.info`, and OpenClaude also generates a git-activity-style heatmap at `coverage/index.html`.
-## Repository Structure
+Звіт про покриття записується у `coverage/lcov.info`, а Neural Network також генерує heatmap у стилі git-активності в `coverage/index.html`.
 
-- `src/` - core CLI/runtime
-- `scripts/` - build, verification, and maintenance scripts
-- `docs/` - setup, contributor, and project documentation
-- `python/` - standalone Python helpers and their tests
-- `vscode-extension/openclaude-vscode/` - VS Code extension
-- `.github/` - repo automation, templates, and CI configuration
-- `bin/` - CLI launcher entrypoints
+## Структура репозиторію
 
-## VS Code Extension
+- `src/` — основний CLI/runtime
+- `scripts/` — збірка, перевірка та обслуговування
+- `docs/` — налаштування, контриб'ютор та проектна документація
+- `python/` — окремі Python-помічники та їх тести
+- `vscode-extension/openclaude-vscode/` — розширення VS Code
+- `.github/` — автоматизація репо, шаблони та налаштування CI
+- `bin/` — CLI ланцюжки входу
 
-The repo includes a VS Code extension in [`vscode-extension/openclaude-vscode`](vscode-extension/openclaude-vscode) for OpenClaude launch integration, provider-aware control-center UI, and theme support.
+## Розширення VS Code
 
-## Security
+Репозиторій включає розширення VS Code в [`vscode-extension/openclaude-vscode`](vscode-extension/openclaude-vscode) для інтеграції запуску Neural Network, UI центру керування з підтримкою провайдерів та підтримки тем.
 
-If you believe you found a security issue, see [SECURITY.md](SECURITY.md).
+## Безпека
 
-## Community
+Якщо знайшов проблему безпеки, дивіться [SECURITY.md](SECURITY.md).
 
-- Use [GitHub Discussions](https://github.com/Gitlawb/openclaude/discussions) for Q&A, ideas, and community conversation
-- Use [GitHub Issues](https://github.com/Gitlawb/openclaude/issues) for confirmed bugs and actionable feature work
+## Спільнота
 
-## Contributing
+- Використовуй [GitHub Discussions](https://github.com/Hacksli/openclaude/discussions) для питань, ідей та спілкування спільноти
+- Використовуй [GitHub Issues](https://github.com/Hacksli/openclaude/issues) для підтверджених багів та реалізації функцій
 
-Contributions are welcome.
+## Контриб'юція
 
-For larger changes, open an issue first so the scope is clear before implementation. Helpful validation commands include:
+Внесок вітається.
+
+Для великих змін спочатку відкрий issue, щоб уточнити scope перед реалізацією. Корисні команди валідації:
 
 - `bun run build`
 - `bun run test:coverage`
 - `bun run smoke`
-- focused `bun test ...` runs for touched areas
+- focused `bun test ...` запуски для торкнених областей
 
-## Disclaimer
+## Відмова від відповідальності
 
-OpenClaude is an independent community project and is not affiliated with, endorsed by, or sponsored by Anthropic.
+Neural Network — це незалежний спільнотний проект, який не афілійований, не схвалений і не спонсорований Anthropic.
 
-OpenClaude originated from the Claude Code codebase and has since been substantially modified to support multiple providers and open use. "Claude" and "Claude Code" are trademarks of Anthropic PBC. See [LICENSE](LICENSE) for details.
+Neural Network походить з кодової бази Claude Code і з тих пір суттєво модифікований для підтримки кількох провайдерів та відкритого використання. "Claude" та "Claude Code" — торгові марки Anthropic PBC. Дивіться [LICENSE](LICENSE) для деталей.
 
-## License
+## Ліцензія
 
-See [LICENSE](LICENSE).
+Дивіться [LICENSE](LICENSE).

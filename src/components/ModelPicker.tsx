@@ -260,12 +260,12 @@ export function ModelPicker(t0) {
   const handleSelect = t14;
   let t15;
   if ($[41] === Symbol.for("react.memo_cache_sentinel")) {
-    t15 = <Text color="remember" bold={true}>Select model</Text>;
+    t15 = <Text color="remember" bold={true}>Оберіть модель</Text>;
     $[41] = t15;
   } else {
     t15 = $[41];
   }
-  const t16 = headerText ?? "Switch between models. Applies to this session and future Neural Network sessions. For other/previous model names, specify with --model.";
+  const t16 = headerText ?? "Перемикання між моделями. Застосовується до цієї сесії та майбутніх сесій Нейромережі. Для інших/попередніх назв моделей вкажіть --model.";
   let t17;
   if ($[42] !== t16) {
     t17 = <Text dimColor={true}>{t16}</Text>;
@@ -276,7 +276,7 @@ export function ModelPicker(t0) {
   }
   let t18;
   if ($[44] !== sessionModel) {
-    t18 = sessionModel && <Text dimColor={true}>Currently using {modelDisplayString(sessionModel)} for this session (set by plan mode). Selecting a model will undo this.</Text>;
+    t18 = sessionModel && <Text dimColor={true}>Зараз використовується {modelDisplayString(sessionModel)} для цієї сесії (встановлено режимом планування). Вибір моделі скасує це.</Text>;
     $[44] = sessionModel;
     $[45] = t18;
   } else {
@@ -308,7 +308,7 @@ export function ModelPicker(t0) {
   }
   let t22;
   if ($[57] !== hiddenCount) {
-    t22 = hiddenCount > 0 && <Box paddingLeft={3}><Text dimColor={true}>and {hiddenCount} more…</Text></Box>;
+    t22 = hiddenCount > 0 && <Box paddingLeft={3}><Text dimColor={true}>та ще {hiddenCount}…</Text></Box>;
     $[57] = hiddenCount;
     $[58] = t22;
   } else {
@@ -325,7 +325,7 @@ export function ModelPicker(t0) {
   }
   let t24;
   if ($[62] !== displayEffort || $[63] !== focusedDefaultEffort || $[64] !== focusedModelName || $[65] !== focusedSupportsEffort) {
-    t24 = <Box marginBottom={1} flexDirection="column">{focusedSupportsEffort ? <Text dimColor={true}><EffortLevelIndicator effort={displayEffort} />{" "}{capitalize(displayEffort)} effort{displayEffort === focusedDefaultEffort ? " (default)" : ""}{" "}<Text color="subtle">← → to adjust</Text></Text> : <Text color="subtle"><EffortLevelIndicator effort={undefined} /> Effort not supported{focusedModelName ? ` for ${focusedModelName}` : ""}</Text>}</Box>;
+    t24 = <Box marginBottom={1} flexDirection="column">{focusedSupportsEffort ? <Text dimColor={true}><EffortLevelIndicator effort={displayEffort} />{" "}{capitalize(displayEffort)} effort{displayEffort === focusedDefaultEffort ? " (за замовчуванням)" : ""}{" "}<Text color="subtle">← → для налаштування</Text></Text> : <Text color="subtle"><EffortLevelIndicator effort={undefined} /> Effort не підтримується{focusedModelName ? ` для ${focusedModelName}` : ""}</Text>}</Box>;
     $[62] = displayEffort;
     $[63] = focusedDefaultEffort;
     $[64] = focusedModelName;
@@ -336,7 +336,7 @@ export function ModelPicker(t0) {
   }
   let t25;
   if ($[67] !== showFastModeNotice) {
-    t25 = isFastModeEnabled() ? showFastModeNotice ? <Box marginBottom={1}><Text dimColor={true}>Fast mode is <Text bold={true}>ON</Text> and available with{" "}{FAST_MODE_MODEL_DISPLAY} only (/fast). Switching to other models turn off fast mode.</Text></Box> : isFastModeAvailable() && !isFastModeCooldown() ? <Box marginBottom={1}><Text dimColor={true}>Use <Text bold={true}>/fast</Text> to turn on Fast mode ({FAST_MODE_MODEL_DISPLAY} only).</Text></Box> : null : null;
+    t25 = isFastModeEnabled() ? showFastModeNotice ? <Box marginBottom={1}><Text dimColor={true}>Швидкий режим <Text bold={true}>увімкнено</Text> і доступний тільки з{" "}{FAST_MODE_MODEL_DISPLAY} (/fast). Перехід на інші моделі вимикає швидкий режим.</Text></Box> : isFastModeAvailable() && !isFastModeCooldown() ? <Box marginBottom={1}><Text dimColor={true}>Використайте <Text bold={true}>/fast</Text> для увімкнення швидкого режиму (тільки {FAST_MODE_MODEL_DISPLAY}).</Text></Box> : null : null;
     $[67] = showFastModeNotice;
     $[68] = t25;
   } else {

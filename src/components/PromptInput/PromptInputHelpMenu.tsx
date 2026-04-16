@@ -129,7 +129,7 @@ export function PromptInputHelpMenu(props) {
   const imagePasteShortcut = t19;
   let t20;
   if ($[20] !== dimColor || $[21] !== terminalShortcut) {
-    t20 = feature("TERMINAL_PANEL") ? getFeatureValue_CACHED_MAY_BE_STALE("tengu_terminal_panel", false) ? <Box><Text dimColor={dimColor}>{terminalShortcut} for terminal</Text></Box> : null : null;
+    t20 = feature("TERMINAL_PANEL") ? getFeatureValue_CACHED_MAY_BE_STALE("tengu_terminal_panel", false) ? <Box><Text dimColor={dimColor}>{terminalShortcut} для термінала</Text></Box> : null : null;
     $[20] = dimColor;
     $[21] = terminalShortcut;
     $[22] = t20;
@@ -140,7 +140,7 @@ export function PromptInputHelpMenu(props) {
   const t21 = fixedWidth ? 24 : undefined;
   let t22;
   if ($[23] !== dimColor) {
-    t22 = <Box><Text dimColor={dimColor}>! for bash mode</Text></Box>;
+    t22 = <Box><Text dimColor={dimColor}>! для bash режиму</Text></Box>;
     $[23] = dimColor;
     $[24] = t22;
   } else {
@@ -148,7 +148,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t23;
   if ($[25] !== dimColor) {
-    t23 = <Box><Text dimColor={dimColor}>/ for commands</Text></Box>;
+    t23 = <Box><Text dimColor={dimColor}>/ для команд</Text></Box>;
     $[25] = dimColor;
     $[26] = t23;
   } else {
@@ -156,7 +156,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t24;
   if ($[27] !== dimColor) {
-    t24 = <Box><Text dimColor={dimColor}>@ for file paths</Text></Box>;
+    t24 = <Box><Text dimColor={dimColor}>@ для шляхів до файлів</Text></Box>;
     $[27] = dimColor;
     $[28] = t24;
   } else {
@@ -164,7 +164,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t25;
   if ($[29] !== dimColor) {
-    t25 = <Box><Text dimColor={dimColor}>{"& for background"}</Text></Box>;
+    t25 = <Box><Text dimColor={dimColor}>& для фону</Text></Box>;
     $[29] = dimColor;
     $[30] = t25;
   } else {
@@ -172,7 +172,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t26;
   if ($[31] !== dimColor) {
-    t26 = <Box><Text dimColor={dimColor}>/btw for side question</Text></Box>;
+    t26 = <Box><Text dimColor={dimColor}>/btw для побіжного запитання</Text></Box>;
     $[31] = dimColor;
     $[32] = t26;
   } else {
@@ -194,7 +194,7 @@ export function PromptInputHelpMenu(props) {
   const t28 = fixedWidth ? 35 : undefined;
   let t29;
   if ($[40] !== dimColor) {
-    t29 = <Box><Text dimColor={dimColor}>double tap esc to clear input</Text></Box>;
+    t29 = <Box><Text dimColor={dimColor}>двічі натисніть Esc, щоб очистити введення</Text></Box>;
     $[40] = dimColor;
     $[41] = t29;
   } else {
@@ -202,7 +202,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t30;
   if ($[42] !== cycleModeShortcut || $[43] !== dimColor) {
-    t30 = <Box><Text dimColor={dimColor}>{cycleModeShortcut}{" "}{false ? "to cycle modes" : "to auto-accept edits"}</Text></Box>;
+    t30 = <Box><Text dimColor={dimColor}>{cycleModeShortcut}{" "}{false ? "для перемикання режимів" : "для автоматичного приймання змін"}</Text></Box>;
     $[42] = cycleModeShortcut;
     $[43] = dimColor;
     $[44] = t30;
@@ -211,7 +211,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t31;
   if ($[45] !== dimColor || $[46] !== transcriptShortcut) {
-    t31 = <Box><Text dimColor={dimColor}>{transcriptShortcut} for verbose output</Text></Box>;
+    t31 = <Box><Text dimColor={dimColor}>{transcriptShortcut} для детального виводу</Text></Box>;
     $[45] = dimColor;
     $[46] = transcriptShortcut;
     $[47] = t31;
@@ -220,7 +220,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t32;
   if ($[48] !== dimColor || $[49] !== todosShortcut) {
-    t32 = <Box><Text dimColor={dimColor}>{todosShortcut} to toggle tasks</Text></Box>;
+    t32 = <Box><Text dimColor={dimColor}>{todosShortcut} для перемикання завдань</Text></Box>;
     $[48] = dimColor;
     $[49] = todosShortcut;
     $[50] = t32;
@@ -258,7 +258,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t36;
   if ($[62] !== dimColor || $[63] !== undoShortcut) {
-    t36 = <Box><Text dimColor={dimColor}>{undoShortcut} to undo</Text></Box>;
+    t36 = <Box><Text dimColor={dimColor}>{undoShortcut} для скасування</Text></Box>;
     $[62] = dimColor;
     $[63] = undoShortcut;
     $[64] = t36;
@@ -267,7 +267,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t37;
   if ($[65] !== dimColor) {
-    t37 = getPlatform() !== "windows" && <Box><Text dimColor={dimColor}>ctrl + z to suspend</Text></Box>;
+    t37 = getPlatform() !== "windows" && <Box><Text dimColor={dimColor}>ctrl + z для призупинення</Text></Box>;
     $[65] = dimColor;
     $[66] = t37;
   } else {
@@ -275,7 +275,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t38;
   if ($[67] !== dimColor || $[68] !== imagePasteShortcut) {
-    t38 = <Box><Text dimColor={dimColor}>{imagePasteShortcut} to paste images</Text></Box>;
+    t38 = <Box><Text dimColor={dimColor}>{imagePasteShortcut} для вставки зображень</Text></Box>;
     $[67] = dimColor;
     $[68] = imagePasteShortcut;
     $[69] = t38;
@@ -284,7 +284,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t39;
   if ($[70] !== dimColor || $[71] !== modelPickerShortcut) {
-    t39 = <Box><Text dimColor={dimColor}>{modelPickerShortcut} to switch model</Text></Box>;
+    t39 = <Box><Text dimColor={dimColor}>{modelPickerShortcut} для зміни моделі</Text></Box>;
     $[70] = dimColor;
     $[71] = modelPickerShortcut;
     $[72] = t39;
@@ -293,7 +293,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t40;
   if ($[73] !== dimColor || $[74] !== fastModeShortcut) {
-    t40 = isFastModeEnabled() && isFastModeAvailable() && <Box><Text dimColor={dimColor}>{fastModeShortcut} to toggle fast mode</Text></Box>;
+    t40 = isFastModeEnabled() && isFastModeAvailable() && <Box><Text dimColor={dimColor}>{fastModeShortcut} для перемикання швидкого режиму</Text></Box>;
     $[73] = dimColor;
     $[74] = fastModeShortcut;
     $[75] = t40;
@@ -302,7 +302,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t41;
   if ($[76] !== dimColor || $[77] !== stashShortcut) {
-    t41 = <Box><Text dimColor={dimColor}>{stashShortcut} to stash prompt</Text></Box>;
+    t41 = <Box><Text dimColor={dimColor}>{stashShortcut} для зберігання запиту</Text></Box>;
     $[76] = dimColor;
     $[77] = stashShortcut;
     $[78] = t41;
@@ -311,7 +311,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t42;
   if ($[79] !== dimColor || $[80] !== externalEditorShortcut) {
-    t42 = <Box><Text dimColor={dimColor}>{externalEditorShortcut} to edit in $EDITOR</Text></Box>;
+    t42 = <Box><Text dimColor={dimColor}>{externalEditorShortcut} для редагування в $EDITOR</Text></Box>;
     $[79] = dimColor;
     $[80] = externalEditorShortcut;
     $[81] = t42;
@@ -320,7 +320,7 @@ export function PromptInputHelpMenu(props) {
   }
   let t43;
   if ($[82] !== dimColor) {
-    t43 = isKeybindingCustomizationEnabled() && <Box><Text dimColor={dimColor}>/keybindings to customize</Text></Box>;
+    t43 = isKeybindingCustomizationEnabled() && <Box><Text dimColor={dimColor}>/keybindings для налаштування</Text></Box>;
     $[82] = dimColor;
     $[83] = t43;
   } else {
