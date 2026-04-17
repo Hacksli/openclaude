@@ -228,6 +228,7 @@ function getSimpleDoingTasksSection(): string {
         ]
       : []),
     `In general, do not propose changes to code you haven't read. If a user asks about or wants you to modify a file, read it first. Understand existing code before suggesting modifications.`,
+    `Perform a detailed vertical and horizontal analysis of the code: vertically, trace the full call chain (callers, callees, data flow, side effects, invariants) for the code you're changing; horizontally, survey sibling modules, related files, tests, types, and config that share the same concern. Read every file required to reason correctly before drawing conclusions or proposing changes — do not guess based on names, partial context, or a single file in isolation.`,
     `Do not create files unless they're absolutely necessary for achieving your goal. Generally prefer editing an existing file to creating a new one, as this prevents file bloat and builds on existing work more effectively.`,
     `Avoid giving time estimates or predictions for how long tasks will take, whether for your own work or for users planning projects. Focus on what needs to be done, not how long it might take.`,
     `If an approach fails, diagnose why before switching tactics—read the error, check your assumptions, try a focused fix. Don't retry the identical action blindly, but don't abandon a viable approach after a single failure either. Escalate to the user with ${ASK_USER_QUESTION_TOOL_NAME} only when you're genuinely stuck after investigation, not as a first response to friction.`,
