@@ -78,6 +78,7 @@ const sortedSessions = computed(() =>
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .header {

@@ -234,6 +234,20 @@ async function main(): Promise<void> {
     hydrateGithubModelsTokenFromSecureStorage()
   }
 
+  // Initialize Gemini OAuth credentials (reads ~/.gemini/oauth_creds.json from Gemini CLI)
+  if (process.env.CLAUDE_CODE_USE_GEMINI_OAUTH === '1' || process.env.CLAUDE_CODE_USE_GEMINI_OAUTH === 'true') {
+    const { initGeminiOAuthIfNeeded } = await import('../utils/geminiOAuthCredentials.js')
+    const ok = await initGeminiOAuthIfNeeded(msg => process.stderr.write(msg + '\n'))
+    if (!ok) {
+      process.stderr.write(
+        '\nПомилка: не вдалося завантажити облікові дані Gemini CLI OAuth.\n' +
+        'Переконайтеся, що ви авторизовані в Gemini CLI: gemini auth login\n' +
+        'Потім знову запустіть openclaude.\n\n',
+      )
+      // Continue anyway — the first API call will fail with a clear error
+    }
+  }
+
   await validateProviderEnvOrExit()
 
   // Print the gradient startup screen before the Ink UI loads

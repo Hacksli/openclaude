@@ -270,6 +270,18 @@ export function applyFavoriteModelToProcessEnv(
     delete process.env.OPENAI_BASE_URL
     delete process.env.OPENAI_MODEL
     delete process.env.OPENAI_API_KEY
+  } else if (entry.providerName === 'gemini-oauth') {
+    // Gemini CLI OAuth — uses existing ~/.gemini/oauth_creds.json credentials
+    process.env.CLAUDE_CODE_USE_GEMINI_OAUTH = '1'
+    process.env.GEMINI_MODEL = entry.model
+    // Clear conflicting vars
+    delete process.env.CLAUDE_CODE_USE_OPENAI
+    delete process.env.OPENAI_BASE_URL
+    delete process.env.OPENAI_MODEL
+    delete process.env.OPENAI_API_KEY
+    delete process.env.ANTHROPIC_BASE_URL
+    delete process.env.ANTHROPIC_MODEL
+    delete process.env.ANTHROPIC_API_KEY
   } else {
     // All non-anthropic providers are OpenAI-compatible
     process.env.CLAUDE_CODE_USE_OPENAI = '1'
@@ -303,6 +315,7 @@ function clearProviderProfileEnvFromProcessEnv(): void {
   const varsToClear = [
     'CLAUDE_CODE_USE_OPENAI',
     'CLAUDE_CODE_USE_GEMINI',
+    'CLAUDE_CODE_USE_GEMINI_OAUTH',
     'CLAUDE_CODE_USE_MISTRAL',
     'CLAUDE_CODE_USE_GITHUB',
     'CLAUDE_CODE_USE_BEDROCK',
@@ -319,6 +332,7 @@ function clearProviderProfileEnvFromProcessEnv(): void {
     'MINIMAX_API_KEY',
     'NVIDIA_API_KEY',
     'GEMINI_API_KEY',
+    'GEMINI_MODEL',
     'MISTRAL_API_KEY',
     'CLAUDE_CODE_PROVIDER_PROFILE_ENV_APPLIED',
     'CLAUDE_CODE_PROVIDER_PROFILE_ENV_APPLIED_ID',

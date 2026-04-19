@@ -110,6 +110,7 @@ function fillCurrentOrigin() {
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 form {

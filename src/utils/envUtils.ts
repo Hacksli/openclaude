@@ -17,14 +17,14 @@ export function resolveConfigHomeDir(options?: {
   const homeDir = options?.homeDir ?? homedir()
   const nncDir = join(homeDir, '.nnc')
   const openClaudeDir = join(homeDir, '.openclaude')
-  const legacyClaudeDir = join(homeDir, '.nnc')
+  const legacyClaudeDir = join(homeDir, '.claude')
   const nncExists = options?.nncExists ?? existsSync(nncDir)
   const openClaudeExists =
     options?.openClaudeExists ?? existsSync(openClaudeDir)
   const legacyClaudeExists =
     options?.legacyClaudeExists ?? existsSync(legacyClaudeDir)
 
-  // Priority: explicit env > ~/.nnc (new default) > ~/.openclaude (legacy) > ~/.nnc (oldest legacy)
+  // Priority: explicit env > ~/.nnc (new default) > ~/.openclaude (legacy) > ~/.claude (oldest legacy)
   if (nncExists) {
     return nncDir.normalize('NFC')
   }
@@ -60,6 +60,23 @@ export const getClaudeConfigHomeDir = memoize(
 
 export function getTeamsDir(): string {
   return join(getClaudeConfigHomeDir(), 'teams')
+}
+
+/**
+ * Extra config roots to merge into read-only operations when --cloudeconf
+ * is active. Used by the /resume picker to surface sessions stored in the
+ * legacy ~/.claude tree alongside the primary ~/.nnc tree. Returns [] when
+ * the flag is off, the legacy dir doesn't exist, or it's the same as the
+ * primary (to avoid double-counting).
+ *
+ * Writes always go to the primary config home — this is read-only merge.
+ */
+export function getExtraReadConfigDirs(): string[] {
+  if (!isEnvTruthy(process.env.OPENCLAUDE_READ_CLAUDE_CONF)) return []
+  const claudeDir = join(homedir(), '.claude').normalize('NFC')
+  if (claudeDir === getClaudeConfigHomeDir()) return []
+  if (!existsSync(claudeDir)) return []
+  return [claudeDir]
 }
 
 /**

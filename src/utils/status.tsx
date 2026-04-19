@@ -250,8 +250,11 @@ export function buildAPIProviderProperties(): Property[] {
       openai: 'OpenAI-compatible',
       codex: 'Codex',
       gemini: 'Google Gemini',
+      'gemini-oauth': 'Google Gemini (CLI OAuth)',
       github: 'GitHub Models',
       mistral: 'Mistral',
+      'nvidia-nim': 'NVIDIA NIM',
+      minimax: 'MiniMax',
     }[apiProvider];
     properties.push({
       label: 'API provider',

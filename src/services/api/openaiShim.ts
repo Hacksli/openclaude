@@ -30,6 +30,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { resolveGeminiCredential } from '../../utils/geminiAuth.js'
 import { hydrateGeminiAccessTokenFromSecureStorage } from '../../utils/geminiCredentials.js'
+import { hydrateGeminiOAuthFromSecureStorage, refreshGeminiOAuthTokenIfNeeded } from '../../utils/geminiOAuthCredentials.js'
 import { hydrateGithubModelsTokenFromSecureStorage } from '../../utils/githubModelsCredentials.js'
 import {
   looksLikeLeakedReasoningPrefix,
@@ -300,6 +301,7 @@ function convertContentBlocks(
 function isGeminiMode(): boolean {
   return (
     isEnvTruthy(process.env.CLAUDE_CODE_USE_GEMINI) ||
+    isEnvTruthy(process.env.CLAUDE_CODE_USE_GEMINI_OAUTH) ||
     hasGeminiApiHost(process.env.OPENAI_BASE_URL)
   )
 }
@@ -1460,6 +1462,9 @@ class OpenAIShimMessages {
         headers.Authorization = `Bearer ${apiKey}`
       }
     } else if (isGemini) {
+      if (isEnvTruthy(process.env.CLAUDE_CODE_USE_GEMINI_OAUTH)) {
+        await refreshGeminiOAuthTokenIfNeeded()
+      }
       const geminiCredential = await resolveGeminiCredential(process.env)
       if (geminiCredential.kind !== 'none') {
         headers.Authorization = `Bearer ${geminiCredential.credential}`
@@ -1805,7 +1810,21 @@ export function createOpenAIShimClient(options: {
   providerOverride?: { model: string; baseURL: string; apiKey: string }
 }): unknown {
   hydrateGeminiAccessTokenFromSecureStorage()
+  hydrateGeminiOAuthFromSecureStorage()
   hydrateGithubModelsTokenFromSecureStorage()
+
+  // When Gemini OAuth provider is active, map to OpenAI-compatible Gemini endpoint.
+  // Credentials are already hydrated into GEMINI_ACCESS_TOKEN by initGeminiOAuthIfNeeded().
+  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_GEMINI_OAUTH)) {
+    process.env.OPENAI_BASE_URL ??=
+      process.env.GEMINI_BASE_URL ??
+      'https://generativelanguage.googleapis.com/v1beta/openai'
+    if (process.env.GEMINI_MODEL && !process.env.OPENAI_MODEL) {
+      process.env.OPENAI_MODEL = process.env.GEMINI_MODEL
+    }
+    // GEMINI_ACCESS_TOKEN is set by hydrateGeminiOAuthFromSecureStorage() above.
+    // resolveGeminiCredential() will pick it up in _doOpenAIRequest.
+  }
 
   // When Gemini provider is active, map Gemini env vars to OpenAI-compatible ones
   // so the existing providerConfig.ts infrastructure picks them up correctly.

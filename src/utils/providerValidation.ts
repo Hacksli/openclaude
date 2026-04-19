@@ -88,6 +88,18 @@ export async function getProviderValidationError(
   const useOpenAI = isEnvTruthy(env.CLAUDE_CODE_USE_OPENAI)
   const useGithub = isEnvTruthy(env.CLAUDE_CODE_USE_GITHUB)
 
+  if (isEnvTruthy(env.CLAUDE_CODE_USE_GEMINI_OAUTH)) {
+    // Token is set by initGeminiOAuthIfNeeded() in cli.tsx before this validation runs.
+    if (!env.GEMINI_ACCESS_TOKEN?.trim()) {
+      return (
+        'Gemini CLI OAuth: access token not found.\n' +
+        'Переконайтеся, що ви увійшли в Gemini CLI: gemini auth login\n' +
+        'Потім повторно запустіть openclaude з CLAUDE_CODE_USE_GEMINI_OAUTH=1.'
+      )
+    }
+    return null
+  }
+
   if (isEnvTruthy(env.CLAUDE_CODE_USE_GEMINI)) {
     const geminiCredential = await (
       options?.resolveGeminiCredential ?? resolveGeminiCredential

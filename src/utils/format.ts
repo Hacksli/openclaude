@@ -200,16 +200,24 @@ export function formatRelativeTimeAgo(
 /**
  * Formats log metadata for display (time, size or message count, branch, tag, PR)
  */
-export function formatLogMetadata(log: {
-  modified: Date
-  messageCount: number
-  fileSize?: number
-  gitBranch?: string
-  tag?: string
-  agentSetting?: string
-  prNumber?: number
-  prRepository?: string
-}): string {
+export function formatLogMetadata(
+  log: {
+    modified: Date
+    messageCount: number
+    fileSize?: number
+    gitBranch?: string
+    tag?: string
+    agentSetting?: string
+    prNumber?: number
+    prRepository?: string
+    model?: string
+    strategyMode?: boolean
+    firstPrompt?: string
+    middlePrompt?: string
+    lastPrompt?: string
+  },
+  opts?: { includePrompts?: boolean },
+): string {
   const sizeOrCount =
     log.fileSize !== undefined
       ? formatFileSize(log.fileSize)
@@ -219,6 +227,12 @@ export function formatLogMetadata(log: {
     ...(log.gitBranch ? [log.gitBranch] : []),
     sizeOrCount,
   ]
+  if (log.model) {
+    parts.push(formatModelForList(log.model))
+  }
+  if (log.strategyMode) {
+    parts.push('стратегія')
+  }
   if (log.tag) {
     parts.push(`#${log.tag}`)
   }
@@ -232,7 +246,54 @@ export function formatLogMetadata(log: {
         : `#${log.prNumber}`,
     )
   }
-  return parts.join(' · ')
+  const head = parts.join(' · ')
+  if (!opts?.includePrompts) return head
+  // Appends middle + last prompts as indented continuation lines so the
+  // /resume picker can show three points along the conversation. The label
+  // already carries firstPrompt; we only surface mid/last when they exist
+  // and differ, and trim to keep the list scannable.
+  const extraLines: string[] = []
+  const firstNorm = normalizePreview(log.firstPrompt)
+  const midNorm = normalizePreview(log.middlePrompt)
+  const lastNorm = normalizePreview(log.lastPrompt)
+  if (midNorm && midNorm !== firstNorm && midNorm !== lastNorm) {
+    extraLines.push(`  ≈ ${truncatePreview(midNorm)}`)
+  }
+  if (lastNorm && lastNorm !== firstNorm) {
+    extraLines.push(`  ↳ ${truncatePreview(lastNorm)}`)
+  }
+  return extraLines.length > 0 ? `${head}\n${extraLines.join('\n')}` : head
+}
+
+function normalizePreview(text: string | undefined): string {
+  if (!text) return ''
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function truncatePreview(text: string, max = 100): string {
+  if (text.length <= max) return text
+  return text.slice(0, max - 1).trimEnd() + '…'
+}
+
+/**
+ * Collapses long provider-qualified model ids (e.g. "claude-opus-4-7" or
+ * "google/gemini-2.5-pro") into something compact enough to fit on the
+ * metadata line of a /resume picker entry.
+ */
+function formatModelForList(model: string): string {
+  const m = model.trim()
+  // Strip provider prefix "openrouter/..." etc.
+  const afterSlash = m.includes('/') ? m.split('/').pop()! : m
+  // Most Anthropic ids follow claude-<family>-<major>-<minor>[-date]
+  const claudeMatch = afterSlash.match(
+    /^claude-(opus|sonnet|haiku)-(\d+)(?:-(\d+))?/i,
+  )
+  if (claudeMatch) {
+    const [, family, major, minor] = claudeMatch
+    const fam = family.charAt(0).toUpperCase() + family.slice(1).toLowerCase()
+    return minor ? `${fam} ${major}.${minor}` : `${fam} ${major}`
+  }
+  return afterSlash.length > 32 ? afterSlash.slice(0, 31) + '…' : afterSlash
 }
 
 export function formatResetTime(

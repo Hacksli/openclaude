@@ -324,7 +324,9 @@ const computedHasStatusClass = computed(() => (status: string) => {
 .diff-line {
   display: flex;
   padding: 0 10px;
-  white-space: pre;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 .diff-line.removed {
   background: rgba(122, 41, 54, 0.35); /* diffRemoved rgb(122,41,54) */

@@ -50,6 +50,10 @@ export type LogOption = {
   mode?: 'coordinator' | 'normal' // Session mode for coordinator/normal detection
   worktreeSession?: PersistedWorktreeSession | null // Worktree state at session end (null = exited, undefined = never entered)
   contentReplacements?: ContentReplacementRecord[] // Replacement decisions for resume reconstruction
+  model?: string // Last known model id/alias for this session (display-only)
+  strategyMode?: boolean // Whether --strategymode was active for this session
+  middlePrompt?: string // A user prompt sampled from mid-session for richer preview
+  lastPrompt?: string // Last user prompt of the session (distinct from firstPrompt)
 }
 
 export type SummaryMessage = {
@@ -138,6 +142,39 @@ export type ModeEntry = {
   type: 'mode'
   sessionId: UUID
   mode: 'coordinator' | 'normal'
+}
+
+/**
+ * Records the model used for a session so the /resume picker can show it
+ * alongside the first/last prompt. Last-wins: model switches mid-session
+ * overwrite earlier entries in the tail scan.
+ */
+export type ModelEntry = {
+  type: 'model'
+  sessionId: UUID
+  model: string
+}
+
+/**
+ * Records whether --strategymode was active when the session was started.
+ * Display-only in /resume — the current terminal's flag still controls
+ * whether strategy mode is on after resuming.
+ */
+export type StrategyModeEntry = {
+  type: 'strategy-mode'
+  sessionId: UUID
+  enabled: boolean
+}
+
+/**
+ * A periodic user-prompt sample taken from mid-session. Paired with the
+ * first prompt (head scan) and last prompt (tail entry) so /resume can
+ * show three points along the conversation for identification.
+ */
+export type MidPromptEntry = {
+  type: 'mid-prompt'
+  sessionId: UUID
+  midPrompt: string
 }
 
 /**
@@ -311,6 +348,9 @@ export type Entry =
   | QueueOperationMessage
   | SpeculationAcceptMessage
   | ModeEntry
+  | ModelEntry
+  | StrategyModeEntry
+  | MidPromptEntry
   | WorktreeStateEntry
   | ContentReplacementEntry
   | ContextCollapseCommitEntry

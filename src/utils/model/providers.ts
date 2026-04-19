@@ -9,6 +9,7 @@ export type APIProvider =
   | 'foundry'
   | 'openai'
   | 'gemini'
+  | 'gemini-oauth'
   | 'github'
   | 'codex'
   | 'nvidia-nim'
@@ -21,6 +22,9 @@ export function getAPIProvider(): APIProvider {
   }
   if (isEnvTruthy(process.env.MINIMAX_API_KEY)) {
     return 'minimax'
+  }
+  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_GEMINI_OAUTH)) {
+    return 'gemini-oauth'
   }
   return isEnvTruthy(process.env.CLAUDE_CODE_USE_GEMINI)
     ? 'gemini'

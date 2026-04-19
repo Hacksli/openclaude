@@ -15,6 +15,7 @@ export type ProviderPreset =
   | 'moonshotai'
   | 'deepseek'
   | 'gemini'
+  | 'gemini-oauth'
   | 'mistral'
   | 'together'
   | 'groq'
@@ -83,6 +84,14 @@ export function getProviderPresetDefaults(
           'https://generativelanguage.googleapis.com/v1beta/openai',
         model: 'gemini-3-flash-preview',
         requiresApiKey: true,
+      }
+    case 'gemini-oauth':
+      return {
+        providerName: 'gemini-oauth',
+        name: 'Google Gemini (Gemini CLI)',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        model: 'gemini-2.5-flash',
+        requiresApiKey: false,
       }
     case 'mistral':
       return {
@@ -186,6 +195,7 @@ export function clearProviderProfileEnvFromProcessEnv(processEnv?: NodeJS.Proces
   const varsToClear = [
     'CLAUDE_CODE_USE_OPENAI',
     'CLAUDE_CODE_USE_GEMINI',
+    'CLAUDE_CODE_USE_GEMINI_OAUTH',
     'CLAUDE_CODE_USE_MISTRAL',
     'CLAUDE_CODE_USE_GITHUB',
     'CLAUDE_CODE_USE_BEDROCK',
@@ -206,6 +216,7 @@ export function clearProviderProfileEnvFromProcessEnv(processEnv?: NodeJS.Proces
     'NVIDIA_API_KEY',
     'NVIDIA_NIM',
     'GEMINI_API_KEY',
+    'GEMINI_MODEL',
     'MISTRAL_API_KEY',
   ]
   for (const v of varsToClear) {

@@ -218,6 +218,7 @@ const ADD_PRESETS: ProviderPreset[] = [
   'openai',
   'ollama',
   'gemini',
+  'gemini-oauth',
   'mistral',
   'deepseek',
   'groq',
@@ -227,6 +228,20 @@ const ADD_PRESETS: ProviderPreset[] = [
   'moonshotai',
   'lmstudio',
   'custom',
+]
+
+const GEMINI_OAUTH_MODELS: WizardModel[] = [
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
+  { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite' },
+  { id: 'gemini-2.5-pro-preview-03-25', name: 'Gemini 2.5 Pro Preview (03-25)' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
+  { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -921,6 +936,8 @@ export function StartupFavoritesPicker({ onSelect, onCancel }: Props) {
     try {
       if (preset === 'anthropic') {
         setModels(ANTHROPIC_MODELS)
+      } else if (preset === 'gemini-oauth') {
+        setModels(GEMINI_OAUTH_MODELS)
       } else if (preset === 'openrouter') {
         // OpenRouter's /models endpoint is public and returns prompt/completion
         // pricing alongside each id — surface that in the picker.

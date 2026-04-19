@@ -69,7 +69,7 @@ import { updateSessionName } from './concurrentSessions.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getClaudeConfigHomeDir, getExtraReadConfigDirs, isEnvTruthy } from './envUtils.js'
 import { isFsInaccessible } from './errors.js'
 import type { FileHistorySnapshot } from './fileHistory.js'
 import { formatFileSize } from './format.js'
@@ -197,6 +197,16 @@ export function isEphemeralToolProgress(dataType: unknown): boolean {
 
 export function getProjectsDir(): string {
   return join(getClaudeConfigHomeDir(), 'projects')
+}
+
+/**
+ * Extra /projects roots to merge into read-only session listings when
+ * --cloudeconf is active. Returns [] otherwise. Writes always target the
+ * primary projects dir — this is strictly for surfacing legacy transcripts
+ * in /resume without migrating them.
+ */
+export function getExtraProjectsDirs(): string[] {
+  return getExtraReadConfigDirs().map(root => join(root, 'projects'))
 }
 
 export function getTranscriptPath(): string {
@@ -538,6 +548,15 @@ class Project {
   currentSessionLastPrompt: string | undefined
   currentSessionAgentSetting: string | undefined
   currentSessionMode: 'coordinator' | 'normal' | undefined
+  currentSessionModel: string | undefined
+  currentSessionStrategyMode: boolean | undefined
+  currentSessionMidPrompt: string | undefined
+  // Count of user prompts seen this session. Used to decide when to roll
+  // `currentSessionMidPrompt` forward so it stays near the middle of the
+  // conversation (doubling-checkpoint heuristic, see captureUserPromptForMeta).
+  currentSessionUserPromptCount: number = 0
+  // User-prompt count at which currentSessionMidPrompt was last written.
+  currentSessionMidPromptAt: number = 0
   // Tri-state: undefined = never touched (don't write), null = exited worktree,
   // object = currently in worktree. reAppendSessionMetadata writes null so
   // --resume knows the session exited (vs. crashed while inside).
@@ -815,6 +834,27 @@ class Project {
         sessionId,
       })
     }
+    if (this.currentSessionModel) {
+      appendEntryToFile(this.sessionFile, {
+        type: 'model',
+        model: this.currentSessionModel,
+        sessionId,
+      })
+    }
+    if (this.currentSessionStrategyMode !== undefined) {
+      appendEntryToFile(this.sessionFile, {
+        type: 'strategy-mode',
+        enabled: this.currentSessionStrategyMode,
+        sessionId,
+      })
+    }
+    if (this.currentSessionMidPrompt) {
+      appendEntryToFile(this.sessionFile, {
+        type: 'mid-prompt',
+        midPrompt: this.currentSessionMidPrompt,
+        sessionId,
+      })
+    }
     if (this.currentSessionWorktree !== undefined) {
       appendEntryToFile(this.sessionFile, {
         type: 'worktree-state',
@@ -1075,8 +1115,19 @@ class Project {
         const text = getFirstMeaningfulUserMessageTextContent(messages)
         if (text) {
           const flat = text.replace(/\n/g, ' ').trim()
-          this.currentSessionLastPrompt =
+          const truncated =
             flat.length > 200 ? flat.slice(0, 200).trim() + '…' : flat
+          this.currentSessionLastPrompt = truncated
+          this.currentSessionUserPromptCount++
+          // Roll the mid-prompt toward the middle on doubling checkpoints
+          // (count = 2, 4, 8, ...). After the session ends, the last stored
+          // mid-prompt sits at ~N/2 of the total prompts — good enough for
+          // a /resume preview without per-turn writes.
+          const n = this.currentSessionUserPromptCount
+          if (n >= 2 && n >= 2 * Math.max(1, this.currentSessionMidPromptAt)) {
+            this.currentSessionMidPrompt = truncated
+            this.currentSessionMidPromptAt = n
+          }
         }
       }
     })
@@ -1194,6 +1245,15 @@ class Project {
       void this.enqueueWrite(sessionFile, entry)
     } else if (entry.type === 'mode') {
       // Mode entries can always be appended
+      void this.enqueueWrite(sessionFile, entry)
+    } else if (entry.type === 'model') {
+      // Model entries can always be appended — last-wins for display
+      void this.enqueueWrite(sessionFile, entry)
+    } else if (entry.type === 'strategy-mode') {
+      // Strategy mode entries can always be appended — last-wins for display
+      void this.enqueueWrite(sessionFile, entry)
+    } else if (entry.type === 'mid-prompt') {
+      // Mid-prompt checkpoints can always be appended
       void this.enqueueWrite(sessionFile, entry)
     } else if (entry.type === 'worktree-state') {
       void this.enqueueWrite(sessionFile, entry)
@@ -2808,12 +2868,28 @@ async function trackSessionBranchingAnalytics(
 }
 
 export async function fetchLogs(limit?: number): Promise<LogOption[]> {
-  const projectDir = getProjectDir(getOriginalCwd())
-  const logs = await getSessionFilesLite(projectDir, limit, getOriginalCwd())
+  const cwd = getOriginalCwd()
+  const projectDir = getProjectDir(cwd)
+  const logs = await getSessionFilesLite(projectDir, limit, cwd)
 
-  await trackSessionBranchingAnalytics(logs)
+  // --cloudeconf: also pull lite logs for this project from legacy roots
+  // (e.g. ~/.claude/projects/<sanitized>). Merge + dedupe by sessionId so
+  // duplicate ids across roots collapse to the newest-mtime record.
+  const extraDirs = getExtraProjectsDirs()
+  if (extraDirs.length > 0) {
+    const sanitized = sanitizePath(cwd)
+    for (const extra of extraDirs) {
+      const extraProjectDir = join(extra, sanitized)
+      logs.push(...(await getSessionFilesLite(extraProjectDir, limit, cwd)))
+    }
+  }
 
-  return logs
+  const merged =
+    extraDirs.length > 0 ? deduplicateLogsBySessionId(logs) : logs
+
+  await trackSessionBranchingAnalytics(merged)
+
+  return merged
 }
 
 /**
@@ -3049,6 +3125,11 @@ export function clearSessionMetadata(): void {
   project.currentSessionLastPrompt = undefined
   project.currentSessionAgentSetting = undefined
   project.currentSessionMode = undefined
+  project.currentSessionModel = undefined
+  project.currentSessionStrategyMode = undefined
+  project.currentSessionMidPrompt = undefined
+  project.currentSessionUserPromptCount = 0
+  project.currentSessionMidPromptAt = 0
   project.currentSessionWorktree = undefined
   project.currentSessionPrNumber = undefined
   project.currentSessionPrUrl = undefined
@@ -3129,6 +3210,26 @@ export function cacheSessionTitle(customTitle: string): void {
  */
 export function saveMode(mode: 'coordinator' | 'normal'): void {
   getProject().currentSessionMode = mode
+}
+
+/**
+ * Cache the model used for this session so /resume can display it next to
+ * the first prompt. Cache-only: written to disk by materializeSessionFile
+ * on the first user message and re-stamped by reAppendSessionMetadata so
+ * model switches mid-session show up in the tail scan.
+ */
+export function saveModel(model: string | undefined): void {
+  getProject().currentSessionModel = model || undefined
+}
+
+/**
+ * Cache whether --strategymode was active when this session started so
+ * /resume can flag it. Cache-only; written on materialize + re-appended on
+ * exit. NOT restored on resume — the current terminal's --strategymode
+ * flag is authoritative, this is display-only.
+ */
+export function saveStrategyMode(enabled: boolean | undefined): void {
+  getProject().currentSessionStrategyMode = enabled
 }
 
 /**
@@ -3222,6 +3323,10 @@ export async function loadFullLog(log: LogOption): Promise<LogOption> {
       prUrls,
       prRepositories,
       modes,
+      models,
+      strategyModes,
+      midPrompts,
+      lastPrompts,
       worktreeStates,
       fileHistorySnapshots,
       attributionSnapshots,
@@ -3265,6 +3370,12 @@ export async function loadFullLog(log: LogOption): Promise<LogOption> {
       agentColor: sessionId ? agentColors.get(sessionId) : log.agentColor,
       agentSetting: sessionId ? agentSettings.get(sessionId) : log.agentSetting,
       mode: sessionId ? (modes.get(sessionId) as LogOption['mode']) : log.mode,
+      model: sessionId ? models.get(sessionId) : log.model,
+      strategyMode: sessionId
+        ? strategyModes.get(sessionId)
+        : log.strategyMode,
+      middlePrompt: sessionId ? midPrompts.get(sessionId) : log.middlePrompt,
+      lastPrompt: sessionId ? lastPrompts.get(sessionId) : log.lastPrompt,
       worktreeSession:
         sessionId && worktreeStates.has(sessionId)
           ? worktreeStates.get(sessionId)
@@ -3369,6 +3480,9 @@ const METADATA_TYPE_MARKERS = [
   '"type":"agent-color"',
   '"type":"agent-setting"',
   '"type":"mode"',
+  '"type":"model"',
+  '"type":"strategy-mode"',
+  '"type":"mid-prompt"',
   '"type":"worktree-state"',
   '"type":"pr-link"',
 ]
@@ -3735,6 +3849,10 @@ export async function loadTranscriptFile(
   prUrls: Map<UUID, string>
   prRepositories: Map<UUID, string>
   modes: Map<UUID, string>
+  models: Map<UUID, string>
+  strategyModes: Map<UUID, boolean>
+  midPrompts: Map<UUID, string>
+  lastPrompts: Map<UUID, string>
   worktreeStates: Map<UUID, PersistedWorktreeSession | null>
   fileHistorySnapshots: Map<UUID, FileHistorySnapshotMessage>
   attributionSnapshots: Map<UUID, AttributionSnapshotMessage>
@@ -3755,6 +3873,10 @@ export async function loadTranscriptFile(
   const prUrls = new Map<UUID, string>()
   const prRepositories = new Map<UUID, string>()
   const modes = new Map<UUID, string>()
+  const models = new Map<UUID, string>()
+  const strategyModes = new Map<UUID, boolean>()
+  const midPrompts = new Map<UUID, string>()
+  const lastPrompts = new Map<UUID, string>()
   const worktreeStates = new Map<UUID, PersistedWorktreeSession | null>()
   const fileHistorySnapshots = new Map<UUID, FileHistorySnapshotMessage>()
   const attributionSnapshots = new Map<UUID, AttributionSnapshotMessage>()
@@ -3856,6 +3978,14 @@ export async function loadTranscriptFile(
           agentSettings.set(entry.sessionId, entry.agentSetting)
         } else if (entry.type === 'mode' && entry.sessionId) {
           modes.set(entry.sessionId, entry.mode)
+        } else if (entry.type === 'model' && entry.sessionId) {
+          models.set(entry.sessionId, entry.model)
+        } else if (entry.type === 'strategy-mode' && entry.sessionId) {
+          strategyModes.set(entry.sessionId, entry.enabled)
+        } else if (entry.type === 'mid-prompt' && entry.sessionId) {
+          midPrompts.set(entry.sessionId, entry.midPrompt)
+        } else if (entry.type === 'last-prompt' && entry.sessionId) {
+          lastPrompts.set(entry.sessionId, entry.lastPrompt)
         } else if (entry.type === 'worktree-state' && entry.sessionId) {
           worktreeStates.set(entry.sessionId, entry.worktreeSession)
         } else if (entry.type === 'pr-link' && entry.sessionId) {
@@ -3920,6 +4050,14 @@ export async function loadTranscriptFile(
         agentSettings.set(entry.sessionId, entry.agentSetting)
       } else if (entry.type === 'mode' && entry.sessionId) {
         modes.set(entry.sessionId, entry.mode)
+      } else if (entry.type === 'model' && entry.sessionId) {
+        models.set(entry.sessionId, entry.model)
+      } else if (entry.type === 'strategy-mode' && entry.sessionId) {
+        strategyModes.set(entry.sessionId, entry.enabled)
+      } else if (entry.type === 'mid-prompt' && entry.sessionId) {
+        midPrompts.set(entry.sessionId, entry.midPrompt)
+      } else if (entry.type === 'last-prompt' && entry.sessionId) {
+        lastPrompts.set(entry.sessionId, entry.lastPrompt)
       } else if (entry.type === 'worktree-state' && entry.sessionId) {
         worktreeStates.set(entry.sessionId, entry.worktreeSession)
       } else if (entry.type === 'pr-link' && entry.sessionId) {
@@ -4057,6 +4195,10 @@ export async function loadTranscriptFile(
     prUrls,
     prRepositories,
     modes,
+    models,
+    strategyModes,
+    midPrompts,
+    lastPrompts,
     worktreeStates,
     fileHistorySnapshots,
     attributionSnapshots,
@@ -4235,17 +4377,20 @@ async function loadAllProjectsMessageLogsFull(
   limit?: number,
 ): Promise<LogOption[]> {
   const projectsDir = getProjectsDir()
+  const extraProjectsDirs = getExtraProjectsDirs()
 
-  let dirents: Dirent[]
-  try {
-    dirents = await readdir(projectsDir, { withFileTypes: true })
-  } catch {
-    return []
+  const projectDirs: string[] = []
+  for (const root of [projectsDir, ...extraProjectsDirs]) {
+    try {
+      const rootDirents = await readdir(root, { withFileTypes: true })
+      for (const dirent of rootDirents) {
+        if (dirent.isDirectory()) projectDirs.push(join(root, dirent.name))
+      }
+    } catch {
+      continue
+    }
   }
-
-  const projectDirs = dirents
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => join(projectsDir, dirent.name))
+  if (projectDirs.length === 0) return []
 
   const logsPerProject = await Promise.all(
     projectDirs.map(projectDir => getLogsWithoutIndex(projectDir, limit)),
@@ -4276,23 +4421,32 @@ export async function loadAllProjectsMessageLogsProgressive(
   initialEnrichCount: number = INITIAL_ENRICH_COUNT,
 ): Promise<SessionLogResult> {
   const projectsDir = getProjectsDir()
+  const extraProjectsDirs = getExtraProjectsDirs()
 
-  let dirents: Dirent[]
-  try {
-    dirents = await readdir(projectsDir, { withFileTypes: true })
-  } catch {
+  const rootsToScan = [projectsDir, ...extraProjectsDirs]
+  const projectDirs: string[] = []
+  for (const root of rootsToScan) {
+    try {
+      const rootDirents = await readdir(root, { withFileTypes: true })
+      for (const dirent of rootDirents) {
+        if (dirent.isDirectory()) projectDirs.push(join(root, dirent.name))
+      }
+    } catch {
+      // Primary root failing is the original "no sessions yet" case; extras
+      // simply skipped. dedupe+sort below handles an empty projectDirs list.
+      continue
+    }
+  }
+  if (projectDirs.length === 0) {
     return { logs: [], allStatLogs: [], nextIndex: 0 }
   }
-
-  const projectDirs = dirents
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => join(projectsDir, dirent.name))
 
   const rawLogs: LogOption[] = []
   for (const projectDir of projectDirs) {
     rawLogs.push(...(await getSessionFilesLite(projectDir, limit)))
   }
-  // Deduplicate — same session can appear in multiple project dirs
+  // Deduplicate — same session can appear in multiple project dirs or
+  // across primary/extra roots (newest mtime wins).
   const sorted = deduplicateLogsBySessionId(rawLogs)
 
   const { logs, nextIndex } = await enrichLogs(sorted, 0, initialEnrichCount)
@@ -4371,11 +4525,23 @@ async function getStatOnlyLogsForWorktrees(
   limit?: number,
 ): Promise<LogOption[]> {
   const projectsDir = getProjectsDir()
+  const extraProjectsDirs = getExtraProjectsDirs()
 
   if (worktreePaths.length <= 1) {
     const cwd = getOriginalCwd()
     const projectDir = getProjectDir(cwd)
-    return getSessionFilesLite(projectDir, undefined, cwd)
+    const primary = await getSessionFilesLite(projectDir, undefined, cwd)
+    if (extraProjectsDirs.length === 0) return primary
+    // --cloudeconf: also surface legacy sessions for this cwd from extra
+    // config roots (read-only). Dedup by sessionId.
+    const sanitized = sanitizePath(cwd)
+    const extras: LogOption[] = []
+    for (const extra of extraProjectsDirs) {
+      extras.push(
+        ...(await getSessionFilesLite(join(extra, sanitized), undefined, cwd)),
+      )
+    }
+    return deduplicateLogsBySessionId([...primary, ...extras])
   }
 
   // On Windows, drive letter case can differ between git worktree list
@@ -4411,28 +4577,45 @@ async function getStatOnlyLogsForWorktrees(
     return getSessionFilesLite(projectDir, limit, getOriginalCwd())
   }
 
-  for (const dirent of allDirents) {
-    if (!dirent.isDirectory()) continue
-    const dirName = caseInsensitive ? dirent.name.toLowerCase() : dirent.name
-    if (seenDirs.has(dirName)) continue
+  // Scan the primary projects dir and any --cloudeconf extras. seenDirs is
+  // per-root so each root's worktree-matching dirs get visited exactly once,
+  // and the final dedup collapses cross-root duplicates by sessionId.
+  const rootsToScan = [projectsDir, ...extraProjectsDirs]
+  for (const root of rootsToScan) {
+    let rootDirents: Dirent[]
+    try {
+      rootDirents =
+        root === projectsDir
+          ? allDirents
+          : await readdir(root, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    const rootSeenDirs = root === projectsDir ? seenDirs : new Set<string>()
+    for (const dirent of rootDirents) {
+      if (!dirent.isDirectory()) continue
+      const dirName = caseInsensitive ? dirent.name.toLowerCase() : dirent.name
+      if (rootSeenDirs.has(dirName)) continue
 
-    for (const { path: wtPath, prefix } of indexed) {
-      if (dirName === prefix || dirName.startsWith(prefix + '-')) {
-        seenDirs.add(dirName)
-        allLogs.push(
-          ...(await getSessionFilesLite(
-            join(projectsDir, dirent.name),
-            undefined,
-            wtPath,
-          )),
-        )
-        break
+      for (const { path: wtPath, prefix } of indexed) {
+        if (dirName === prefix || dirName.startsWith(prefix + '-')) {
+          rootSeenDirs.add(dirName)
+          allLogs.push(
+            ...(await getSessionFilesLite(
+              join(root, dirent.name),
+              undefined,
+              wtPath,
+            )),
+          )
+          break
+        }
       }
     }
   }
 
   // Deduplicate by sessionId — the same session can appear in multiple
-  // worktree project dirs. Keep the entry with the newest modified time.
+  // worktree project dirs or across primary/extra roots. Keep the entry
+  // with the newest modified time.
   return deduplicateLogsBySessionId(allLogs)
 }
 
@@ -4845,6 +5028,10 @@ type LiteMetadata = {
   prNumber?: number
   prUrl?: string
   prRepository?: string
+  model?: string
+  strategyMode?: boolean
+  middlePrompt?: string
+  lastPrompt?: string
 }
 
 /**
@@ -4867,6 +5054,10 @@ export async function loadAllLogsFromSessionFile(
     prUrls,
     prRepositories,
     modes,
+    models,
+    strategyModes,
+    midPrompts,
+    lastPrompts,
     fileHistorySnapshots,
     attributionSnapshots,
     contentReplacements,
@@ -4929,6 +5120,10 @@ export async function loadAllLogsFromSessionFile(
       agentColor: agentColors.get(sessionId),
       agentSetting: agentSettings.get(sessionId),
       mode: modes.get(sessionId) as LogOption['mode'],
+      model: models.get(sessionId),
+      strategyMode: strategyModes.get(sessionId),
+      middlePrompt: midPrompts.get(sessionId),
+      lastPrompt: lastPrompts.get(sessionId),
       prNumber: prNumbers.get(sessionId),
       prUrl: prUrls.get(sessionId),
       prRepository: prRepositories.get(sessionId),
@@ -5052,6 +5247,22 @@ async function readLiteMetadata(
     }
   }
 
+  const model = extractLastJsonStringField(tail, 'model')
+  const middlePrompt = extractLastJsonStringField(tail, 'midPrompt')
+  const lastPrompt = extractLastJsonStringField(tail, 'lastPrompt')
+  // strategy-mode is a boolean; extractLastJsonStringField only handles
+  // strings, so look for the raw JSON `"enabled":true|false` within a
+  // strategy-mode line. Fall back via tail.lastIndexOf to catch whichever
+  // value comes last.
+  let strategyMode: boolean | undefined
+  const smLineIdx = tail.lastIndexOf('"type":"strategy-mode"')
+  if (smLineIdx >= 0) {
+    const lineEnd = tail.indexOf('\n', smLineIdx)
+    const smLine = tail.slice(smLineIdx, lineEnd === -1 ? undefined : lineEnd)
+    if (smLine.includes('"enabled":true')) strategyMode = true
+    else if (smLine.includes('"enabled":false')) strategyMode = false
+  }
+
   return {
     firstPrompt,
     gitBranch,
@@ -5065,6 +5276,10 @@ async function readLiteMetadata(
     prNumber,
     prUrl,
     prRepository,
+    model,
+    strategyMode,
+    middlePrompt,
+    lastPrompt,
   }
 }
 
@@ -5299,6 +5514,10 @@ async function enrichLog(
     prUrl: meta.prUrl,
     prRepository: meta.prRepository,
     projectPath: meta.projectPath ?? log.projectPath,
+    model: meta.model,
+    strategyMode: meta.strategyMode,
+    middlePrompt: meta.middlePrompt,
+    lastPrompt: meta.lastPrompt,
   }
 
   // Provide a fallback title for sessions where we couldn't extract the first

@@ -81,8 +81,16 @@ function detectProvider(): { name: string; model: string; baseUrl: string; isLoc
   const useOpenAI = process.env.CLAUDE_CODE_USE_OPENAI === '1' || process.env.CLAUDE_CODE_USE_OPENAI === 'true'
   const useMistral = process.env.CLAUDE_CODE_USE_MISTRAL === '1' || process.env.CLAUDE_CODE_USE_MISTRAL === 'true'
 
+  const useGeminiOAuth = process.env.CLAUDE_CODE_USE_GEMINI_OAUTH === '1' || process.env.CLAUDE_CODE_USE_GEMINI_OAUTH === 'true'
+
+  if (useGeminiOAuth) {
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    const baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai'
+    return { name: 'Google Gemini (OAuth)', model, baseUrl, isLocal: false }
+  }
+
   if (useGemini) {
-    const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
     const baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai'
     return { name: 'Google Gemini', model, baseUrl, isLocal: false }
   }
@@ -250,6 +258,22 @@ export function printStartupScreen(): void {
       ;[r, l] = lbl('Ціна', priceLine)
       out.push(boxRow(r, W, l))
     }
+  }
+
+  const strategyModeFlagPresent =
+    process.env.OPENCLAUDE_STRATEGY_MODE === '1' ||
+    process.argv.includes('--strategymode')
+  if (strategyModeFlagPresent) {
+    ;[r, l] = lbl('\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u044f', '\u0430\u043a\u0442\u0438\u0432\u043d\u0430', [200, 255, 100])
+    out.push(boxRow(r, W, l))
+  }
+
+  const cloudeconfFlagPresent =
+    process.env.OPENCLAUDE_READ_CLAUDE_CONF === '1' ||
+    process.argv.includes('--cloudeconf')
+  if (cloudeconfFlagPresent) {
+    ;[r, l] = lbl('.claude', '\u0447\u0438\u0442\u0430\u043d\u043d\u044f \u0443\u0432\u0456\u043c\u043a\u043d\u0435\u043d\u043e', [200, 255, 100])
+    out.push(boxRow(r, W, l))
   }
 
   // Current working directory (truncated from the left if too long)

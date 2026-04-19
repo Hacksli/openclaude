@@ -65,6 +65,7 @@ const label = computed(() => {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
+  padding-top: max(8px, env(safe-area-inset-top));
   /* Safe-area on the inner bar in case the root app's insets are 0 but the
      device still notches the left/right edge (e.g. landscape iOS). */
   padding-left: max(12px, env(safe-area-inset-left));

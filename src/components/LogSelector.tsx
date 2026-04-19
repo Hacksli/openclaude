@@ -136,9 +136,15 @@ function buildLogMetadata(log: LogOption, options?: {
   } = options || {};
   // Match the child prefix width for proper alignment
   const childPadding = isChild ? '    ' : ''; // 4 spaces to match '  ▸ '
-  const baseMetadata = formatLogMetadata(log);
+  const baseMetadata = formatLogMetadata(log, { includePrompts: true });
+  // projectSuffix lands on the first line (the header), before any
+  // continuation prompt lines that formatLogMetadata may have appended.
+  const [headLine, ...rest] = baseMetadata.split('\n');
   const projectSuffix = showProjectPath && log.projectPath ? ` · ${log.projectPath}` : '';
-  return childPadding + baseMetadata + projectSuffix;
+  const combined = rest.length > 0
+    ? [headLine + projectSuffix, ...rest].join('\n')
+    : headLine + projectSuffix;
+  return childPadding + combined;
 }
 export function LogSelector(t0) {
   const $ = _c(247);
@@ -671,7 +677,7 @@ export function LogSelector(t0) {
           const rawSummary = getLogDisplayTitle(log_9);
           const summaryWithSidechain = rawSummary + (log_9.isSidechain ? " (sidechain)" : "");
           const summary = normalizeAndTruncateToWidth(summaryWithSidechain, maxLabelWidth);
-          const baseDescription = formatLogMetadata(log_9);
+          const baseDescription = formatLogMetadata(log_9, { includePrompts: true });
           const projectSuffix = showAllProjects && log_9.projectPath ? ` · ${log_9.projectPath}` : "";
           const snippet_1 = snippets.get(log_9);
           const snippetStr_0 = snippet_1 ? formatSnippet(snippet_1, highlightColor) : null;
