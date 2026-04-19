@@ -221,7 +221,7 @@ export function publishResolvedPermission(requestId: string): void {
   events.emit('permissionResolved', requestId)
 }
 
-export { tokenPreview, rotateLocalRemoteToken, reloadLocalRemote }
+export { tokenPreview, rotateLocalRemoteToken }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
