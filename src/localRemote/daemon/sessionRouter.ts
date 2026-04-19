@@ -223,6 +223,26 @@ export class SessionRouter {
 
       case 'ping':
         break
+
+      case 'shutdown':
+        // Handle shutdown request - send notification to all workers
+        logForDebugging(`[sessionRouter] shutdown request received from client, reason: ${event.reason || 'none'}`)
+        // Notify all workers that daemon is shutting down
+        for (const worker of this.workers.values()) {
+          try {
+            worker.send({ type: 'kick', code: 4000, reason: 'daemon shutdown requested' })
+          } catch {
+            // ignore
+          }
+        }
+        // Send acknowledgment to client
+        client.send({ type: 'error', message: 'Daemon shutting down...' })
+        // Schedule daemon shutdown after a short delay
+        setTimeout(() => {
+          logForDebugging('[sessionRouter] initiating daemon shutdown')
+          process.emit('SIGTERM', 'SIGTERM')
+        }, 500)
+        break
     }
   }
 

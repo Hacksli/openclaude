@@ -147,6 +147,22 @@ export function createWorkerConnection(
 
       case 'kick':
         logForDebugging(`[workerConnection] kicked: ${event.reason}`)
+        if (event.code === 4000) {
+          // Daemon is shutting down, gracefully disconnect
+          setTimeout(() => {
+            logForDebugging('[workerConnection] daemon requested shutdown, disconnecting...')
+            // Stop retrying and close connection
+            disposed = true
+            if (retryTimer) {
+              clearTimeout(retryTimer)
+              retryTimer = null
+            }
+            if (ws) {
+              try { ws.close(1000) } catch { /* noop */ }
+              ws = null
+            }
+          }, 100)
+        }
         break
     }
   }

@@ -162,6 +162,25 @@ export async function createLocalRemoteServer(
       return
     }
 
+    if (pathname === '/api/shutdown') {
+      const supplied = extractToken(req)
+      if (!supplied || !timingSafeEqual(supplied, opts.token)) {
+        res.statusCode = 401
+        res.setHeader('www-authenticate', 'Bearer')
+        res.end('Unauthorized')
+        return
+      }
+      res.statusCode = 200
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({ ok: true, message: 'Server shutting down' }))
+      // Schedule graceful shutdown after response is sent
+      setTimeout(() => {
+        console.log('Server received shutdown request via API')
+        process.exit(0)
+      }, 100)
+      return
+    }
+
     if (pathname === '/ws') {
       res.statusCode = 426
       res.setHeader('upgrade', 'websocket')

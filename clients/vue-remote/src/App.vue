@@ -94,6 +94,23 @@ function onDeny(requestId: string) {
   session.respondToPermission(requestId, 'deny')
 }
 
+async function handleShutdown() {
+  if (confirm('Завершити сесію та закрити демон? Це завершить роботу консольного клієнта.')) {
+    try {
+      const success = await session.shutdownDaemon('Вимкнено з веб-інтерфейсу')
+      if (success) {
+        alert('Демон отримав запит на завершення. Сесія буде закрита.')
+        // Переходимо назад до підключення
+        openSettings()
+      } else {
+        alert('Не вдалося надіслати запит на завершення. Спробуйте ще раз.')
+      }
+    } catch (err) {
+      alert(`Помилка: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+}
+
 const shortCwd = computed(() => {
   const cwd = sessionInfo.value?.cwd
   if (!cwd) return null
@@ -133,6 +150,7 @@ watch(selectedSessionId, () => {
       :session-cwd="screen === 'chat' ? shortCwd : null"
       :can-open-settings="screen !== 'connect'"
       @open-settings="openSettings"
+      @shutdown="handleShutdown"
     />
 
     <ConnectPanel

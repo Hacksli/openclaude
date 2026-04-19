@@ -93,6 +93,10 @@ export type ClientEvent =
       type: 'select_session'
       sessionId: string
     }
+  | {
+      type: 'shutdown'
+      reason?: string
+    }
 
 // ─── Worker → Daemon events ──────────────────────────────────────────
 export type WorkerToDaemonEvent =
@@ -151,6 +155,10 @@ export type DaemonToWorkerEvent =
       type: 'kick'
       code: number
       reason: string
+    }
+  | {
+      type: 'shutdown'
+      reason?: string
     }
 
 // ─── Session summary (for /api/sessions + sessions WS event) ────────

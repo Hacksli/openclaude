@@ -54,6 +54,8 @@ export interface RemoteSession {
     behavior: PermissionBehavior,
     message?: string,
   ) => boolean
+  /** Gracefully shutdown the daemon (requires authentication). */
+  shutdownDaemon: (reason?: string) => Promise<boolean>
 }
 
 export function useRemoteSession(): RemoteSession {
@@ -344,6 +346,39 @@ export function useRemoteSession(): RemoteSession {
     return ok
   }
 
+  async function shutdownDaemon(reason?: string): Promise<boolean> {
+    // Try to send WebSocket shutdown event first
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      const ok = send({ type: 'shutdown', reason })
+      if (ok) {
+        // Wait a bit for graceful shutdown
+        await new Promise(resolve => setTimeout(resolve, 100))
+        return true
+      }
+    }
+
+    // Fallback: try HTTP API endpoint
+    try {
+      const url = new URL(desiredUrl)
+      const shutdownUrl = `${url.protocol}//${url.host}/api/shutdown`
+      const response = await fetch(shutdownUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${desiredToken}`
+        }
+      })
+
+      if (response.ok) {
+        // Wait for graceful shutdown
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return true
+      }
+      return false
+    } catch {
+      return false
+    }
+  }
+
   return {
     connectionState,
     isLoading,
@@ -361,5 +396,6 @@ export function useRemoteSession(): RemoteSession {
     sendPrompt,
     selectSession,
     respondToPermission,
+    shutdownDaemon,
   }
 }

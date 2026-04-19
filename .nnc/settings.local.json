@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -c src/localRemote/index.ts)",
+      "Bash(node -c src/commands/remote.ts)",
+      "Bash(git add:*)"
+    ]
+  }
+}

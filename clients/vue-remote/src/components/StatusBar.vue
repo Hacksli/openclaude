@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   openSettings: []
+  shutdown: []
 }>()
 
 const dotClass = computed(() => {
@@ -54,6 +55,14 @@ const label = computed(() => {
       @click="emit('openSettings')"
     >
       ⚙
+    </button>
+    <button
+      v-if="canOpenSettings && connectionState === 'connected'"
+      class="shutdown"
+      aria-label="Shutdown"
+      @click="emit('shutdown')"
+    >
+      ⏻
     </button>
   </header>
 </template>
@@ -174,6 +183,28 @@ const label = computed(() => {
   background: var(--bg-chip);
 }
 .settings:active {
+  transform: scale(0.94);
+}
+
+.shutdown {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-size: 16px;
+  cursor: pointer;
+  min-width: 36px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.shutdown:hover {
+  color: var(--danger);
+  background: rgba(255, 107, 128, 0.08);
+}
+.shutdown:active {
   transform: scale(0.94);
 }
 </style>

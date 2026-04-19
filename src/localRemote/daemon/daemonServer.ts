@@ -145,6 +145,26 @@ export async function createDaemonServer(opts: {
       return
     }
 
+    // /api/shutdown — authenticated endpoint to gracefully stop the daemon
+    if (pathname === '/api/shutdown') {
+      const supplied = extractToken(req)
+      if (!supplied || !timingSafeEqual(supplied, opts.token)) {
+        res.statusCode = 401
+        res.setHeader('www-authenticate', 'Bearer')
+        res.end('Unauthorized')
+        return
+      }
+      res.statusCode = 200
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({ ok: true, message: 'Daemon shutting down' }))
+      // Schedule graceful shutdown after response is sent
+      setTimeout(() => {
+        console.log('Daemon received shutdown request via API')
+        process.emit('SIGTERM', 'SIGTERM')
+      }, 100)
+      return
+    }
+
     if (pathname === '/ws/worker' || pathname === '/ws/client') {
       res.statusCode = 426
       res.setHeader('upgrade', 'websocket')

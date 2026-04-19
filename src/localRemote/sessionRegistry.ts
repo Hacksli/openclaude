@@ -9,6 +9,7 @@
  */
 
 import type { PermissionBehavior } from './types.js'
+import * as events from './localRemoteEvents.js'
 
 export type PromptSubmitter = (text: string) => void
 
@@ -64,7 +65,11 @@ export function settlePermission(
   const settler = permissionSettlers.get(requestId)
   if (!settler) return false
   const ok = settler(requestId, behavior, message)
-  if (ok) permissionSettlers.delete(requestId)
+  if (ok) {
+    permissionSettlers.delete(requestId)
+    // Повідомляємо про успішне виконання
+    events.emit('permissionResolved', requestId)
+  }
   return ok
 }
 

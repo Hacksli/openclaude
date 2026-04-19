@@ -141,6 +141,7 @@ select {
   -webkit-user-select: text; /* Дозволити вибір тексту */
 }
 
+/* Optiomize touch interactions for mobile devices */
 @media (max-width: 768px) {
   input,
   textarea,

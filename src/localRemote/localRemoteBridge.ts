@@ -134,11 +134,26 @@ export function bindLocalRemoteBridge(
           event.message,
         )
         if (!ok) {
+          // Settler не знайдено - надсилаємо permission_clear, щоб клієнт розблокував UI
           server.send({ type: 'permission_clear', requestId: event.requestId })
         }
         return
       }
       case 'ping':
+        return
+      case 'shutdown':
+        // Handle graceful shutdown of the console session
+        console.log(`Received shutdown request from client: ${event.reason || 'no reason provided'}`)
+        // Send acknowledgement
+        server.send({
+          type: 'error',
+          message: 'Console session is shutting down...'
+        })
+        // Trigger graceful exit after a short delay
+        setTimeout(() => {
+          console.log('Shutting down console session...')
+          process.exit(0)
+        }, 500)
         return
       default:
         // Forward-compat: ignore unknown event types.
