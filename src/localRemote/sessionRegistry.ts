@@ -43,6 +43,16 @@ export function registerPermissionSettler(
 }
 
 /**
+ * Явне зняття settler-а знадвору — потрібне, коли локальний TUI/hook
+ * розв'язав запит самостійно і settlePermission уже не буде викликано.
+ * Раніше settler зависав у мапі до наступного settlePermission — тепер
+ * його можна прибирати з місця React-cleanup (див. publishResolvedPermission).
+ */
+export function unregisterPermissionSettler(requestId: string): void {
+  permissionSettlers.delete(requestId)
+}
+
+/**
  * Called by the WebSocket handler when a client returns a permission decision.
  * Returns true if a settler was found and invoked.
  */

@@ -30,6 +30,12 @@ export interface RemoteSession {
   spinnerVerb: Ref<string | null>
   messages: Ref<WireMessage[]>
   pendingPermission: Ref<RemotePermissionRequest | null>
+  /**
+   * requestId, для якого зараз відправлено permission_response і ми
+   * чекаємо на підтвердження (permission_clear) або помилку.
+   * UI може використовувати його, щоб задизейблити кнопки під час очікування.
+   */
+  respondingRequestId: Ref<string | null>
   error: Ref<string | null>
   sessionInfo: Ref<SessionInfo | null>
   /** The URL the user entered, even if the socket is down. */
@@ -56,6 +62,11 @@ export function useRemoteSession(): RemoteSession {
   const spinnerVerb = ref<string | null>(null)
   const messages = shallowRef<WireMessage[]>([])
   const pendingPermission = ref<RemotePermissionRequest | null>(null)
+  // Стан "очікуємо відповіді сервера на permission_response": раніше діалог
+  // закривався оптимістично (як тільки ws.send не кинув), і якщо сервер
+  // тихо губив повідомлення — користувач цього не бачив. Тепер діалог
+  // лишається відкритим до повернення permission_clear або error.
+  const respondingRequestId = ref<string | null>(null)
   const error = ref<string | null>(null)
   const sessionInfo = ref<SessionInfo | null>(null)
   const currentUrl = ref('')
@@ -204,6 +215,11 @@ export function useRemoteSession(): RemoteSession {
         if (pendingPermission.value?.requestId === event.requestId) {
           pendingPermission.value = null
         }
+        // Скидаємо "очікування відповіді", якщо сервер підтвердив саме цей
+        // запит — тепер UI може дозволити нові дії.
+        if (respondingRequestId.value === event.requestId) {
+          respondingRequestId.value = null
+        }
         return
       case 'status':
         isLoading.value = event.isLoading
@@ -211,6 +227,12 @@ export function useRemoteSession(): RemoteSession {
         return
       case 'error':
         error.value = event.message ?? t.errors.server
+        // Якщо ми чекали на відповідь по permission_response і сервер
+        // повернув помилку — розблоковуємо UI, щоб користувач міг
+        // спробувати ще раз (напр., після реконекту).
+        if (respondingRequestId.value !== null) {
+          respondingRequestId.value = null
+        }
         return
       case 'sessions':
         sessions.value = event.sessions ?? []
@@ -220,6 +242,9 @@ export function useRemoteSession(): RemoteSession {
           selectedSessionId.value = ''
           messages.value = []
           pendingPermission.value = null
+          // Якщо ми чекали підтвердження для цієї сесії — скидаємо, UI
+          // повинен реагувати на зникнення сесії як на завершення.
+          respondingRequestId.value = null
           sessionInfo.value = null
           isLoading.value = false
         }
@@ -258,6 +283,9 @@ export function useRemoteSession(): RemoteSession {
     currentUrl.value = desiredUrl
     messages.value = []
     pendingPermission.value = null
+    // При повному переконекті вся сесія скидається — зокрема й очікування
+    // підтвердження на permission_response (воно не переживе зміну з'єднання).
+    respondingRequestId.value = null
     sessionInfo.value = null
     isLoading.value = false
     backoff = INITIAL_BACKOFF_MS
@@ -280,6 +308,9 @@ export function useRemoteSession(): RemoteSession {
     selectedSessionId.value = sessionId
     messages.value = []
     pendingPermission.value = null
+    // Перемикання сесії анулює попереднє очікування відповіді —
+    // новий server-snapshot перерендерить актуальний діалог, якщо є.
+    respondingRequestId.value = null
     sessionInfo.value = null
     isLoading.value = false
     send({ type: 'select_session', sessionId })
@@ -296,9 +327,19 @@ export function useRemoteSession(): RemoteSession {
     behavior: PermissionBehavior,
     message?: string,
   ): boolean {
+    // Раніше тут було "оптимістичне" закриття діалогу одразу після send:
+    //   if (ok) pendingPermission.value = null
+    // Це маскувало випадки, коли відповідь не доходила до worker-а
+    // (тихий дроп у sessionRouter або відсутній settler). Тепер діалог
+    // залишається видимим до приходу permission_clear/error від сервера,
+    // а ми лише фіксуємо "очікуємо підтвердження" у respondingRequestId.
+    respondingRequestId.value = requestId
     const ok = send({ type: 'permission_response', requestId, behavior, message })
-    if (ok && pendingPermission.value?.requestId === requestId) {
-      pendingPermission.value = null
+    if (!ok) {
+      // send провалився (сокет не OPEN) — миттєво знімаємо очікування,
+      // щоб кнопки знову були активні, і виставляємо явну помилку.
+      respondingRequestId.value = null
+      error.value = t.errors.connection
     }
     return ok
   }
@@ -309,6 +350,7 @@ export function useRemoteSession(): RemoteSession {
     spinnerVerb,
     messages,
     pendingPermission,
+    respondingRequestId,
     error,
     sessionInfo,
     currentUrl,

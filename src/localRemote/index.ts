@@ -25,6 +25,7 @@ import { getSpinnerVerbs } from '../constants/spinnerVerbs.js'
 import {
   registerPermissionSettler,
   setPromptSubmitter,
+  unregisterPermissionSettler,
   type PermissionSettler,
   type PromptSubmitter,
 } from './sessionRegistry.js'
@@ -165,8 +166,16 @@ export function publishPendingPermission(
   return req.requestId
 }
 
-/** Emit that a pending permission was resolved (locally or remotely). */
+/**
+ * Emit that a pending permission was resolved (locally or remotely).
+ *
+ * Зміна: додатково знімаємо settler із sessionRegistry. Без цього при
+ * локальному розв'язанні запиту settler залишався у глобальній мапі, і
+ * наступна (помилково пізня) відповідь із браузера могла спрацювати
+ * повторно — або ж settler просто "висів" до наступного settlePermission.
+ */
 export function publishResolvedPermission(requestId: string): void {
+  unregisterPermissionSettler(requestId)
   if (!workerConn) return
   events.emit('permissionResolved', requestId)
 }

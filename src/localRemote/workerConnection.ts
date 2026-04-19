@@ -122,9 +122,28 @@ export function createWorkerConnection(
         break
       }
 
-      case 'permission_response':
-        settlePermission(event.requestId, event.behavior, event.message)
+      case 'permission_response': {
+        // Зміна: раніше результат settlePermission ігнорувався — якщо
+        // settler уже знятий (локальне розв'язання або cleanup React), то
+        // браузер не отримував жодного сигналу. Тепер, якщо settler не
+        // знайдено, надсилаємо назад у daemon явну помилку, щоб клієнт
+        // міг розблокувати UI і показати причину.
+        const ok = settlePermission(
+          event.requestId,
+          event.behavior,
+          event.message,
+        )
+        if (!ok) {
+          logForDebugging(
+            `[workerConnection] permission_response without settler: requestId=${event.requestId}`,
+          )
+          send({
+            type: 'error',
+            message: `No pending permission for ${event.requestId}.`,
+          })
+        }
         break
+      }
 
       case 'kick':
         logForDebugging(`[workerConnection] kicked: ${event.reason}`)

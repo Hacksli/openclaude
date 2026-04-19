@@ -6,6 +6,7 @@
  */
 
 import type { Message } from '../../types/message.js'
+import { logForDebugging } from '../../utils/debug.js'
 import type {
   ClientEvent,
   DaemonToWorkerEvent,
@@ -163,8 +164,54 @@ export class SessionRouter {
       }
 
       case 'permission_response': {
-        const worker = this.workers.get(client.subscribedSession)
-        if (!worker) return
+        // Зміна: раніше при відсутності прив'язки клієнта до сесії відповідь
+        // на запит дозволу тихо відкидалась — і в терміналі нічого не
+        // відбувалось, хоча браузер показував "успіх". Тепер:
+        //   1) якщо прив'язки нема — пробуємо self-healing: знайти worker,
+        //      у якого цей requestId ще висить у pendingPermissions;
+        //   2) якщо worker не знайдено/неоднозначно — повертаємо клієнту
+        //      явну помилку, щоб UI міг розблокувати кнопки;
+        //   3) якщо worker знайдено, але requestId уже не в pending —
+        //      це нормальний race (локальний TUI/hook розв'язав першим),
+        //      тихо ігноруємо без error для клієнта.
+        let worker = this.workers.get(client.subscribedSession)
+        if (!worker) {
+          // Пошук за requestId серед усіх worker-ів. Ідентифікатори
+          // pending-запитів унікальні (toolUseID з Anthropic SDK), тож
+          // колізія між сесіями малоімовірна.
+          const candidates: WorkerEntry[] = []
+          for (const w of this.workers.values()) {
+            if (w.pendingPermissions.has(event.requestId)) candidates.push(w)
+          }
+          if (candidates.length === 1) {
+            worker = candidates[0]
+            // Перепідв'язуємо клієнта, щоб наступні події (prompt/
+            // permission_clear) йшли правильно.
+            client.subscribedSession = worker.sessionId
+            logForDebugging(
+              `[sessionRouter] permission_response self-healed: requestId=${event.requestId} → session=${worker.sessionId}`,
+            )
+          } else {
+            logForDebugging(
+              `[sessionRouter] permission_response dropped: no bound session and ${candidates.length} matching workers for requestId=${event.requestId}`,
+            )
+            client.send({
+              type: 'error',
+              message: `No active session for permission ${event.requestId}. Reconnect or select a session.`,
+            })
+            return
+          }
+        }
+
+        if (!worker.pendingPermissions.has(event.requestId)) {
+          // Локальний бік уже розв'язав запит — мовчазний no-op,
+          // щоб не показувати користувачу хибну помилку на нормальній гонці.
+          logForDebugging(
+            `[sessionRouter] permission_response ignored: requestId=${event.requestId} no longer pending on worker=${worker.sessionId}`,
+          )
+          return
+        }
+
         worker.send({
           type: 'permission_response',
           requestId: event.requestId,
