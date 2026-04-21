@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref, nextTick } from 'vue'
 import { t } from '../i18n'
 import type { RemotePermissionRequest } from '../types'
 
@@ -9,8 +9,42 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   allow: [requestId: string, message?: string]
-  deny: [requestId: string]
+  deny: [requestId: string, message?: string]
 }>()
+
+// ─── Вільний коментар / обговорення ──────────────────────────────────────────
+// У TUI користувач може натиснути Tab щоб додати вільний текст до Allow/Deny,
+// або взагалі "відкрити діалог" і відповісти повідомленням замість вибору
+// конкретної опції. Для веба робимо еквівалент: розгортається textarea,
+// де можна написати коментар. Натискаєш "Надіслати як обговорення" і це
+// піде як deny з message → модель отримує текст користувача і продовжує
+// розмову замість жорсткої відмови.
+
+const discussOpen = ref(false)
+const discussText = ref('')
+const discussRef = ref<HTMLTextAreaElement | null>(null)
+
+async function openDiscuss() {
+  discussOpen.value = true
+  await nextTick()
+  discussRef.value?.focus()
+}
+
+function sendDiscuss() {
+  const msg = discussText.value.trim()
+  if (!msg) return
+  emit('deny', props.request.requestId, msg)
+  discussText.value = ''
+  discussOpen.value = false
+}
+
+function cancelDiscuss() {
+  discussOpen.value = false
+  discussText.value = ''
+}
+
+// Прапор: чи є коментар, яким варто збагатити Allow/Deny
+const discussTrimmed = computed(() => discussText.value.trim())
 
 // ─── AskUserQuestion detection ──────────────────────────────────────────────
 
@@ -24,34 +58,97 @@ const askQuestions = computed<Question[] | null>(() => {
   return inp.questions
 })
 
-// answers: question text → selected label(s)
-const answers = reactive<Record<string, string | string[]>>({})
-
-function isSelected(question: Question, label: string): boolean {
-  if (question.multiSelect) {
-    const cur = answers[question.question]
-    return Array.isArray(cur) ? cur.includes(label) : false
-  }
-  return answers[question.question] === label
+// Стан відповіді по кожному питанню. selected = обрані labels (для multi
+// їх може бути кілька; для single — рівно одна). customText — текст
+// опції "Інше"; якщо otherSelected=true і customText непорожній, він
+// включається в фінальну відповідь. Патерн повторює логіку TUI-варіанта
+// QuestionView + __other__ input.
+type AnswerState = {
+  selected: string[]
+  customText: string
+  otherSelected: boolean
 }
 
-function toggleOption(question: Question, label: string) {
-  if (question.multiSelect) {
-    const cur = (answers[question.question] as string[] | undefined) ?? []
-    const idx = cur.indexOf(label)
-    answers[question.question] = idx >= 0 ? cur.filter(l => l !== label) : [...cur, label]
+const answers = reactive<Record<string, AnswerState>>({})
+const currentIdx = ref(0)
+
+function getAnswer(q: Question): AnswerState {
+  const cur = answers[q.question]
+  if (cur) return cur
+  const fresh: AnswerState = { selected: [], customText: '', otherSelected: false }
+  answers[q.question] = fresh
+  return fresh
+}
+
+function isSelected(q: Question, label: string): boolean {
+  return getAnswer(q).selected.includes(label)
+}
+
+function toggleOption(q: Question, label: string) {
+  const a = getAnswer(q)
+  if (q.multiSelect) {
+    const idx = a.selected.indexOf(label)
+    if (idx >= 0) a.selected = a.selected.filter(l => l !== label)
+    else a.selected = [...a.selected, label]
   } else {
-    answers[question.question] = label
+    // single-select: обрання стандартної опції знімає "Інше"
+    a.selected = [label]
+    a.otherSelected = false
   }
+}
+
+function toggleOther(q: Question) {
+  const a = getAnswer(q)
+  if (q.multiSelect) {
+    a.otherSelected = !a.otherSelected
+  } else {
+    // single-select: "Інше" скасовує вибір інших опцій
+    a.otherSelected = true
+    a.selected = []
+  }
+}
+
+function isAnswered(q: Question): boolean {
+  const a = getAnswer(q)
+  if (a.selected.length > 0) return true
+  if (a.otherSelected && a.customText.trim().length > 0) return true
+  return false
+}
+
+const currentQuestion = computed<Question | null>(() => {
+  const qs = askQuestions.value
+  if (!qs) return null
+  return qs[currentIdx.value] ?? null
+})
+
+const totalQuestions = computed(() => askQuestions.value?.length ?? 0)
+const isFirstQuestion = computed(() => currentIdx.value === 0)
+const isLastQuestion = computed(() => currentIdx.value === totalQuestions.value - 1)
+const canAdvance = computed(() => {
+  const q = currentQuestion.value
+  return q ? isAnswered(q) : false
+})
+
+function goPrev() {
+  if (currentIdx.value > 0) currentIdx.value--
+}
+function goNext() {
+  if (!canAdvance.value) return
+  if (currentIdx.value < totalQuestions.value - 1) currentIdx.value++
+}
+
+function serializeAnswer(state: AnswerState): string {
+  const parts = [...state.selected]
+  if (state.otherSelected && state.customText.trim()) {
+    parts.push(state.customText.trim())
+  }
+  return parts.join(', ')
 }
 
 const allAnswered = computed(() => {
   const qs = askQuestions.value
   if (!qs) return false
-  return qs.every(q => {
-    const a = answers[q.question]
-    return Array.isArray(a) ? a.length > 0 : !!a
-  })
+  return qs.every(q => isAnswered(q))
 })
 
 function submitAnswers() {
@@ -59,10 +156,19 @@ function submitAnswers() {
   if (!qs) return
   const flat: Record<string, string> = {}
   for (const q of qs) {
-    const a = answers[q.question]
-    flat[q.question] = Array.isArray(a) ? a.join(', ') : (a ?? '')
+    flat[q.question] = serializeAnswer(getAnswer(q))
   }
   emit('allow', props.request.requestId, JSON.stringify({ answers: flat }))
+}
+
+function onAllowClick() {
+  // Якщо користувач написав коментар — передаємо як feedback разом з allow.
+  // Не застосовно до AskUserQuestion (там allow несе JSON-answers).
+  emit('allow', props.request.requestId, discussTrimmed.value || undefined)
+}
+
+function onDenyClick() {
+  emit('deny', props.request.requestId, discussTrimmed.value || undefined)
 }
 
 // ─── Generic permission (non-AskUserQuestion) ────────────────────────────────
@@ -77,37 +183,136 @@ const inputText = computed(() => {
 </script>
 
 <template>
-  <!-- ── AskUserQuestion: interactive multi-choice UI ─────────────────────── -->
-  <div v-if="askQuestions" class="banner ask" role="dialog">
+  <!-- ── AskUserQuestion: step-by-step multi-choice UI ─────────────────────── -->
+  <div v-if="askQuestions && currentQuestion" class="banner ask" role="dialog">
     <div class="header">
       <span class="tool">{{ request.toolName }}</span>
+      <span v-if="totalQuestions > 1" class="step-indicator">
+        {{ currentIdx + 1 }} / {{ totalQuestions }}
+      </span>
     </div>
 
-    <div v-for="q in askQuestions" :key="q.question" class="question-block">
-      <div class="question-text">{{ q.question }}</div>
+    <!-- Крапки-прогрес (клікабельні — дозволяють стрибати між уже відкритими питаннями) -->
+    <div v-if="totalQuestions > 1" class="steps">
+      <button
+        v-for="(q, i) in askQuestions"
+        :key="q.question"
+        type="button"
+        class="step-dot"
+        :class="{ active: i === currentIdx, done: isAnswered(q) }"
+        :aria-label="`Питання ${i + 1}`"
+        @click="currentIdx = i"
+      />
+    </div>
+
+    <div class="question-block">
+      <div class="question-text">{{ currentQuestion.question }}</div>
       <div class="options">
         <button
-          v-for="opt in q.options"
+          v-for="opt in currentQuestion.options"
           :key="opt.label"
           type="button"
           class="option"
-          :class="{ selected: isSelected(q, opt.label) }"
-          @click="toggleOption(q, opt.label)"
+          :class="{ selected: isSelected(currentQuestion, opt.label) }"
+          @click="toggleOption(currentQuestion, opt.label)"
         >
-          <span class="option-marker">{{ isSelected(q, opt.label) ? (q.multiSelect ? '☑' : '◉') : (q.multiSelect ? '☐' : '○') }}</span>
+          <span class="option-marker">{{
+            isSelected(currentQuestion, opt.label)
+              ? (currentQuestion.multiSelect ? '☑' : '◉')
+              : (currentQuestion.multiSelect ? '☐' : '○')
+          }}</span>
           <span class="option-content">
             <span class="option-label">{{ opt.label }}</span>
             <span v-if="opt.description" class="option-desc">{{ opt.description }}</span>
           </span>
         </button>
+
+        <!-- Auto-added "Other" (free text) — еквівалент TUI __other__. -->
+        <div class="option other" :class="{ selected: getAnswer(currentQuestion).otherSelected }">
+          <button
+            type="button"
+            class="option-head"
+            @click="toggleOther(currentQuestion)"
+          >
+            <span class="option-marker">{{
+              getAnswer(currentQuestion).otherSelected
+                ? (currentQuestion.multiSelect ? '☑' : '◉')
+                : (currentQuestion.multiSelect ? '☐' : '○')
+            }}</span>
+            <span class="option-content">
+              <span class="option-label">Інше</span>
+              <span class="option-desc">Напишіть свій варіант відповіді</span>
+            </span>
+          </button>
+          <textarea
+            v-if="getAnswer(currentQuestion).otherSelected"
+            v-model="getAnswer(currentQuestion).customText"
+            class="other-input"
+            rows="2"
+            placeholder="Ваш варіант…"
+          />
+        </div>
       </div>
     </div>
 
+    <!-- Обговорення: текст, що надсилається як deny+feedback (fallback
+         для випадків, коли жодна опція не підходить і хочеться просто
+         написати моделі). -->
+    <div v-if="discussOpen" class="discuss">
+      <textarea
+        ref="discussRef"
+        v-model="discussText"
+        class="discuss-input"
+        rows="3"
+        placeholder="Напишіть повідомлення замість вибору опції…"
+        @keydown.ctrl.enter.prevent="sendDiscuss"
+        @keydown.meta.enter.prevent="sendDiscuss"
+      />
+      <div class="discuss-actions">
+        <button type="button" class="link" @click="cancelDiscuss">
+          Скасувати
+        </button>
+        <button
+          type="button"
+          class="discuss-send"
+          :disabled="!discussTrimmed"
+          @click="sendDiscuss"
+        >
+          Надіслати
+        </button>
+      </div>
+    </div>
+
+    <!-- Навігація між питаннями + фінальні дії -->
     <div class="actions">
-      <button type="button" class="deny" @click="emit('deny', request.requestId)">
-        {{ t.permission.deny }}
+      <button
+        v-if="!discussOpen"
+        type="button"
+        class="discuss-toggle"
+        @click="openDiscuss"
+        title="Написати повідомлення замість вибору"
+      >
+        💬 Обговорити
       </button>
       <button
+        type="button"
+        class="nav-btn"
+        :disabled="isFirstQuestion"
+        @click="goPrev"
+      >
+        ← Назад
+      </button>
+      <button
+        v-if="!isLastQuestion"
+        type="button"
+        class="nav-btn primary"
+        :disabled="!canAdvance"
+        @click="goNext"
+      >
+        Далі →
+      </button>
+      <button
+        v-else
         type="button"
         class="allow"
         :disabled="!allAnswered"
@@ -128,18 +333,56 @@ const inputText = computed(() => {
       {{ request.description }}
     </div>
     <pre v-if="inputText" class="input">{{ inputText }}</pre>
+
+    <!-- Обговорення: текст, що надсилається як feedback разом з allow/deny
+         або як самостійне "deny with feedback" повідомлення (кнопка
+         "Надіслати") — еквівалент TUI-шляху Tab → коментар. -->
+    <div v-if="discussOpen" class="discuss">
+      <textarea
+        ref="discussRef"
+        v-model="discussText"
+        class="discuss-input"
+        rows="3"
+        placeholder="Ваш коментар — додасться до Allow/Deny або буде надісланий як обговорення…"
+        @keydown.ctrl.enter.prevent="sendDiscuss"
+        @keydown.meta.enter.prevent="sendDiscuss"
+      />
+      <div class="discuss-actions">
+        <button type="button" class="link" @click="cancelDiscuss">
+          Скасувати
+        </button>
+        <button
+          type="button"
+          class="discuss-send"
+          :disabled="!discussTrimmed"
+          @click="sendDiscuss"
+        >
+          Надіслати як обговорення
+        </button>
+      </div>
+    </div>
+
     <div class="actions">
+      <button
+        v-if="!discussOpen"
+        type="button"
+        class="discuss-toggle"
+        @click="openDiscuss"
+        title="Додати коментар"
+      >
+        💬 Обговорити
+      </button>
       <button
         type="button"
         class="deny"
-        @click="emit('deny', request.requestId)"
+        @click="onDenyClick"
       >
         {{ t.permission.deny }}
       </button>
       <button
         type="button"
         class="allow"
-        @click="emit('allow', request.requestId)"
+        @click="onAllowClick"
       >
         {{ t.permission.allow }}
       </button>
@@ -314,6 +557,118 @@ const inputText = computed(() => {
   color: var(--accent-dim);
 }
 
+/* "Інше" — контейнер з кнопкою-головою + textarea усередині */
+.option.other {
+  padding: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+.option.other .option-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.other-input {
+  margin: 0 12px 10px;
+  padding: 6px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 44px;
+  max-height: 140px;
+  outline: none;
+  box-sizing: border-box;
+  width: calc(100% - 24px);
+  transition: border-color 0.15s;
+}
+.other-input:focus {
+  border-color: var(--accent-dim);
+}
+
+/* Step-indicator та крапки прогресу */
+.step-indicator {
+  margin-left: auto;
+  color: var(--fg-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.steps {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-left: 2px;
+}
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  min-height: auto;
+  min-width: auto;
+  flex: 0 0 auto;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.step-dot:hover {
+  border-color: var(--accent-dim);
+}
+.step-dot.done {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
+}
+.step-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.3);
+}
+
+/* Навігаційні кнопки "Назад / Далі" */
+.nav-btn {
+  color: var(--fg-muted);
+  border: 1px solid var(--border-strong);
+  padding: 8px 18px;
+  min-height: 44px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+.nav-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: transparent;
+}
+.nav-btn.primary {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+.nav-btn.primary:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.1);
+  border-color: var(--accent);
+}
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .option-content {
   display: flex;
   flex-direction: column;
@@ -385,5 +740,95 @@ button {
 }
 .deny:active {
   transform: scale(0.985);
+}
+
+/* ─── Обговорення (вільний коментар) ─────────────────────────────────────── */
+
+.discuss {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.discuss-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 180px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.discuss-input:focus {
+  border-color: var(--accent-dim);
+}
+
+.discuss-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.discuss-send {
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  min-height: 40px;
+  padding: 6px 16px;
+  font-size: var(--font-size-sm);
+  flex: 0 0 auto;
+  min-width: auto;
+}
+.discuss-send:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.1);
+  border-color: var(--accent);
+}
+.discuss-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.discuss-toggle {
+  color: var(--fg-muted);
+  border: 1px solid var(--border-strong);
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  flex: 0 0 auto;
+  min-width: auto;
+  margin-right: auto;
+}
+.discuss-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: transparent;
+}
+
+.link {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: 6px 4px;
+  min-height: auto;
+  flex: 0 0 auto;
+  min-width: auto;
+}
+.link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  background: transparent;
 }
 </style>

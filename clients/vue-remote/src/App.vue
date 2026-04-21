@@ -66,6 +66,22 @@ function handleSelectSession(sessionId: string) {
   screen.value = 'chat'
 }
 
+function handleCloseSession(sessionId: string) {
+  if (confirm('Закрити цю сесію? Консольний процес буде завершено.')) {
+    const ok = session.closeSession(sessionId, 'Закрито з веб-інтерфейсу')
+    if (!ok) {
+      error.value = t.errors.connection
+    }
+  }
+}
+
+function handleCreateSession() {
+  const ok = session.createSession()
+  if (!ok) {
+    error.value = t.errors.connection
+  }
+}
+
 function backToSessions() {
   selectedSessionId.value = ''
   screen.value = 'sessions'
@@ -90,8 +106,11 @@ function removeFromQueue(index: number) {
 function onAllow(requestId: string, message?: string) {
   session.respondToPermission(requestId, 'allow', message)
 }
-function onDeny(requestId: string) {
-  session.respondToPermission(requestId, 'deny')
+function onDeny(requestId: string, message?: string) {
+  // message — опціональний коментар користувача ("обговорення"). Потрапляє
+  // у onReject(feedback) на worker-боці → модель бачить текст юзера як
+  // reason для cancelAndAbort і продовжує розмову, а не глухо завершує.
+  session.respondToPermission(requestId, 'deny', message)
 }
 
 async function handleShutdown() {
@@ -140,6 +159,22 @@ watch(isLoading, (loading, wasLoading) => {
 watch(selectedSessionId, () => {
   queue.value = []
 })
+
+// Navigate back to session list when the current session is closed
+// server-side. Додаткова умова `!selectedSessionId.value` — без неї
+// watcher помилково тригерився при кожному кліку по сесії (selectSession
+// раніше сам занулював sessionInfo). Тепер спрацьовує лише коли worker
+// дійсно зник з сервера (ServerEvent 'session_gone' у composable
+// чистить і sessionInfo, і selectedSessionId).
+watch(sessionInfo, (info, oldInfo) => {
+  if (
+    oldInfo && !info &&
+    screen.value === 'chat' &&
+    !selectedSessionId.value
+  ) {
+    screen.value = 'sessions'
+  }
+})
 </script>
 
 <template>
@@ -166,7 +201,11 @@ watch(selectedSessionId, () => {
       v-else-if="screen === 'sessions'"
       :sessions="sessions"
       :selected-id="selectedSessionId"
+      :can-close-sessions="true"
+      :can-create-session="true"
       @select="handleSelectSession"
+      @close="handleCloseSession"
+      @create="handleCreateSession"
       @back="openSettings"
     />
 
@@ -181,6 +220,7 @@ watch(selectedSessionId, () => {
       <Transition name="banner">
         <PermissionBanner
           v-if="pendingPermission"
+          :key="pendingPermission.requestId"
           :request="pendingPermission"
           @allow="onAllow"
           @deny="onDeny"

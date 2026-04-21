@@ -103,6 +103,77 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 try {
 
+// Build the Vue remote client (PWA served by the /remote daemon) and
+// stage it into src/localRemote/client/ so the main bundle picks up the
+// latest assets. This must run BEFORE the Bun.build() call below, because
+// the post-build copy step below reads from src/localRemote/client/.
+//
+// Skipped (with a warning) when clients/vue-remote/ is missing — e.g. in
+// shallow checkouts that vendor only dist/ artifacts. Install step runs
+// only when node_modules/ is absent, so subsequent builds stay fast.
+await buildAndStageVueClient()
+async function buildAndStageVueClient(): Promise<void> {
+  const fsMod = await import('fs')
+  const pathMod = await import('path')
+  const { spawnSync } = await import('child_process')
+  const repoRoot = pathMod.resolve(import.meta.dir, '..')
+  const vueRoot = pathMod.join(repoRoot, 'clients', 'vue-remote')
+  const vueDist = pathMod.join(vueRoot, 'dist')
+  const clientStage = pathMod.join(repoRoot, 'src', 'localRemote', 'client')
+
+  if (!fsMod.existsSync(vueRoot)) {
+    console.log('⚠  clients/vue-remote not found — skipping Vue client build')
+    return
+  }
+
+  if (!fsMod.existsSync(pathMod.join(vueRoot, 'node_modules'))) {
+    console.log('📦 Installing Vue client dependencies...')
+    const install = spawnSync('npm', ['install'], {
+      cwd: vueRoot,
+      stdio: 'inherit',
+      shell: true,
+    })
+    if (install.status !== 0) {
+      console.error('✗ npm install failed in clients/vue-remote')
+      process.exit(1)
+    }
+  }
+
+  console.log('📦 Building Vue remote client...')
+  const build = spawnSync('npm', ['run', 'build'], {
+    cwd: vueRoot,
+    stdio: 'inherit',
+    shell: true,
+  })
+  if (build.status !== 0) {
+    console.error('✗ Vue client build failed')
+    process.exit(1)
+  }
+
+  if (!fsMod.existsSync(vueDist)) {
+    console.error(`✗ Vue build produced no dist at ${vueDist}`)
+    process.exit(1)
+  }
+
+  // Replace src/localRemote/client/ with the fresh build output. Clearing
+  // first so stale hashed bundle files from prior builds don't linger.
+  if (fsMod.existsSync(clientStage)) {
+    fsMod.rmSync(clientStage, { recursive: true, force: true })
+  }
+  fsMod.mkdirSync(clientStage, { recursive: true })
+  const copyDir = (src: string, dest: string) => {
+    fsMod.mkdirSync(dest, { recursive: true })
+    for (const ent of fsMod.readdirSync(src, { withFileTypes: true })) {
+      const from = pathMod.join(src, ent.name)
+      const to = pathMod.join(dest, ent.name)
+      if (ent.isDirectory()) copyDir(from, to)
+      else if (ent.isFile()) fsMod.copyFileSync(from, to)
+    }
+  }
+  copyDir(vueDist, clientStage)
+  console.log('✓ Vue client → src/localRemote/client/')
+}
+
 const result = await Bun.build({
   entrypoints: ['./src/entrypoints/cli.tsx'],
   outdir: './dist',
@@ -425,37 +496,6 @@ ${exports}
         )
       },
     },
-  ],
-  external: [
-    // OpenTelemetry — too many named exports to stub, kept external
-    '@opentelemetry/api',
-    '@opentelemetry/api-logs',
-    '@opentelemetry/core',
-    '@opentelemetry/exporter-trace-otlp-grpc',
-    '@opentelemetry/exporter-trace-otlp-http',
-    '@opentelemetry/exporter-trace-otlp-proto',
-    '@opentelemetry/exporter-logs-otlp-http',
-    '@opentelemetry/exporter-logs-otlp-proto',
-    '@opentelemetry/exporter-logs-otlp-grpc',
-    '@opentelemetry/exporter-metrics-otlp-proto',
-    '@opentelemetry/exporter-metrics-otlp-grpc',
-    '@opentelemetry/exporter-metrics-otlp-http',
-    '@opentelemetry/exporter-prometheus',
-    '@opentelemetry/resources',
-    '@opentelemetry/sdk-trace-base',
-    '@opentelemetry/sdk-trace-node',
-    '@opentelemetry/sdk-logs',
-    '@opentelemetry/sdk-metrics',
-    '@opentelemetry/semantic-conventions',
-    // Native image processing
-    'sharp',
-    // Cloud provider SDKs
-    '@aws-sdk/client-bedrock',
-    '@aws-sdk/client-bedrock-runtime',
-    '@aws-sdk/client-sts',
-    '@aws-sdk/credential-providers',
-    '@azure/identity',
-    'google-auth-library',
   ],
 })
 

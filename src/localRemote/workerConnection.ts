@@ -13,6 +13,7 @@ import { logForDebugging } from '../utils/debug.js'
 import { isEligibleBridgeMessage } from '../bridge/bridgeMessaging.js'
 import * as events from './localRemoteEvents.js'
 import { getPromptSubmitter, settlePermission } from './sessionRegistry.js'
+import { getCachedRemoteSnapshot } from './index.js'
 import type { DaemonToWorkerEvent, WorkerToDaemonEvent } from './types.js'
 import type { Message } from '../types/message.js'
 
@@ -102,10 +103,29 @@ export function createWorkerConnection(
 
   function handleDaemonEvent(event: DaemonToWorkerEvent): void {
     switch (event.type) {
-      case 'hello':
+      case 'hello': {
         logForDebugging('[workerConnection] registered with daemon')
         retryDelay = 250 // reset backoff on success
+        // Initial snapshot push: REPL викликає publishMessages/Loading
+        // одразу на mount, можливо ДО того як наш WS відкрився і
+        // підписався на event-шину. Без цього sync перший браузер що
+        // підключиться, отримав би порожню історію від демона (в
+        // worker.messages ще нічого не було), аж поки користувач не
+        // відправить нове повідомлення. Читаємо кешовані значення з
+        // localRemote/index.ts та пушимо в демон.
+        const snapshot = getCachedRemoteSnapshot()
+        if (snapshot.messages) {
+          send({ type: 'messages', messages: filterMessages(snapshot.messages) })
+        }
+        if (snapshot.loading) {
+          send({
+            type: 'status',
+            isLoading: snapshot.loading.isLoading,
+            spinnerVerb: snapshot.loading.spinnerVerb,
+          })
+        }
         break
+      }
 
       case 'prompt': {
         const submitter = getPromptSubmitter()
@@ -161,6 +181,22 @@ export function createWorkerConnection(
               try { ws.close(1000) } catch { /* noop */ }
               ws = null
             }
+          }, 100)
+        }
+        if (event.code === 4002) {
+          // Session closed from browser UI — exit the process
+          setTimeout(() => {
+            logForDebugging('[workerConnection] session closed from browser, exiting...')
+            disposed = true
+            if (retryTimer) {
+              clearTimeout(retryTimer)
+              retryTimer = null
+            }
+            if (ws) {
+              try { ws.close(1000) } catch { /* noop */ }
+              ws = null
+            }
+            process.exit(0)
           }, 100)
         }
         break

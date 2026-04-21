@@ -42,7 +42,6 @@ const label = computed(() => {
 
 <template>
   <header class="statusbar">
-    <div class="brand">openclaude</div>
     <div class="state">
       <span :class="dotClass"></span>
       <span class="label">{{ label }}</span>
@@ -55,14 +54,6 @@ const label = computed(() => {
       @click="emit('openSettings')"
     >
       ⚙
-    </button>
-    <button
-      v-if="canOpenSettings && connectionState === 'connected'"
-      class="shutdown"
-      aria-label="Shutdown"
-      @click="emit('shutdown')"
-    >
-      ⏻
     </button>
   </header>
 </template>
@@ -89,19 +80,6 @@ const label = computed(() => {
   max-width: 100%;
   overflow: hidden;
   backdrop-filter: saturate(1.1);
-}
-
-.brand {
-  color: var(--accent);
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  flex-shrink: 0;
-  /* Prevent a long brand string (we keep it short but be defensive) */
-  white-space: nowrap;
-}
-.brand::before {
-  content: "⏵ ";
-  color: var(--fg-dim);
 }
 
 .state {
@@ -186,25 +164,4 @@ const label = computed(() => {
   transform: scale(0.94);
 }
 
-.shutdown {
-  background: transparent;
-  border: none;
-  color: var(--fg-muted);
-  font-size: 16px;
-  cursor: pointer;
-  min-width: 36px;
-  min-height: 32px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  line-height: 1;
-  flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
-}
-.shutdown:hover {
-  color: var(--danger);
-  background: rgba(255, 107, 128, 0.08);
-}
-.shutdown:active {
-  transform: scale(0.94);
-}
 </style>

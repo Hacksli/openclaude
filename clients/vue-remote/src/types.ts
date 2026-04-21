@@ -61,6 +61,8 @@ export type ClientEvent =
   | { type: 'ping' }
   | { type: 'select_session'; sessionId: string }
   | { type: 'shutdown'; reason?: string }
+  | { type: 'close_session'; sessionId: string; reason?: string }
+  | { type: 'new_session' }
 
 export interface SessionSummary {
   id: string

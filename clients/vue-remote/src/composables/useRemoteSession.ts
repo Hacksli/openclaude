@@ -56,6 +56,10 @@ export interface RemoteSession {
   ) => boolean
   /** Gracefully shutdown the daemon (requires authentication). */
   shutdownDaemon: (reason?: string) => Promise<boolean>
+  /** Close a specific worker session from the browser. */
+  closeSession: (sessionId: string, reason?: string) => boolean
+  /** Ask the daemon to open a new local terminal running openclaude. */
+  createSession: () => boolean
 }
 
 export function useRemoteSession(): RemoteSession {
@@ -78,6 +82,13 @@ export function useRemoteSession(): RemoteSession {
   let ws: WebSocket | null = null
   let desiredUrl = ''
   let desiredToken = ''
+  // Сесія, на яку користувач клацнув (або в якій він зараз). Окремо від
+  // selectedSessionId.value щоб: (а) передати в URL при відкритті сокета
+  // та (б) автоматично перепідписатись після реконекту — без цього, коли
+  // WS переривався (сон, рестарт демона, мережа), клік на сесію після
+  // відновлення нічого не робив на сервері, і допомагало лише перезавантаження
+  // сторінки.
+  let desiredSessionId = ''
   let explicitlyClosed = false
   let backoff = INITIAL_BACKOFF_MS
   let reconnectTimer: number | null = null
@@ -119,11 +130,35 @@ export function useRemoteSession(): RemoteSession {
     backoff = Math.min(backoff * 2, MAX_BACKOFF_MS)
   }
 
+  /**
+   * Примусовий переконект — використовується коли сокет у "зомбі"-стані:
+   * readyState == OPEN, але TCP мертвий (типовий сценарій на мобільному
+   * PWA після пробудження з фону або зміни мережі). Закриваємо сокет —
+   * `close` handler запустить scheduleReconnect, а ми скидаємо backoff,
+   * щоб переконект спрацював миттєво, а не через секунди очікування.
+   */
+  function forceReconnect(reason: string) {
+    if (explicitlyClosed) return
+    if (!desiredUrl || !desiredToken) return
+    backoff = INITIAL_BACKOFF_MS
+    clearTimers()
+    if (ws) {
+      try { ws.close(1000, reason) } catch { /* noop */ }
+      ws = null
+    }
+    // Відкриваємо новий сокет ВІДРАЗУ (без backoff-затримки) — користувач
+    // щойно взаємодіяв / повернувся до вкладки, і чекати 1с зайве.
+    openSocket()
+  }
+
   function openSocket() {
     if (!desiredUrl || !desiredToken) return
     let wsUrl: string
     try {
-      wsUrl = buildWsUrl(desiredUrl, desiredToken)
+      // Передаємо desiredSessionId у query-рядок — демон підпише клієнта
+      // відразу у addClient(), тож snapshot прилітає без окремого
+      // select_session, і race-умова "клік до completed open" зникає.
+      wsUrl = buildWsUrl(desiredUrl, desiredToken, desiredSessionId || undefined)
     } catch (err) {
       error.value = (err as Error).message
       connectionState.value = 'error'
@@ -153,9 +188,18 @@ export function useRemoteSession(): RemoteSession {
       pingTimer = window.setInterval(() => {
         send({ type: 'ping' })
       }, PING_INTERVAL_MS)
+      // Захист від race-умов: навіть якщо desiredSessionId не потрапив у
+      // query (встановили після відкриття, або query загубився проксі) —
+      // явно підписуємось на open. Повторна підписка на тій же сесії
+      // серверу не зашкодить (subscribeClientToSession ідемпотентний —
+      // просто шле свіжий snapshot).
+      if (desiredSessionId) {
+        send({ type: 'select_session', sessionId: desiredSessionId })
+      }
     })
 
     socket.addEventListener('message', ev => {
+      markInbound()
       let parsed: unknown
       try {
         parsed = JSON.parse(String(ev.data))
@@ -282,6 +326,7 @@ export function useRemoteSession(): RemoteSession {
 
     desiredUrl = url.trim()
     desiredToken = token.trim()
+    desiredSessionId = ''
     currentUrl.value = desiredUrl
     messages.value = []
     pendingPermission.value = null
@@ -308,14 +353,30 @@ export function useRemoteSession(): RemoteSession {
 
   function selectSession(sessionId: string) {
     selectedSessionId.value = sessionId
+    desiredSessionId = sessionId
     messages.value = []
     pendingPermission.value = null
     // Перемикання сесії анулює попереднє очікування відповіді —
     // новий server-snapshot перерендерить актуальний діалог, якщо є.
     respondingRequestId.value = null
-    sessionInfo.value = null
+    // УВАГА: НЕ занулювати sessionInfo тут. App.vue має watch, який на
+    // перехід sessionInfo: {…} → null повертає користувача на список
+    // сесій (для випадку "сесія зникла на сервері"). Якщо чистити тут —
+    // watch помилково спрацьовує на кожен клік по сесії і миттєво
+    // скидає screen='chat' → 'sessions'; користувачу здається, що клік
+    // не працює. Новий 'hello' від сервера перезапише sessionInfo вже
+    // для правильної сесії — при цьому екран chat залишиться.
     isLoading.value = false
-    send({ type: 'select_session', sessionId })
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      send({ type: 'select_session', sessionId })
+    } else if (!ws || ws.readyState === WebSocket.CLOSED) {
+      // Сокет мертвий — піднімаємо новий негайно (після 'open' надішле
+      // select_session з URL-параметра / open-handler). Раніше клік
+      // "нічого не робив" саме у цьому стані: залишались чекати
+      // scheduleReconnect з можливим backoff-ом.
+      forceReconnect('session-click-stale-socket')
+    }
+    // CONNECTING — чекаємо, open-handler сам відправить select_session.
   }
 
   function sendPrompt(text: string): boolean {
@@ -379,6 +440,67 @@ export function useRemoteSession(): RemoteSession {
     }
   }
 
+  function closeSession(sessionId: string, reason?: string): boolean {
+    return send({ type: 'close_session', sessionId, reason })
+  }
+
+  function createSession(): boolean {
+    return send({ type: 'new_session' })
+  }
+
+  // ─── Відновлення зв'язку після пробудження з фону / зміни мережі ──────────
+  //
+  // На мобільному PWA (і в Chrome DevTools "Throttling → Offline" теж)
+  // WebSocket після тривалого сну залишається у readyState=OPEN, але TCP
+  // насправді мертвий: ws.send() не кидає помилку, сервер нічого не бачить,
+  // "клік по сесії" ніби нічого не робить і допомагає лише reload сторінки.
+  //
+  // Ловимо три сигнали що варто перевірити сокет:
+  //   • visibilitychange → visible  (вкладка ожила)
+  //   • online                      (мережа відновилась)
+  //   • focus                       (вікно отримало фокус — резерв)
+  //
+  // Якщо сокет не OPEN — примусовий переконект (forceReconnect). Якщо
+  // OPEN — надсилаємо ping. На зомбі-сокеті ping теж тихо "успіхне",
+  // але ми ставимо короткий watchdog: якщо протягом 4с сервер не відповів
+  // НІЧОГО (pong або інший трафік — ми не парсимо типи, просто лічимо
+  // активність на onmessage), закриваємо і перепідключаємось.
+  let lastInboundAt = Date.now()
+  const WATCHDOG_MS = 4000
+
+  function markInbound() { lastInboundAt = Date.now() }
+
+  function pokeConnection(reason: string) {
+    if (explicitlyClosed) return
+    if (!desiredUrl) return
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      // Сокет закритий/закривається → пересоздаємо одразу.
+      forceReconnect(`poke:${reason}`)
+      return
+    }
+    // OPEN, але може бути "зомбі". Шлемо ping і стартуємо watchdog —
+    // якщо за WATCHDOG_MS нічого не прилетить, forceReconnect.
+    const baseline = lastInboundAt
+    send({ type: 'ping' })
+    window.setTimeout(() => {
+      if (explicitlyClosed) return
+      if (lastInboundAt === baseline) {
+        // Ні pong від сервера, ні інших повідомлень — сокет мертвий.
+        forceReconnect(`watchdog:${reason}`)
+      }
+    }, WATCHDOG_MS)
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') pokeConnection('visibility')
+    })
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => pokeConnection('online'))
+    window.addEventListener('focus', () => pokeConnection('focus'))
+  }
+
   return {
     connectionState,
     isLoading,
@@ -397,5 +519,7 @@ export function useRemoteSession(): RemoteSession {
     selectSession,
     respondToPermission,
     shutdownDaemon,
+    closeSession,
+    createSession,
   }
 }

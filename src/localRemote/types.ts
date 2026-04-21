@@ -97,6 +97,14 @@ export type ClientEvent =
       type: 'shutdown'
       reason?: string
     }
+  | {
+      type: 'close_session'
+      sessionId: string
+      reason?: string
+    }
+  | {
+      type: 'new_session'
+    }
 
 // ─── Worker → Daemon events ──────────────────────────────────────────
 export type WorkerToDaemonEvent =

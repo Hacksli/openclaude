@@ -29,6 +29,7 @@ import {
   type PermissionSettler,
   type PromptSubmitter,
 } from './sessionRegistry.js'
+import type { Message } from '../types/message.js'
 import type { ServerStatus, StartResult } from './types.js'
 import {
   createWorkerConnection,
@@ -171,20 +172,48 @@ export function setRemoteSubmitter(fn: PromptSubmitter | null): () => void {
   return () => setPromptSubmitter(null)
 }
 
+// Кешований стан сесії. Оновлюється КОЖНИМ викликом publishMessages/
+// publishLoading (навіть коли workerConn ще не піднятий) — workerConnection
+// після 'hello' від демона читає його і пушить як initial snapshot, щоб
+// перший браузер що підключиться, бачив повну історію, а не порожню
+// сторінку до першого нового повідомлення.
+let cachedMessages: Message[] = []
+let hasCachedMessages = false
+let cachedLoading: { isLoading: boolean; spinnerVerb?: string } = {
+  isLoading: false,
+}
+let hasCachedLoading = false
+
+export function getCachedRemoteSnapshot(): {
+  messages: Message[] | null
+  loading: { isLoading: boolean; spinnerVerb?: string } | null
+} {
+  return {
+    messages: hasCachedMessages ? cachedMessages : null,
+    loading: hasCachedLoading ? cachedLoading : null,
+  }
+}
+
 /** Emit a message list change so the bridge can broadcast to clients. */
 export function publishMessages(
   messages: Parameters<typeof events.emit<'messagesChanged'>>[1],
 ): void {
+  // Завжди кешуємо (навіть без workerConn) — потрібно для initial snapshot
+  // при першому підключенні WS.
+  cachedMessages = messages
+  hasCachedMessages = true
   if (!workerConn) return
   events.emit('messagesChanged', messages)
 }
 
 /** Emit a loading-state change. Picks a random spinner verb when loading starts. */
 export function publishLoading(isLoading: boolean, spinnerVerb?: string): void {
-  if (!workerConn) return
   const verb = isLoading
     ? (spinnerVerb ?? pickRandomVerb())
     : undefined
+  cachedLoading = { isLoading, spinnerVerb: verb }
+  hasCachedLoading = true
+  if (!workerConn) return
   events.emit('loadingChanged', isLoading, verb)
 }
 

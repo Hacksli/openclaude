@@ -15,6 +15,7 @@ import type {
   SessionSummary,
   WorkerToDaemonEvent,
 } from '../types.js'
+import { spawnSessionTerminal } from './spawnSessionTerminal.js'
 
 type Send<T> = (event: T) => void
 
@@ -227,6 +228,32 @@ export class SessionRouter {
 
       case 'ping':
         break
+
+      case 'close_session': {
+        const worker = this.workers.get(event.sessionId)
+        if (!worker) {
+          client.send({ type: 'error', message: `Session "${event.sessionId}" not found.` })
+          return
+        }
+        logForDebugging(`[sessionRouter] close_session request from client for session ${event.sessionId}, reason: ${event.reason || 'none'}`)
+        worker.send({ type: 'kick', code: 4002, reason: event.reason || 'closed from browser' })
+        break
+      }
+
+      case 'new_session': {
+        // Open a fresh local terminal running `openclaude`. The new worker
+        // will connect back to this daemon and appear in the session list
+        // via broadcastSessionList — no explicit ack beyond `error` on fail.
+        logForDebugging('[sessionRouter] new_session request from client')
+        const result = spawnSessionTerminal()
+        if (!result.ok) {
+          client.send({
+            type: 'error',
+            message: `Не вдалося відкрити нову консоль: ${result.error}`,
+          })
+        }
+        break
+      }
 
       case 'shutdown':
         // Handle shutdown request - send notification to all workers
