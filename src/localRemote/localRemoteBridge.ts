@@ -133,10 +133,12 @@ export function bindLocalRemoteBridge(
           event.behavior,
           event.message,
         )
-        if (!ok) {
-          // Settler не знайдено - надсилаємо permission_clear, щоб клієнт розблокував UI
-          server.send({ type: 'permission_clear', requestId: event.requestId })
-        }
+        // Наслідки однакові для клієнта — відправляємо permission_clear
+        // незалежно від результату settlePermission:
+        //   ok = true  → settler знайдено і викликано, діалог більше не потрібен;
+        //   ok = false → settler відсутній (розв'язано раніше / race), теж
+        //                закриваємо діалог.
+        server.send({ type: 'permission_clear', requestId: event.requestId })
         return
       }
       case 'ping':

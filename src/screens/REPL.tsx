@@ -1138,6 +1138,13 @@ export function REPL({
         } else {
           head.onReject(message);
         }
+        // onAllow/onReject в interactiveHandler резолвлять promise тула,
+        // але не виймають запит із черги — це робить локальний onDone у
+        // PermissionRequest-компоненті. Без цього TUI-діалог залишається
+        // на екрані, хоч запит уже розв'язано з браузера.
+        setToolUseConfirmQueue(queue =>
+          queue.filter(item => item.toolUseID !== head.toolUseID),
+        );
         return true;
       },
     );

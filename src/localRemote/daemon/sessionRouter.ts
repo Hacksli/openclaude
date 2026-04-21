@@ -204,11 +204,15 @@ export class SessionRouter {
         }
 
         if (!worker.pendingPermissions.has(event.requestId)) {
-          // Локальний бік уже розв'язав запит — мовчазний no-op,
-          // щоб не показувати користувачу хибну помилку на нормальній гонці.
+          // Локальний бік уже розв'язав запит — мовчазний no-op для
+          // worker-а, але потрібно повідомити клієнта що діалог закрито
+          // (permission_clear), інакше UI зависає.
           logForDebugging(
             `[sessionRouter] permission_response ignored: requestId=${event.requestId} no longer pending on worker=${worker.sessionId}`,
           )
+          worker.pendingPermissions.delete(event.requestId)
+          client.send({ type: 'permission_clear', requestId: event.requestId })
+          this.broadcastSessionList()
           return
         }
 
