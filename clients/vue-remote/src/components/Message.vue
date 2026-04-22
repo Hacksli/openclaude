@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import type { RenderedMessage } from '../composables/renderMessage'
 import { formatDurationUk, t } from '../i18n'
+import Markdown from './Markdown.vue'
 
 defineProps<{
   message: RenderedMessage
@@ -49,7 +50,7 @@ const computedHasStatusClass = computed(() => (status: string) => {
       :class="`block-${block.kind}`"
     >
       <template v-if="block.kind === 'text'">
-        <div class="text">{{ block.text }}</div>
+        <Markdown v-if="block.text" :text="block.text" />
       </template>
 
       <template v-else-if="block.kind === 'local_output'">

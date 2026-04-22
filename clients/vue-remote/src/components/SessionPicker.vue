@@ -6,27 +6,15 @@ const props = defineProps<{
   sessions: SessionSummary[]
   selectedId: string
   canCloseSessions?: boolean
-  canCreateSession?: boolean
+  /** drawer-режим: без "← налашт." кнопки, дрібніший padding */
+  compact?: boolean
 }>()
 
 const emit = defineEmits<{
   select: [sessionId: string]
   close: [sessionId: string]
   back: []
-  create: []
 }>()
-
-const creating = ref(false)
-
-function onCreate() {
-  if (creating.value) return
-  creating.value = true
-  emit('create')
-  // Короткий lockout — очікуваний новий worker зареєструється за секунду-дві.
-  setTimeout(() => {
-    creating.value = false
-  }, 2000)
-}
 
 const closingId = ref<string | null>(null)
 
@@ -64,18 +52,16 @@ function onClose(sessionId: string) {
 <template>
   <section class="session-picker">
     <div class="header">
-      <button class="link back" @click="emit('back')">&#x2190; налашт.</button>
-      <h2>Сесії ({{ sessions.length }})</h2>
+      <h2>Сесії <span class="count">{{ sessions.length }}</span></h2>
       <button
-        v-if="canCreateSession"
-        class="create-btn"
-        :class="{ busy: creating }"
-        :disabled="creating"
-        @click="onCreate"
-        title="Відкрити нову консоль"
-        aria-label="Нова сесія"
+        class="close-drawer-btn"
+        @click="emit('back')"
+        title="Закрити меню"
+        aria-label="Закрити меню"
       >
-        +
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
       </button>
     </div>
 
@@ -95,19 +81,28 @@ function onClose(sessionId: string) {
           <span class="time">{{ timeAgo(s.startedAt) }}</span>
         </div>
         <div class="row-meta">
-          <span class="pid">PID {{ s.pid }}</span>
+          <!-- Замість PID показуємо модель (+ dot-індикатор cloud/local).
+               Fallback — PID, якщо worker ще не встиг прислати metadata
+               (стара версія openclaude без snapshot-push). -->
+          <span v-if="s.model" class="model-chip" :class="{ local: s.isLocal }">
+            <span class="model-dot" aria-hidden="true"></span>
+            <span class="model-name">{{ s.model }}</span>
+          </span>
+          <span v-else class="pid">PID {{ s.pid }}</span>
           <span v-if="s.isLoading" class="badge thinking">думає</span>
           <span v-if="s.hasPendingPermission" class="badge perm">дозвіл</span>
-          <button
-            v-if="canCloseSessions"
-            class="close-btn"
-            :class="{ busy: closingId === s.id }"
-            @click.stop="onClose(s.id)"
-            title="Закрити сесію"
-          >
-            ✕
-          </button>
         </div>
+        <button
+          v-if="canCloseSessions"
+          class="close-btn"
+          :class="{ busy: closingId === s.id }"
+          :aria-label="`Закрити сесію ${shortCwd(s.cwd)}`"
+          @click.stop="onClose(s.id)"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
       </li>
     </ul>
   </section>
@@ -118,11 +113,8 @@ function onClose(sessionId: string) {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px;
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
-  max-width: 560px;
-  margin: 0 auto;
+  /* Нема горизонтального padding — li займають повну ширину до країв drawer-а */
+  padding: 0;
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
@@ -131,22 +123,30 @@ function onClose(sessionId: string) {
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
   min-width: 0;
 }
 
 .header h2 {
   margin: 0;
-  font-size: 16px;
+  flex: 1 1 auto;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--fg);
-  letter-spacing: 0.2px;
+  color: var(--fg-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.header .count {
+  color: var(--fg-dim);
+  font-weight: 400;
+  margin-left: 6px;
 }
 
 .back {
@@ -162,42 +162,32 @@ function onClose(sessionId: string) {
 }
 .back:hover { text-decoration: underline; }
 
-.create-btn {
+.close-drawer-btn {
   margin-left: auto;
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
-  border: 1px solid var(--accent-dim);
-  background: rgba(var(--accent-rgb), 0.08);
-  color: var(--accent);
-  font-size: 20px;
-  line-height: 1;
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
 }
-.create-btn:hover:not(:disabled) {
-  background: rgba(var(--accent-rgb), 0.16);
-  border-color: var(--accent);
+.close-drawer-btn:hover {
+  color: var(--fg);
+  background: var(--bg-elev);
 }
-.create-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-.create-btn.busy,
-.create-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
+.close-drawer-btn:active { transform: scale(0.94); }
 
 .empty {
   color: var(--fg-muted);
   font-size: var(--font-size-sm);
-  padding: 32px 0;
+  padding: 32px 16px;
   text-align: center;
   line-height: 1.55;
 }
@@ -210,27 +200,35 @@ function onClose(sessionId: string) {
 }
 
 .list li {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  margin-bottom: 8px;
+  /* Повна ширина, без рамок і радіусів — тільки тонкий роздільник знизу.
+     Active-стан підкреслюємо лівою акцент-смужкою (3px), не рамкою.
+     Правий padding 44px — щоб текст/бейджі не налазили на absolute
+     close-кнопку у верхньому куті. */
+  position: relative;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 14px 44px 14px 16px;
+  margin: 0;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s;
-  background: var(--bg-elev);
+  transition: background 0.15s;
+  background: transparent;
   min-width: 0;
-  box-shadow: var(--shadow-sm);
 }
 .list li:hover {
-  border-color: var(--accent-dim);
-  background: var(--bg-elev-hover);
-}
-.list li:active {
-  transform: scale(0.995);
+  background: var(--bg-elev);
 }
 .list li.active {
-  border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.08);
-  box-shadow: var(--ring-accent);
+  background: var(--bg-elev);
+}
+.list li.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
 }
 
 .row-main {
@@ -275,6 +273,34 @@ function onClose(sessionId: string) {
   color: var(--fg-dim);
 }
 
+/* Model chip: компактний індикатор нейронки сесії. Крапка тим же кольором
+   що accent (хмара) або success (локально), далі моно-назва моделі. */
+.model-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+.model-chip .model-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.model-chip.local .model-dot {
+  background: var(--success);
+}
+.model-chip .model-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 .badge {
   font-size: 11px;
   padding: 2px 8px;
@@ -293,26 +319,44 @@ function onClose(sessionId: string) {
   background: rgba(245, 166, 35, 0.06);
 }
 
+/* Close button — absolute у верхньому правому куті картки. На desktop
+   прихована до hover; на touch (без hover) — бачимо завжди, але
+   приглушено. Іконка — тонкий stroke-only X, без жодних рамок. */
 .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   background: transparent;
-  border: 1px solid var(--border-strong);
-  color: var(--fg-muted);
-  font-size: 13px;
+  border: none;
+  color: var(--fg-dim);
   cursor: pointer;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   line-height: 1;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+}
+.list li:hover .close-btn {
+  opacity: 1;
 }
 .close-btn:hover {
   color: var(--danger);
-  border-color: var(--danger);
-  background: rgba(255, 107, 128, 0.08);
+  background: rgba(239, 68, 68, 0.12);
 }
+.close-btn:active { transform: scale(0.9); }
 .close-btn.busy {
-  opacity: 0.4;
+  opacity: 0.35 !important;
   pointer-events: none;
+}
+/* Touch-first: на пристроях без hover завжди показуємо кнопку. */
+@media (hover: none) {
+  .close-btn { opacity: 0.5; }
+  .list li.active .close-btn { opacity: 0.8; }
 }
 
 .list li.closing {

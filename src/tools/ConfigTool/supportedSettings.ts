@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
 import {
   EDITOR_MODES,
@@ -31,7 +30,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     source: 'global',
     type: 'string',
     description: 'Color theme for the UI',
-    options: feature('AUTO_THEME') ? THEME_SETTINGS : THEME_NAMES,
+    options: false ? THEME_SETTINGS : THEME_NAMES,
   },
   editorMode: {
     source: 'global',
@@ -114,7 +113,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     source: 'settings',
     type: 'string',
     description: 'Default permission mode for tool usage',
-    options: feature('TRANSCRIPT_CLASSIFIER')
+    options: false
       ? ['default', 'plan', 'acceptEdits', 'dontAsk', 'auto']
       : ['default', 'plan', 'acceptEdits', 'dontAsk'],
   },
@@ -141,7 +140,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
         },
       }
     : {}),
-  ...(feature('VOICE_MODE')
+  ...(false
     ? {
         voiceEnabled: {
           source: 'settings' as const,
@@ -150,7 +149,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
         },
       }
     : {}),
-  ...(feature('BRIDGE_MODE')
+  ...(false
     ? {
         remoteControlAtStartup: {
           source: 'global' as const,
@@ -161,7 +160,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
         },
       }
     : {}),
-  ...(feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION')
+  ...(false || false
     ? {
         taskCompleteNotifEnabled: {
           source: 'global' as const,

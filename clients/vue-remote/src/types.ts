@@ -39,16 +39,33 @@ export interface RemotePermissionRequest {
   createdAt: number
 }
 
+export interface SessionMetadata {
+  version: string
+  providerName: string
+  model: string
+  baseUrl: string
+  isLocal: boolean
+  priceLine?: string
+  cwd: string
+}
+
 export type ServerEvent =
-  | { type: 'hello'; sessionId: string; cwd: string; serverVersion: string }
-  | { type: 'snapshot'; messages: WireMessage[] }
-  | { type: 'messages'; messages: WireMessage[] }
-  | { type: 'permission_req'; request: RemotePermissionRequest }
-  | { type: 'permission_clear'; requestId: string }
-  | { type: 'status'; isLoading: boolean; spinnerVerb?: string }
-  | { type: 'error'; message: string }
+  | {
+      type: 'hello'
+      sessionId: string
+      cwd: string
+      serverVersion: string
+      metadata?: SessionMetadata
+    }
+  | { type: 'snapshot'; sessionId: string; messages: WireMessage[] }
+  | { type: 'messages'; sessionId: string; messages: WireMessage[] }
+  | { type: 'permission_req'; sessionId: string; request: RemotePermissionRequest }
+  | { type: 'permission_clear'; sessionId: string; requestId: string }
+  | { type: 'status'; sessionId: string; isLoading: boolean; spinnerVerb?: string }
+  | { type: 'error'; sessionId: string; message: string }
   | { type: 'sessions'; sessions: SessionSummary[] }
   | { type: 'session_gone'; sessionId: string }
+  | { type: 'pong' }
 
 export type ClientEvent =
   | { type: 'prompt'; text: string }
@@ -72,6 +89,9 @@ export interface SessionSummary {
   startedAt: number
   isLoading: boolean
   hasPendingPermission: boolean
+  providerName?: string
+  model?: string
+  isLocal?: boolean
 }
 
 export type ConnectionState =
@@ -85,4 +105,5 @@ export interface SessionInfo {
   sessionId: string
   cwd: string
   serverVersion: string
+  metadata?: SessionMetadata
 }

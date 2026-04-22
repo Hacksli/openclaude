@@ -58,8 +58,10 @@ defineExpose({ setText })
 
 <template>
   <footer class="composer" :class="{ disabled, loading: isLoading }">
+    <!-- Send тепер всередині input-wrap — інтегрована кнопка в полі вводу
+         (паттерн ChatGPT/Claude.ai). Візуально прив'язана до правого краю
+         текстового поля, висота і розмір узгоджені. -->
     <div class="input-wrap">
-      <span class="prompt-prefix" aria-hidden="true">&gt;</span>
       <textarea
         ref="textarea"
         v-model="text"
@@ -71,17 +73,21 @@ defineExpose({ setText })
         @keydown="onKeydown"
         @focus="onFocus"
       ></textarea>
+      <button
+        type="button"
+        class="send"
+        :disabled="disabled || !text.trim()"
+        :aria-label="isLoading ? t.composer.interrupt : t.composer.send"
+        @click="submit"
+      >
+        <svg v-if="isLoading" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="6" y="6" width="12" height="12" rx="1" />
+        </svg>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+      </button>
     </div>
-    <button
-      type="button"
-      class="send"
-      :disabled="disabled || !text.trim()"
-      :aria-label="isLoading ? t.composer.interrupt : t.composer.send"
-      @click="submit"
-    >
-      <span v-if="isLoading">esc</span>
-      <span v-else>⏎</span>
-    </button>
   </footer>
 </template>
 
@@ -89,41 +95,33 @@ defineExpose({ setText })
 .composer {
   flex: 0 0 auto;
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 8px 10px;
-  /* Respect iOS home-indicator / notch at the bottom */
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
-  padding-left: max(10px, env(safe-area-inset-left));
-  padding-right: max(10px, env(safe-area-inset-right));
+  padding: 10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
   border-top: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--bg-elev-hover) 0%, var(--bg-elev) 100%);
-  /* Never let the row overflow its parent */
+  background: var(--bg);
   min-width: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  /* overflow:hidden ensures a child (like the send button on a tiny screen)
-     can never visually leak past the rounded composer edge. */
-  overflow: hidden;
 }
 
 .input-wrap {
-  /* flex:1 + min-width:0 = shrinks properly without pushing siblings */
   flex: 1 1 0;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;  /* send тягнеться до низу при multi-line textarea */
   gap: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  padding: 8px 12px;
-  border-radius: var(--radius);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  padding: 6px 6px 6px 14px; /* менший right padding — там сидить send */
+  border-radius: 20px; /* pill-shape */
+  transition: border-color 0.15s;
+  min-height: 40px;
 }
 .input-wrap:focus-within {
-  border-color: var(--accent-dim);
-  box-shadow: var(--ring-accent);
+  border-color: var(--accent);
 }
 .composer.disabled .input-wrap {
   opacity: 0.55;
@@ -147,14 +145,15 @@ textarea {
   background: transparent;
   border: none;
   color: var(--fg);
-  padding: 0;
+  padding: 5px 0;   /* вертикально центрує 1-рядкове введення до 28px send */
   font: inherit;
   font-size: var(--font-size-base);
   resize: none;
   outline: none;
   line-height: var(--line-height);
   max-height: 200px;
-  caret-color: var(--user);
+  caret-color: var(--accent);
+  align-self: center;
 }
 textarea::placeholder {
   color: var(--fg-dim);
@@ -164,55 +163,34 @@ textarea:disabled {
 }
 
 .send {
-  /* Square-ish 44x44 touch target. align-self: flex-end anchors it to the
-     bottom of the composer so a multi-line textarea doesn't pull it up. */
+  /* flex-end → кнопка лишається внизу при multi-line textarea, не
+     з'їжджає до середини. Шляхом align-self: flex-end в `.input-wrap`
+     з align-items: flex-end — те саме, але явно. */
   align-self: flex-end;
-  min-width: 44px;
-  min-height: 44px;
-  height: 44px;
-  background: var(--bg-elev);
-  color: var(--accent);
-  border: 1px solid var(--border-strong);
-  font-size: 15px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  background: var(--fg);
+  color: var(--bg);
+  border: none;
   cursor: pointer;
-  /* Never shrink — this is what was going off-screen */
   flex: 0 0 auto;
-  padding: 0 14px;
-  border-radius: var(--radius);
-  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
+  padding: 0;
+  border-radius: 50%;
+  transition: opacity 0.15s, transform 0.1s, background 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
 }
-.send:not(:disabled):hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.08);
-}
-.send:not(:disabled):active {
-  transform: scale(0.96);
-}
+.send:not(:disabled):hover { opacity: 0.85; }
+.send:not(:disabled):active { transform: scale(0.92); }
 .send:disabled {
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: not-allowed;
 }
 .composer.loading .send {
-  color: var(--warning);
-  border-color: var(--warning);
-  background: rgba(255, 193, 7, 0.08);
-}
-
-/* On very narrow screens, the send button uses less horizontal padding. */
-@media (max-width: 420px) {
-  .composer {
-    gap: 4px;
-    padding-left: max(4px, env(safe-area-inset-left));
-    padding-right: max(4px, env(safe-area-inset-right));
-  }
-  .send {
-    padding: 0 8px;
-    min-width: 40px; /* трохи менше для вузьких екранів */
-  }
+  background: var(--accent);
+  color: var(--bg);
 }
 </style>

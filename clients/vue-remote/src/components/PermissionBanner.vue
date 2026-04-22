@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, nextTick } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { t } from '../i18n'
 import type { RemotePermissionRequest } from '../types'
 
@@ -11,40 +11,6 @@ const emit = defineEmits<{
   allow: [requestId: string, message?: string]
   deny: [requestId: string, message?: string]
 }>()
-
-// ─── Вільний коментар / обговорення ──────────────────────────────────────────
-// У TUI користувач може натиснути Tab щоб додати вільний текст до Allow/Deny,
-// або взагалі "відкрити діалог" і відповісти повідомленням замість вибору
-// конкретної опції. Для веба робимо еквівалент: розгортається textarea,
-// де можна написати коментар. Натискаєш "Надіслати як обговорення" і це
-// піде як deny з message → модель отримує текст користувача і продовжує
-// розмову замість жорсткої відмови.
-
-const discussOpen = ref(false)
-const discussText = ref('')
-const discussRef = ref<HTMLTextAreaElement | null>(null)
-
-async function openDiscuss() {
-  discussOpen.value = true
-  await nextTick()
-  discussRef.value?.focus()
-}
-
-function sendDiscuss() {
-  const msg = discussText.value.trim()
-  if (!msg) return
-  emit('deny', props.request.requestId, msg)
-  discussText.value = ''
-  discussOpen.value = false
-}
-
-function cancelDiscuss() {
-  discussOpen.value = false
-  discussText.value = ''
-}
-
-// Прапор: чи є коментар, яким варто збагатити Allow/Deny
-const discussTrimmed = computed(() => discussText.value.trim())
 
 // ─── AskUserQuestion detection ──────────────────────────────────────────────
 
@@ -162,13 +128,11 @@ function submitAnswers() {
 }
 
 function onAllowClick() {
-  // Якщо користувач написав коментар — передаємо як feedback разом з allow.
-  // Не застосовно до AskUserQuestion (там allow несе JSON-answers).
-  emit('allow', props.request.requestId, discussTrimmed.value || undefined)
+  emit('allow', props.request.requestId)
 }
 
 function onDenyClick() {
-  emit('deny', props.request.requestId, discussTrimmed.value || undefined)
+  emit('deny', props.request.requestId)
 }
 
 // ─── Generic permission (non-AskUserQuestion) ────────────────────────────────
@@ -255,45 +219,8 @@ const inputText = computed(() => {
       </div>
     </div>
 
-    <!-- Обговорення: текст, що надсилається як deny+feedback (fallback
-         для випадків, коли жодна опція не підходить і хочеться просто
-         написати моделі). -->
-    <div v-if="discussOpen" class="discuss">
-      <textarea
-        ref="discussRef"
-        v-model="discussText"
-        class="discuss-input"
-        rows="3"
-        placeholder="Напишіть повідомлення замість вибору опції…"
-        @keydown.ctrl.enter.prevent="sendDiscuss"
-        @keydown.meta.enter.prevent="sendDiscuss"
-      />
-      <div class="discuss-actions">
-        <button type="button" class="link" @click="cancelDiscuss">
-          Скасувати
-        </button>
-        <button
-          type="button"
-          class="discuss-send"
-          :disabled="!discussTrimmed"
-          @click="sendDiscuss"
-        >
-          Надіслати
-        </button>
-      </div>
-    </div>
-
     <!-- Навігація між питаннями + фінальні дії -->
     <div class="actions">
-      <button
-        v-if="!discussOpen"
-        type="button"
-        class="discuss-toggle"
-        @click="openDiscuss"
-        title="Написати повідомлення замість вибору"
-      >
-        💬 Обговорити
-      </button>
       <button
         type="button"
         class="nav-btn"
@@ -334,44 +261,7 @@ const inputText = computed(() => {
     </div>
     <pre v-if="inputText" class="input">{{ inputText }}</pre>
 
-    <!-- Обговорення: текст, що надсилається як feedback разом з allow/deny
-         або як самостійне "deny with feedback" повідомлення (кнопка
-         "Надіслати") — еквівалент TUI-шляху Tab → коментар. -->
-    <div v-if="discussOpen" class="discuss">
-      <textarea
-        ref="discussRef"
-        v-model="discussText"
-        class="discuss-input"
-        rows="3"
-        placeholder="Ваш коментар — додасться до Allow/Deny або буде надісланий як обговорення…"
-        @keydown.ctrl.enter.prevent="sendDiscuss"
-        @keydown.meta.enter.prevent="sendDiscuss"
-      />
-      <div class="discuss-actions">
-        <button type="button" class="link" @click="cancelDiscuss">
-          Скасувати
-        </button>
-        <button
-          type="button"
-          class="discuss-send"
-          :disabled="!discussTrimmed"
-          @click="sendDiscuss"
-        >
-          Надіслати як обговорення
-        </button>
-      </div>
-    </div>
-
     <div class="actions">
-      <button
-        v-if="!discussOpen"
-        type="button"
-        class="discuss-toggle"
-        @click="openDiscuss"
-        title="Додати коментар"
-      >
-        💬 Обговорити
-      </button>
       <button
         type="button"
         class="deny"
@@ -395,43 +285,28 @@ const inputText = computed(() => {
   margin: 8px 10px 0 10px;
   margin-left: max(10px, env(safe-area-inset-left));
   margin-right: max(10px, env(safe-area-inset-right));
-  padding: 12px 14px 14px 14px;
+  padding: 14px 16px;
   border-radius: var(--radius);
   background: var(--bg-elev);
-  border: 1px solid var(--warning);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  position: relative;
-  animation: slide-in 0.2s ease-out;
+  gap: 10px;
+  animation: slide-in 0.18s ease-out;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  box-shadow: var(--shadow-md);
   word-wrap: break-word;
   overflow-wrap: anywhere;
 }
 
-/* TUI-style title tag on the top border */
-.banner::before {
-  content: "[ permission ]";
-  position: absolute;
-  top: -0.7em;
-  left: 10px;
-  padding: 0 6px;
-  background: var(--bg);
-  color: var(--warning);
-  font-size: var(--font-size-sm);
-  letter-spacing: 0.5px;
+/* Жовтий акцент на звичайному permission, індіго на AskUserQuestion —
+   ОДИН піксель бордера зверху, не вся рамка, щоб не кричало */
+.banner {
+  border-top: 2px solid var(--warning);
 }
-
-.banner.ask::before {
-  content: "[ ? ]";
-  color: var(--accent-dim);
-}
-
 .banner.ask {
-  border-color: var(--accent-dim);
+  border-top-color: var(--accent);
 }
 
 @keyframes slide-in {
@@ -443,25 +318,20 @@ const inputText = computed(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--warning);
-  font-size: var(--font-size-base);
+  color: var(--fg-muted);
+  font-size: var(--font-size-sm);
 }
 
 .badge {
-  display: none; /* the ::before box-title already serves this role */
+  display: none;
 }
 
 .tool {
-  font-weight: 600;
-  font-size: var(--font-size-base);
-  color: var(--fg);
-}
-.tool::before {
-  content: "⚡ ";
-  color: var(--warning);
-}
-.banner.ask .tool::before {
-  content: "";
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .description {
@@ -740,78 +610,6 @@ button {
 }
 .deny:active {
   transform: scale(0.985);
-}
-
-/* ─── Обговорення (вільний коментар) ─────────────────────────────────────── */
-
-.discuss {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.discuss-input {
-  width: 100%;
-  resize: vertical;
-  min-height: 60px;
-  max-height: 180px;
-  padding: 8px 10px;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--font-size-base);
-  line-height: 1.4;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.discuss-input:focus {
-  border-color: var(--accent-dim);
-}
-
-.discuss-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.discuss-send {
-  color: var(--accent);
-  border: 1px solid var(--accent-dim);
-  min-height: 40px;
-  padding: 6px 16px;
-  font-size: var(--font-size-sm);
-  flex: 0 0 auto;
-  min-width: auto;
-}
-.discuss-send:hover:not(:disabled) {
-  background: rgba(var(--accent-rgb), 0.1);
-  border-color: var(--accent);
-}
-.discuss-send:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.discuss-toggle {
-  color: var(--fg-muted);
-  border: 1px solid var(--border-strong);
-  min-height: 40px;
-  padding: 6px 14px;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  flex: 0 0 auto;
-  min-width: auto;
-  margin-right: auto;
-}
-.discuss-toggle:hover {
-  color: var(--accent);
-  border-color: var(--accent-dim);
-  background: transparent;
 }
 
 .link {

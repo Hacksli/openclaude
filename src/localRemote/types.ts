@@ -31,6 +31,17 @@ export type RemotePermissionRequest = {
   createdAt: number
 }
 
+/** Детальні метадані сесії для браузера (header-card у web UI) */
+export type SessionMetadata = {
+  version: string
+  providerName: string
+  model: string
+  baseUrl: string
+  isLocal: boolean
+  priceLine?: string
+  cwd: string
+}
+
 // ─── Server → Browser (client) events ────────────────────────────────
 export type ServerEvent =
   | {
@@ -38,31 +49,41 @@ export type ServerEvent =
       sessionId: string
       cwd: string
       serverVersion: string
+      metadata?: SessionMetadata
     }
   | {
       type: 'snapshot'
+      sessionId: string
       messages: Message[]
     }
   | {
       type: 'messages'
+      sessionId: string
       messages: Message[]
     }
   | {
       type: 'permission_req'
+      sessionId: string
       request: RemotePermissionRequest
     }
   | {
       type: 'permission_clear'
+      sessionId: string
       requestId: string
     }
   | {
       type: 'status'
+      sessionId: string
       isLoading: boolean
       spinnerVerb?: string
     }
   | {
       type: 'error'
+      sessionId: string
       message: string
+    }
+  | {
+      type: 'pong'
     }
   | {
       type: 'sessions'
@@ -116,6 +137,8 @@ export type WorkerToDaemonEvent =
       title: string
       startedAt: number
       serverVersion: string
+      /** Структуровані метадані сесії (provider/model/price/version тощо) */
+      metadata?: SessionMetadata
     }
   | {
       type: 'messages'
@@ -168,6 +191,21 @@ export type DaemonToWorkerEvent =
       type: 'shutdown'
       reason?: string
     }
+  | {
+      /**
+       * Demand that the worker re-push its current state (messages +
+       * loading) so a newly-subscribed browser gets fresh data. Safety
+       * net for the "empty history until first message" race: primary
+       * mechanism is worker pushing on 'hello', but if that didn't fire
+       * (or the worker reconnected with no activity since) the daemon
+       * uses this to kick the refresh. Unknown event in older workers
+       * — harmlessly ignored.
+       */
+      type: 'request_state'
+    }
+  | {
+      type: 'pong'
+    }
 
 // ─── Session summary (for /api/sessions + sessions WS event) ────────
 export type SessionSummary = {
@@ -178,6 +216,11 @@ export type SessionSummary = {
   startedAt: number
   isLoading: boolean
   hasPendingPermission: boolean
+  /** Коротка інфо про модель/провайдера — щоб UI не мусив чекати
+      на hello з іншої сесії, щоб показати, яка нейронка в сесії. */
+  providerName?: string
+  model?: string
+  isLocal?: boolean
 }
 
 /** Result of the `/remote on` command. */

@@ -14,6 +14,8 @@ import { isEligibleBridgeMessage } from '../bridge/bridgeMessaging.js'
 import * as events from './localRemoteEvents.js'
 import { getPromptSubmitter, settlePermission } from './sessionRegistry.js'
 import { getCachedRemoteSnapshot } from './index.js'
+import { collectSessionMetadata } from './sessionMetadata.js'
+import type { SessionMetadata } from './types.js'
 import type { DaemonToWorkerEvent, WorkerToDaemonEvent } from './types.js'
 import type { Message } from '../types/message.js'
 
@@ -165,6 +167,23 @@ export function createWorkerConnection(
         break
       }
 
+      case 'request_state': {
+        // Демон просить свіжий snapshot — типово коли браузер щойно
+        // підписався. Читаємо кеш і пушимо. Аналогічно до логіки в 'hello'.
+        const snap = getCachedRemoteSnapshot()
+        if (snap.messages) {
+          send({ type: 'messages', messages: filterMessages(snap.messages) })
+        }
+        if (snap.loading) {
+          send({
+            type: 'status',
+            isLoading: snap.loading.isLoading,
+            spinnerVerb: snap.loading.spinnerVerb,
+          })
+        }
+        break
+      }
+
       case 'kick':
         logForDebugging(`[workerConnection] kicked: ${event.reason}`)
         if (event.code === 4000) {
@@ -177,9 +196,10 @@ export function createWorkerConnection(
               clearTimeout(retryTimer)
               retryTimer = null
             }
-            if (ws) {
-              try { ws.close(1000) } catch { /* noop */ }
-              ws = null
+            const oldWs = ws
+            if (oldWs) {
+              try { oldWs.close(1000) } catch { /* noop */ }
+              if (ws === oldWs) ws = null
             }
           }, 100)
         }
@@ -192,9 +212,10 @@ export function createWorkerConnection(
               clearTimeout(retryTimer)
               retryTimer = null
             }
-            if (ws) {
-              try { ws.close(1000) } catch { /* noop */ }
-              ws = null
+            const oldWs = ws
+            if (oldWs) {
+              try { oldWs.close(1000) } catch { /* noop */ }
+              if (ws === oldWs) ws = null
             }
             process.exit(0)
           }, 100)
@@ -219,7 +240,15 @@ export function createWorkerConnection(
     }
 
     ws.on('open', () => {
-      // Register this session.
+      // Register this session. metadata — щоб browser міг зразу показати
+      // header-картку з provider/моделлю/ціною/cwd/версією (без потреби
+      // парсити TUI stdout).
+      let metadata: SessionMetadata | undefined
+      try {
+        metadata = collectSessionMetadata()
+      } catch (err) {
+        logForDebugging(`[workerConnection] metadata collect failed: ${String(err)}`)
+      }
       send({
         type: 'register',
         sessionId,
@@ -228,6 +257,7 @@ export function createWorkerConnection(
         title: opts.title,
         startedAt,
         serverVersion: '1',
+        metadata,
       })
       subscribeToSession()
     })
@@ -241,13 +271,18 @@ export function createWorkerConnection(
       handleDaemonEvent(parsed)
     })
 
+    const thisWs = ws
     const onCloseOrError = () => {
-      ws = null
-      unsubscribeFromSession()
+      // Guard against race: if connect() already created a new WS,
+      // don't null it when the old one finally closes.
+      if (ws === thisWs) {
+        ws = null
+        unsubscribeFromSession()
+      }
       scheduleRetry()
     }
-    ws.on('close', onCloseOrError)
-    ws.on('error', () => {
+    thisWs.on('close', onCloseOrError)
+    thisWs.on('error', () => {
       // Error fires before close; close handler does cleanup.
     })
   }
@@ -304,10 +339,15 @@ export function createWorkerConnection(
       retryTimer = null
     }
     unsubscribeFromSession()
-    if (ws) {
-      send({ type: 'bye', reason: '/remote off' })
-      try { ws.close(1000) } catch { /* noop */ }
-      ws = null
+    const oldWs = ws
+    if (oldWs) {
+      try {
+        if (oldWs.readyState === WebSocket.OPEN) {
+          oldWs.send(JSON.stringify({ type: 'bye', reason: '/remote off' }))
+        }
+        oldWs.close(1000)
+      } catch { /* noop */ }
+      if (ws === oldWs) ws = null
     }
   }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { t } from '../i18n'
+import { useLocalStorage } from '../composables/useStorage'
 
 const props = defineProps<{
   initialUrl: string
@@ -36,6 +37,15 @@ function onSubmit(e: Event) {
 function fillCurrentOrigin() {
   url.value = currentOrigin
 }
+
+// Налаштування відображення шапки сесії. Зберігається у localStorage,
+// читається у App.vue. Значення: 'full' | 'compact' | 'hidden'.
+const headerMode = useLocalStorage('session-header-mode', 'full')
+const headerOptions = [
+  { value: 'full', label: 'Повна' },
+  { value: 'compact', label: 'Коротка' },
+  { value: 'hidden', label: 'Схована' },
+] as const
 </script>
 
 <template>
@@ -94,6 +104,29 @@ function fillCurrentOrigin() {
 
       <p v-if="error" class="error">{{ error }}</p>
     </form>
+
+    <!-- Вподобання інтерфейсу. Збережуться у localStorage і застосуються
+         незалежно від того, натискав користувач "Підключитись" чи ні. -->
+    <section class="prefs">
+      <h3>Інтерфейс</h3>
+      <div class="pref-row">
+        <label class="pref-label" for="header-mode">Шапка сесії</label>
+        <div class="segmented" role="radiogroup" aria-label="Шапка сесії">
+          <button
+            v-for="opt in headerOptions"
+            :key="opt.value"
+            type="button"
+            class="seg"
+            :class="{ active: headerMode === opt.value }"
+            role="radio"
+            :aria-checked="headerMode === opt.value"
+            @click="headerMode = opt.value"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -114,26 +147,11 @@ function fillCurrentOrigin() {
 }
 
 form {
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 22px 22px 22px 22px;
-  background: var(--bg-elev);
-  position: relative;
-  box-shadow: var(--shadow-md);
+  padding: 28px 24px;
+  background: transparent;
   min-width: 0;
-}
-
-/* Optional "title bar" on the box — TUI feel, kept but softened */
-form::before {
-  content: "[ connect ]";
-  position: absolute;
-  top: -0.7em;
-  left: 16px;
-  padding: 0 8px;
-  background: var(--bg);
-  color: var(--accent);
-  font-size: var(--font-size-sm);
-  letter-spacing: 0.5px;
 }
 
 h2 {
@@ -171,16 +189,8 @@ label {
   gap: 10px;
   font-size: var(--font-size-sm);
   color: var(--fg-muted);
-  margin-bottom: 6px;
-  padding-left: 14px;
-  position: relative;
+  margin-bottom: 8px;
   min-width: 0;
-}
-.label-row::before {
-  content: "─";
-  position: absolute;
-  left: 0;
-  color: var(--fg-dim);
 }
 .label-row > span:first-child {
   overflow: hidden;
@@ -206,50 +216,45 @@ label {
 input {
   width: 100%;
   box-sizing: border-box;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   color: var(--fg);
   padding: 10px 12px;
-  /* 44px minimum touch target on mobile */
   min-height: 44px;
   font: inherit;
   font-size: var(--font-size-base);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s;
 }
 input:focus {
-  border-color: var(--accent-dim);
-  box-shadow: var(--ring-accent);
+  border-color: var(--accent);
 }
 
 button.primary {
   width: 100%;
   box-sizing: border-box;
-  padding: 11px;
+  padding: 12px;
   min-height: 44px;
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent-dim);
-  border-radius: var(--radius);
+  background: var(--fg);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--font-size-base);
-  letter-spacing: 0.2px;
   cursor: pointer;
-  margin-top: 8px;
-  transition: background 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
+  margin-top: 14px;
+  transition: opacity 0.15s, transform 0.1s;
 }
 button.primary:hover:not(:disabled) {
-  background: var(--accent);
-  color: var(--bg);
-  box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.25);
+  opacity: 0.88;
 }
 button.primary:active:not(:disabled) {
   transform: scale(0.985);
 }
 button.primary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -257,14 +262,66 @@ button.primary:disabled {
   color: var(--danger);
   font-size: var(--font-size-sm);
   margin: 14px 0 0 0;
-  padding-left: 16px;
-  position: relative;
   word-wrap: break-word;
   overflow-wrap: anywhere;
 }
-.error::before {
-  content: "✗";
-  position: absolute;
-  left: 0;
+
+/* ─── Preferences section ─────────────────────────────────────────────── */
+
+.prefs {
+  margin-top: 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.prefs h3 {
+  margin: 0 0 14px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.pref-label {
+  color: var(--fg);
+  font-size: var(--font-size-base);
+  min-width: 0;
+}
+
+.segmented {
+  display: inline-flex;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+.seg {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 28px;
+  transition: background 0.12s, color 0.12s;
+}
+.seg:hover:not(.active) {
+  color: var(--fg);
+}
+.seg.active {
+  background: var(--bg);
+  color: var(--fg);
 }
 </style>

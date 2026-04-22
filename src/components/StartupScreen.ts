@@ -75,7 +75,7 @@ const LOGO_SKYSERVICE = [
 
 // ─── Provider detection ───────────────────────────────────────────────────────
 
-function detectProvider(): { name: string; model: string; baseUrl: string; isLocal: boolean } {
+export function detectProvider(): { name: string; model: string; baseUrl: string; isLocal: boolean } {
   const useGemini = process.env.CLAUDE_CODE_USE_GEMINI === '1' || process.env.CLAUDE_CODE_USE_GEMINI === 'true'
   const useGithub = process.env.CLAUDE_CODE_USE_GITHUB === '1' || process.env.CLAUDE_CODE_USE_GITHUB === 'true'
   const useOpenAI = process.env.CLAUDE_CODE_USE_OPENAI === '1' || process.env.CLAUDE_CODE_USE_OPENAI === 'true'
@@ -169,7 +169,7 @@ function formatStartupContext(tokens: number): string {
   return `${tokens} ctx`
 }
 
-function formatStartupPricingLine(p: FavoriteModelPricing): string {
+export function formatStartupPricingLine(p: FavoriteModelPricing): string {
   const parts: string[] = []
   const { promptPricePerMToken: prompt, completionPricePerMToken: completion } = p
   if (prompt !== null && completion !== null) {

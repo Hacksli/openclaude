@@ -29,7 +29,7 @@ export interface RemoteSession {
   isLoading: Ref<boolean>
   spinnerVerb: Ref<string | null>
   messages: Ref<WireMessage[]>
-  pendingPermission: Ref<RemotePermissionRequest | null>
+  pendingPermissions: Ref<RemotePermissionRequest[]>
   /**
    * requestId, для якого зараз відправлено permission_response і ми
    * чекаємо на підтвердження (permission_clear) або помилку.
@@ -67,7 +67,7 @@ export function useRemoteSession(): RemoteSession {
   const isLoading = ref(false)
   const spinnerVerb = ref<string | null>(null)
   const messages = shallowRef<WireMessage[]>([])
-  const pendingPermission = ref<RemotePermissionRequest | null>(null)
+  const pendingPermissions = ref<RemotePermissionRequest[]>([])
   // Стан "очікуємо відповіді сервера на permission_response": раніше діалог
   // закривався оптимістично (як тільки ws.send не кинув), і якщо сервер
   // тихо губив повідомлення — користувач цього не бачив. Тепер діалог
@@ -185,6 +185,9 @@ export function useRemoteSession(): RemoteSession {
       connectionState.value = 'connected'
       backoff = INITIAL_BACKOFF_MS
       error.value = null
+      // Скидаємо очікування відповіді на permission — нова з'єднання
+      // означає новий цикл, старе очікування більше не актуальне.
+      respondingRequestId.value = null
       pingTimer = window.setInterval(() => {
         send({ type: 'ping' })
       }, PING_INTERVAL_MS)
@@ -199,6 +202,9 @@ export function useRemoteSession(): RemoteSession {
     })
 
     socket.addEventListener('message', ev => {
+      // Ігноруємо повідомлення від сокета, який вже не актуальний
+      // (forceReconnect міг відкрити новий сокет поки старий ще доганяє).
+      if (ws !== socket) return
       markInbound()
       let parsed: unknown
       try {
@@ -211,7 +217,11 @@ export function useRemoteSession(): RemoteSession {
     })
 
     socket.addEventListener('close', ev => {
-      ws = null
+      // Захист від race: якщо forceReconnect вже створив новий сокет,
+      // не зануляємо ws — це новий живий сокет.
+      if (ws === socket) {
+        ws = null
+      }
       clearTimers()
       isLoading.value = false
       if (ev.code === 4001) {
@@ -241,13 +251,40 @@ export function useRemoteSession(): RemoteSession {
     })
   }
 
+  /** Перевіряє, що подія належить поточній вибраній сесії. */
+  function isEventForCurrentSession(event: ServerEvent): boolean {
+    switch (event.type) {
+      case 'hello':
+      case 'snapshot':
+      case 'messages':
+      case 'permission_req':
+      case 'permission_clear':
+      case 'status':
+      case 'error':
+        return event.sessionId === selectedSessionId.value
+      case 'sessions':
+      case 'session_gone':
+      case 'pong':
+        return true
+      default:
+        return true
+    }
+  }
+
   function handleServerEvent(event: ServerEvent): void {
+    // Відкидаємо повідомлення від іншої сесії (race при швидкому
+    // перемиканні або реконнекті).
+    if (!isEventForCurrentSession(event)) {
+      return
+    }
+
     switch (event.type) {
       case 'hello':
         sessionInfo.value = {
           sessionId: event.sessionId,
           cwd: event.cwd,
           serverVersion: event.serverVersion,
+          metadata: event.metadata,
         }
         return
       case 'snapshot':
@@ -255,12 +292,12 @@ export function useRemoteSession(): RemoteSession {
         messages.value = event.messages ?? []
         return
       case 'permission_req':
-        pendingPermission.value = event.request
+        // Додаємо в кінець черги — так декілька підряд не перезапишуть
+        // один одного; UI бачить завжди перший (head-of-queue).
+        pendingPermissions.value = [...pendingPermissions.value, event.request]
         return
       case 'permission_clear':
-        if (pendingPermission.value?.requestId === event.requestId) {
-          pendingPermission.value = null
-        }
+        pendingPermissions.value = pendingPermissions.value.filter(r => r.requestId !== event.requestId)
         // Скидаємо "очікування відповіді", якщо сервер підтвердив саме цей
         // запит — тепер UI може дозволити нові дії.
         if (respondingRequestId.value === event.requestId) {
@@ -283,11 +320,16 @@ export function useRemoteSession(): RemoteSession {
       case 'sessions':
         sessions.value = event.sessions ?? []
         return
+      case 'pong':
+        // Daemon відповів на ping — оновлюємо lastInboundAt, щоб
+        // watchdog не спрацював на зайвий forceReconnect.
+        markInbound()
+        return
       case 'session_gone':
         if (selectedSessionId.value === event.sessionId) {
           selectedSessionId.value = ''
           messages.value = []
-          pendingPermission.value = null
+          pendingPermissions.value = []
           // Якщо ми чекали підтвердження для цієї сесії — скидаємо, UI
           // повинен реагувати на зникнення сесії як на завершення.
           respondingRequestId.value = null
@@ -329,7 +371,7 @@ export function useRemoteSession(): RemoteSession {
     desiredSessionId = ''
     currentUrl.value = desiredUrl
     messages.value = []
-    pendingPermission.value = null
+    pendingPermissions.value = []
     // При повному переконекті вся сесія скидається — зокрема й очікування
     // підтвердження на permission_response (воно не переживе зміну з'єднання).
     respondingRequestId.value = null
@@ -355,7 +397,7 @@ export function useRemoteSession(): RemoteSession {
     selectedSessionId.value = sessionId
     desiredSessionId = sessionId
     messages.value = []
-    pendingPermission.value = null
+    pendingPermissions.value = []
     // Перемикання сесії анулює попереднє очікування відповіді —
     // новий server-snapshot перерендерить актуальний діалог, якщо є.
     respondingRequestId.value = null
@@ -506,7 +548,7 @@ export function useRemoteSession(): RemoteSession {
     isLoading,
     spinnerVerb,
     messages,
-    pendingPermission,
+    pendingPermissions,
     respondingRequestId,
     error,
     sessionInfo,

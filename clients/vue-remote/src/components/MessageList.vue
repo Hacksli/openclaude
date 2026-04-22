@@ -10,6 +10,8 @@ const props = defineProps<{
   messages: WireMessage[]
   isLoading?: boolean
   spinnerVerb?: string | null
+  /** Кнопка скролу ховається коли з'являється PermissionBanner поверх. */
+  bannerShown?: boolean
 }>()
 
 const scrollRoot = ref<HTMLElement | null>(null)
@@ -63,14 +65,17 @@ defineExpose({ jumpToBottom })
       <ThinkingIndicator v-if="isLoading" :verb="spinnerVerb ?? undefined" />
     </div>
 
-    <button
-      v-if="!pinned && rendered.length > 0"
-      type="button"
-      class="jump-latest"
-      @click="jumpToBottom"
-    >
-      {{ t.messages.newBadge }}
-    </button>
+    <div v-if="!pinned && !props.bannerShown && rendered.length > 0" class="jump-wrap">
+      <button
+        type="button"
+        class="jump-latest"
+        @click="jumpToBottom"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 4v12M5 11l5 5 5-5"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -117,24 +122,32 @@ defineExpose({ jumpToBottom })
 }
 
 .jump-latest {
-  position: sticky;
-  bottom: 8px;
-  align-self: center;
+  position: fixed;
+  bottom: 80px; /* above the prompt composer (~60px) + padding */
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--bg-elev);
   color: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 999px;
+  border-radius: var(--radius);
   padding: 6px 16px;
   font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   box-shadow: var(--shadow-md);
   transition: background 0.15s, transform 0.1s;
+  z-index: 99;
 }
 .jump-latest:hover {
   background: rgba(var(--accent-rgb), 0.12);
 }
 .jump-latest:active {
-  transform: scale(0.97);
+  transform: translateX(-50%) scale(0.97);
+}
+
+.arrow-down {
+  margin-right: 6px;
+  line-height: 1;
+  display: inline-block;
 }
 </style>

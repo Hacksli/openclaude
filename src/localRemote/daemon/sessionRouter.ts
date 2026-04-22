@@ -12,6 +12,7 @@ import type {
   DaemonToWorkerEvent,
   RemotePermissionRequest,
   ServerEvent,
+  SessionMetadata,
   SessionSummary,
   WorkerToDaemonEvent,
 } from '../types.js'
@@ -26,6 +27,7 @@ export type WorkerEntry = {
   title: string
   startedAt: number
   serverVersion: string
+  metadata?: SessionMetadata
   messages: Message[]
   isLoading: boolean
   spinnerVerb?: string
@@ -62,6 +64,7 @@ export class SessionRouter {
       title: event.title,
       startedAt: event.startedAt,
       serverVersion: event.serverVersion,
+      metadata: event.metadata,
       messages: [],
       isLoading: false,
       pendingPermissions: new Map(),
@@ -73,13 +76,22 @@ export class SessionRouter {
     return entry
   }
 
-  unregisterWorker(sessionId: string): void {
-    this.workers.delete(sessionId)
+  unregisterWorker(entry: WorkerEntry): void {
+    // Guard against race: if a worker reconnects with the same sessionId,
+    // the old WS closing must not delete the new entry.
+    const current = this.workers.get(entry.sessionId)
+    if (current !== entry) {
+      logForDebugging(
+        `[sessionRouter] unregisterWorker skipped: stale entry for sessionId=${entry.sessionId}`,
+      )
+      return
+    }
+    this.workers.delete(entry.sessionId)
 
     // Notify clients subscribed to this session.
     for (const client of this.clients) {
-      if (client.subscribedSession === sessionId) {
-        client.send({ type: 'session_gone', sessionId })
+      if (client.subscribedSession === entry.sessionId) {
+        client.send({ type: 'session_gone', sessionId: entry.sessionId })
         client.subscribedSession = ''
       }
     }
@@ -95,34 +107,37 @@ export class SessionRouter {
     switch (event.type) {
       case 'messages':
         worker.messages = event.messages
-        this.relayToSubscribers(sessionId, { type: 'messages', messages: event.messages })
+        this.relayToSubscribers(sessionId, { type: 'messages', sessionId, messages: event.messages })
         break
 
       case 'status':
         worker.isLoading = event.isLoading
         worker.spinnerVerb = event.isLoading ? event.spinnerVerb : undefined
-        this.relayToSubscribers(sessionId, { type: 'status', isLoading: event.isLoading, spinnerVerb: worker.spinnerVerb })
+        this.relayToSubscribers(sessionId, { type: 'status', sessionId, isLoading: event.isLoading, spinnerVerb: worker.spinnerVerb })
         this.broadcastSessionList()
         break
 
       case 'permission_req':
         worker.pendingPermissions.set(event.request.requestId, event.request)
-        this.relayToSubscribers(sessionId, { type: 'permission_req', request: event.request })
+        this.relayToSubscribers(sessionId, { type: 'permission_req', sessionId, request: event.request })
         this.broadcastSessionList()
         break
 
       case 'permission_clear':
         worker.pendingPermissions.delete(event.requestId)
-        this.relayToSubscribers(sessionId, { type: 'permission_clear', requestId: event.requestId })
+        this.relayToSubscribers(sessionId, { type: 'permission_clear', sessionId, requestId: event.requestId })
         this.broadcastSessionList()
         break
 
       case 'error':
-        this.relayToSubscribers(sessionId, { type: 'error', message: event.message })
+        this.relayToSubscribers(sessionId, { type: 'error', sessionId, message: event.message })
         break
 
       case 'bye':
-        this.unregisterWorker(sessionId)
+        {
+          const worker = this.workers.get(sessionId)
+          if (worker) this.unregisterWorker(worker)
+        }
         break
 
       // 'register' is handled separately.
@@ -157,7 +172,7 @@ export class SessionRouter {
       case 'prompt': {
         const worker = this.workers.get(client.subscribedSession)
         if (!worker) {
-          client.send({ type: 'error', message: 'Session not found or disconnected.' })
+          client.send({ type: 'error', sessionId: client.subscribedSession, message: 'Session not found or disconnected.' })
           return
         }
         worker.send({ type: 'prompt', text: event.text })
@@ -165,6 +180,9 @@ export class SessionRouter {
       }
 
       case 'permission_response': {
+        logForDebugging(
+          `[sessionRouter] permission_response from client: requestId=${event.requestId}, behavior=${event.behavior}, subscribedSession=${client.subscribedSession}`,
+        )
         // Зміна: раніше при відсутності прив'язки клієнта до сесії відповідь
         // на запит дозволу тихо відкидалась — і в терміналі нічого не
         // відбувалось, хоча браузер показував "успіх". Тепер:
@@ -198,6 +216,7 @@ export class SessionRouter {
             )
             client.send({
               type: 'error',
+              sessionId: '',
               message: `No active session for permission ${event.requestId}. Reconnect or select a session.`,
             })
             return
@@ -212,7 +231,7 @@ export class SessionRouter {
             `[sessionRouter] permission_response ignored: requestId=${event.requestId} no longer pending on worker=${worker.sessionId}`,
           )
           worker.pendingPermissions.delete(event.requestId)
-          client.send({ type: 'permission_clear', requestId: event.requestId })
+          client.send({ type: 'permission_clear', sessionId: worker.sessionId, requestId: event.requestId })
           this.broadcastSessionList()
           return
         }
@@ -227,12 +246,13 @@ export class SessionRouter {
       }
 
       case 'ping':
+        client.send({ type: 'pong' })
         break
 
       case 'close_session': {
         const worker = this.workers.get(event.sessionId)
         if (!worker) {
-          client.send({ type: 'error', message: `Session "${event.sessionId}" not found.` })
+          client.send({ type: 'error', sessionId: event.sessionId, message: `Session "${event.sessionId}" not found.` })
           return
         }
         logForDebugging(`[sessionRouter] close_session request from client for session ${event.sessionId}, reason: ${event.reason || 'none'}`)
@@ -249,6 +269,7 @@ export class SessionRouter {
         if (!result.ok) {
           client.send({
             type: 'error',
+            sessionId: '',
             message: `Не вдалося відкрити нову консоль: ${result.error}`,
           })
         }
@@ -267,7 +288,7 @@ export class SessionRouter {
           }
         }
         // Send acknowledgment to client
-        client.send({ type: 'error', message: 'Daemon shutting down...' })
+        client.send({ type: 'error', sessionId: '', message: 'Daemon shutting down...' })
         // Schedule daemon shutdown after a short delay
         setTimeout(() => {
           logForDebugging('[sessionRouter] initiating daemon shutdown')
@@ -283,22 +304,31 @@ export class SessionRouter {
     client.subscribedSession = sessionId
     const worker = this.workers.get(sessionId)
     if (!worker) {
-      client.send({ type: 'error', message: `Session "${sessionId}" not found.` })
+      client.send({ type: 'error', sessionId, message: `Session "${sessionId}" not found.` })
       return
     }
 
-    // Send snapshot for the selected session.
+    // Send snapshot for the selected session. Якщо worker.messages уже
+    // заповнений (типовий випадок — worker push'нув на 'hello') — браузер
+    // одразу побачить історію. Якщо ні — просимо worker-а переслати стан;
+    // він прилетить через 'messages' event і relayToSubscribers передасть
+    // уже підписаному клієнту. Це saft-net для ситуацій, коли worker
+    // зареєстрував, але snapshot-push чомусь не спрацював (reconnect,
+    // старша версія, race).
     client.send({
       type: 'hello',
       sessionId: worker.sessionId,
       cwd: worker.cwd,
       serverVersion: worker.serverVersion,
+      metadata: worker.metadata,
     })
-    client.send({ type: 'snapshot', messages: worker.messages })
-    client.send({ type: 'status', isLoading: worker.isLoading, spinnerVerb: worker.spinnerVerb })
+    client.send({ type: 'snapshot', sessionId: worker.sessionId, messages: worker.messages })
+    client.send({ type: 'status', sessionId: worker.sessionId, isLoading: worker.isLoading, spinnerVerb: worker.spinnerVerb })
     for (const req of worker.pendingPermissions.values()) {
-      client.send({ type: 'permission_req', request: req })
+      client.send({ type: 'permission_req', sessionId: worker.sessionId, request: req })
     }
+    // Завжди просимо свіжий стан — у worker'а може бути новіший.
+    try { worker.send({ type: 'request_state' }) } catch { /* noop */ }
   }
 
   private relayToSubscribers(sessionId: string, event: ServerEvent): void {
@@ -320,6 +350,9 @@ export class SessionRouter {
         startedAt: w.startedAt,
         isLoading: w.isLoading,
         hasPendingPermission: w.pendingPermissions.size > 0,
+        providerName: w.metadata?.providerName,
+        model: w.metadata?.model,
+        isLocal: w.metadata?.isLocal,
       })
     }
     return list

@@ -60,7 +60,7 @@ export function bindLocalRemoteBridge(
   unsubscribers.push(
     events.on('messagesChanged', (messages: Message[]) => {
       latestMessages = filterForWire(messages)
-      server.send({ type: 'messages', messages: latestMessages })
+      server.send({ type: 'messages', sessionId: context.sessionId, messages: latestMessages })
     }),
   )
 
@@ -68,21 +68,21 @@ export function bindLocalRemoteBridge(
     events.on('loadingChanged', (isLoading: boolean, spinnerVerb?: string) => {
       latestLoading = isLoading
       latestSpinnerVerb = isLoading ? spinnerVerb : undefined
-      server.send({ type: 'status', isLoading, spinnerVerb: latestSpinnerVerb })
+      server.send({ type: 'status', sessionId: context.sessionId, isLoading, spinnerVerb: latestSpinnerVerb })
     }),
   )
 
   unsubscribers.push(
     events.on('permissionPending', (request: RemotePermissionRequest) => {
       pending.set(request.requestId, request)
-      server.send({ type: 'permission_req', request })
+      server.send({ type: 'permission_req', sessionId: context.sessionId, request })
     }),
   )
 
   unsubscribers.push(
     events.on('permissionResolved', (requestId: string) => {
       if (pending.delete(requestId)) {
-        server.send({ type: 'permission_clear', requestId })
+        server.send({ type: 'permission_clear', sessionId: context.sessionId, requestId })
       }
     }),
   )
@@ -94,10 +94,10 @@ export function bindLocalRemoteBridge(
       cwd: context.cwd,
       serverVersion: context.serverVersion,
     })
-    server.send({ type: 'snapshot', messages: latestMessages })
-    server.send({ type: 'status', isLoading: latestLoading, spinnerVerb: latestSpinnerVerb })
+    server.send({ type: 'snapshot', sessionId: context.sessionId, messages: latestMessages })
+    server.send({ type: 'status', sessionId: context.sessionId, isLoading: latestLoading, spinnerVerb: latestSpinnerVerb })
     for (const req of pending.values()) {
-      server.send({ type: 'permission_req', request: req })
+      server.send({ type: 'permission_req', sessionId: context.sessionId, request: req })
     }
   }
 
@@ -108,6 +108,7 @@ export function bindLocalRemoteBridge(
         if (!submitter) {
           server.send({
             type: 'error',
+            sessionId: context.sessionId,
             message: 'No active session. Open Neural Network first.',
           })
           return
@@ -122,6 +123,7 @@ export function bindLocalRemoteBridge(
           )
           server.send({
             type: 'error',
+            sessionId: context.sessionId,
             message: 'Prompt rejected by session.',
           })
         }
@@ -138,7 +140,7 @@ export function bindLocalRemoteBridge(
         //   ok = true  → settler знайдено і викликано, діалог більше не потрібен;
         //   ok = false → settler відсутній (розв'язано раніше / race), теж
         //                закриваємо діалог.
-        server.send({ type: 'permission_clear', requestId: event.requestId })
+        server.send({ type: 'permission_clear', sessionId: context.sessionId, requestId: event.requestId })
         return
       }
       case 'ping':
@@ -149,6 +151,7 @@ export function bindLocalRemoteBridge(
         // Send acknowledgement
         server.send({
           type: 'error',
+          sessionId: context.sessionId,
           message: 'Console session is shutting down...'
         })
         // Trigger graceful exit after a short delay

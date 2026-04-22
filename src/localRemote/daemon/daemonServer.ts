@@ -265,7 +265,7 @@ function handleWorkerSocket(ws: WebSocket, router: SessionRouter): void {
 
   const onClose = () => {
     if (entry) {
-      router.unregisterWorker(entry.sessionId)
+      router.unregisterWorker(entry)
       entry = null
     }
   }
@@ -308,7 +308,20 @@ async function serveStatic(
   urlPath: string,
 ): Promise<void> {
   const rel = urlPath === '/' ? 'index.html' : urlPath.slice(1)
-  const file = await findClientFile(rel)
+  let file = await findClientFile(rel)
+
+  // SPA-fallback: Vue Router у history-mode генерує URL'и типу /chat/:id,
+  // за якими нема статичного файлу. Якщо запит схожий на сторінку — тобто
+  // не має розширення (отже не ресурс із MIME), і метод GET/HEAD — віддаємо
+  // index.html, щоб SPA змонтувалась і router сам розпарсив URL. Запити
+  // з розширенням (.js, .css, .png тощо) що не знайдені — реальний 404.
+  if (!file) {
+    const hasExt = /\.[a-z0-9]+$/i.test(urlPath)
+    if (!hasExt) {
+      file = await findClientFile('index.html')
+    }
+  }
+
   if (!file) {
     res.statusCode = 404
     res.setHeader('content-type', 'text/plain; charset=utf-8')

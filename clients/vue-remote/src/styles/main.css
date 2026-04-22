@@ -1,45 +1,104 @@
-:root {
-  /* Palette synced with the TUI dark theme (src/utils/theme.ts darkTheme).
-     Keep in sync when the TUI palette changes. */
-  --bg: #000000;                       /* terminal black */
-  --bg-elev: #373737;                  /* userMessageBackground rgb(55,55,55) */
-  --bg-elev-hover: #464646;            /* userMessageBackgroundHover rgb(70,70,70) */
-  --bg-chip: #2c323e;                  /* messageActionsBackground rgb(44,50,62) */
-  --fg: #ffffff;                       /* text rgb(255,255,255) */
-  --fg-muted: #aaaaaa;                 /* світліший для кращої читабельності на мобільних */
-  --fg-dim: #505050;                   /* subtle rgb(80,80,80) */
-  --accent: #e88a6a;                   /* світліший відтінок оранжевого для кращого контрасту */
-  --accent-dim: #c0c8ff;               /* світліший блакитний для permission */
-  --accent-rgb: 232, 138, 106;         /* оновлено для нового акцентного кольору */
-  --permission: #c0c8ff;               /* синхронізовано з accent-dim */
-  --success: #4eba65;                  /* success rgb(78,186,101) */
-  --danger: #ff6b80;                   /* error rgb(255,107,128) */
-  --warning: #ffc107;                  /* warning rgb(255,193,7) */
-  --user: #ffd166;                     /* м'якший жовтий для користувацьких повідомлень */
-  --bash-border: #fd5db1;             /* bashBorder rgb(253,93,177) */
-  --plan-mode: #489690;               /* planMode rgb(72,150,140) */
-  --auto-accept: #af87ff;             /* autoAccept rgb(175,135,255) */
-  --prompt-border: #888888;            /* promptBorder rgb(136,136,136) */
-  --border: #373737;                   /* match bg-elev for subtle borders */
-  --border-strong: #505050;            /* subtle gray */
-  --selection-bg: rgba(38, 79, 120, 0.6); /* selectionBg */
-  --radius: 8px;                      /* більші радіуси для сучасного вигляду */
+/* ─── Design tokens ──────────────────────────────────────────────────────
+ * Monochromatic, minimalist base + single indigo accent. Dark theme is
+ * default (pure black bg); light theme activated by [data-theme="light"]
+ * on <html>. Toggle logic lives in App.vue.
+ */
+
+:root,
+:root[data-theme='dark'] {
+  /* Surface — тепліший "warm dark" замість пласкої чорноти */
+  --bg: #252525;
+  --bg-elev: #2d2d2d;
+  --bg-elev-hover: #333333;
+  --bg-chip: #2a2a2a;
+
+  /* Text */
+  --fg: #ededed;
+  --fg-muted: #969696;
+  --fg-dim: #616161;
+
+  /* Accent — теплий жовтий #fde68a. Один-
+     єдиний колір у всьому UI (активні стани, фокус, прогрес). */
+  --accent: #fde68a;
+  --accent-dim: #fceeb5;
+  --accent-rgb: 253, 230, 138;
+
+  /* Semantic */
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --permission: var(--accent);
+  --user: #fde68a;
+
+  /* Legacy aliases (залишено щоб не чіпати компоненти) */
+  --bash-border: var(--accent);
+  --plan-mode: var(--accent-dim);
+  --auto-accept: var(--accent-dim);
+  --prompt-border: var(--border-strong);
+
+  /* Structure */
+  --border: #333333;
+  --border-strong: #404040;
+  --selection-bg: rgba(240, 148, 100, 0.28);
+
+  --radius: 8px;
   --radius-sm: 6px;
   --radius-lg: 12px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
-  --ring-accent: 0 0 0 1px var(--accent-dim), 0 0 0 4px rgba(var(--accent-rgb), 0.15);
-
-  --font-mono:
-    "JetBrains Mono", "Fira Code", "SFMono-Regular", ui-monospace, Consolas,
-    "Liberation Mono", Menlo, Monaco, "Courier New", monospace;
-  --font-size-base: 13.5px;
-  --font-size-sm: 12.5px;
-  --line-height: 1.5;
+  /* Майже плоский — для мінімалізму. На темряві взагалі тіні ледве видно. */
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --ring-accent: 0 0 0 1px var(--accent-dim);
 
   color-scheme: dark;
 }
+
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --bg-elev: #fafafa;
+  --bg-elev-hover: #f4f4f5;
+  --bg-chip: #f4f4f5;
+
+  --fg: #0a0a0a;
+  --fg-muted: #525252;
+  --fg-dim: #a3a3a3;
+
+  /* Для білої теми беремо глибший жовтий — на білому світлий
+     #fde68a виглядає пастельно і погано читається. */
+  --accent: #b45309;
+  --accent-dim: #d97706;
+  --accent-rgb: 180, 83, 9;
+
+  --success: #059669;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --user: #b45309;
+
+  --border: #ebebeb;
+  --border-strong: #d4d4d4;
+  --selection-bg: rgba(180, 83, 9, 0.18);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --ring-accent: 0 0 0 1px var(--accent-dim);
+
+  color-scheme: light;
+}
+
+/* ─── Typography ──────────────────────────────────────────────────────── */
+
+:root {
+  /* Моноширинний шрифт для всього UI — як в TUI. */
+  --font-mono:
+    'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Consolas,
+    'Liberation Mono', Menlo, Monaco, 'Courier New', monospace;
+  --font-sans: var(--font-mono);
+  --font-size-base: 16px;
+  --font-size-sm: 13px;
+  --line-height: 1.5;
+}
+
+/* ─── Base layout ─────────────────────────────────────────────────────── */
 
 *,
 *::before,
@@ -64,16 +123,16 @@ body {
   width: 100%;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--font-size-base);
   line-height: var(--line-height);
-  font-variant-ligatures: none;
-  font-feature-settings: "calt" 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow: hidden;
   overscroll-behavior: none;
+  /* Плавна зміна теми — щоб перемикання не різало око */
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 #app {
@@ -93,7 +152,6 @@ body {
   flex-direction: column;
 }
 
-/* Remove tap highlight on iOS */
 button,
 input,
 textarea {
@@ -101,13 +159,19 @@ textarea {
   font-family: inherit;
 }
 
-/* Selection — matches TUI selectionBg */
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
 ::selection {
   background: var(--selection-bg);
   color: var(--fg);
 }
 
-/* Scrollbars — slim, subtle, softly rounded */
+/* Slim scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -127,25 +191,19 @@ textarea {
   border: 2px solid transparent;
 }
 
-/*
- * Prevent iOS Safari from auto-zooming on input focus.
- * font-size ≥ 16px disables the zoom behaviour.
- * We only override the effective size, not the variable, so layout elsewhere
- * remains stable (--font-size-base is still 13.5 px for all other elements).
- */
+/* iOS: 16px на фокусі щоб прибрати auto-zoom */
 input,
 textarea,
 select {
   font-size: max(var(--font-size-base), 16px) !important;
-  transform: translateZ(0); /* Примусове апаратне прискорення */
-  -webkit-user-select: text; /* Дозволити вибір тексту */
+  transform: translateZ(0);
+  -webkit-user-select: text;
 }
 
-/* Optiomize touch interactions for mobile devices */
 @media (max-width: 768px) {
   input,
   textarea,
   select {
-    touch-action: manipulation; /* Оптимізувати для дотиків */
+    touch-action: manipulation;
   }
 }

@@ -7,14 +7,14 @@ const props = defineProps<{
   connectionState: ConnectionState
   isLoading: boolean
   sessionCwd?: string | null
-  canOpenSettings: boolean
 }>()
 
 const emit = defineEmits<{
-  openSettings: []
-  shutdown: []
+  openDrawer: []
 }>()
 
+// Визначаємо лише статус крапки. Текстовий лейбл показуємо ТІЛЬКИ коли
+// щось не ОК — у нормі хочемо максимально порожній верх.
 const dotClass = computed(() => {
   switch (props.connectionState) {
     case 'connected':
@@ -29,9 +29,9 @@ const dotClass = computed(() => {
   }
 })
 
-const label = computed(() => {
+const statusLabel = computed(() => {
   if (props.connectionState === 'connected') {
-    return props.isLoading ? t.status.thinking : t.status.connected
+    return props.isLoading ? t.status.thinking : null
   }
   if (props.connectionState === 'connecting') return t.status.connecting
   if (props.connectionState === 'reconnecting') return t.status.reconnecting
@@ -42,19 +42,18 @@ const label = computed(() => {
 
 <template>
   <header class="statusbar">
-    <div class="state">
-      <span :class="dotClass"></span>
-      <span class="label">{{ label }}</span>
-      <span v-if="sessionCwd" class="cwd">· {{ sessionCwd }}</span>
-    </div>
-    <button
-      v-if="canOpenSettings"
-      class="settings"
-      aria-label="Settings"
-      @click="emit('openSettings')"
-    >
-      ⚙
+    <button class="menu-btn" aria-label="Меню" @click="emit('openDrawer')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12h18M3 6h18M3 18h18" />
+      </svg>
     </button>
+
+    <div class="center">
+      <span v-if="sessionCwd" class="cwd">{{ sessionCwd }}</span>
+      <span v-if="statusLabel" class="status-label">{{ statusLabel }}</span>
+    </div>
+
+    <span :class="dotClass" :title="statusLabel ?? t.status.connected"></span>
   </header>
 </template>
 
@@ -63,105 +62,86 @@ const label = computed(() => {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  padding-top: max(8px, env(safe-area-inset-top));
-  /* Safe-area on the inner bar in case the root app's insets are 0 but the
-     device still notches the left/right edge (e.g. landscape iOS). */
+  gap: 12px;
+  padding: 6px 12px;
+  padding-top: max(6px, env(safe-area-inset-top));
   padding-left: max(12px, env(safe-area-inset-left));
   padding-right: max(12px, env(safe-area-inset-right));
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg-elev-hover) 100%);
-  min-height: 40px;
+  background: var(--bg);
+  min-height: 44px;
   font-size: var(--font-size-sm);
-  /* Ensure this row never overflows its flex parent — the source of the
-     bug where the header pushed off the right edge on narrow screens. */
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
-  backdrop-filter: saturate(1.1);
 }
 
-.state {
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.menu-btn:hover {
+  color: var(--fg);
+  background: var(--bg-elev);
+}
+.menu-btn:active { transform: scale(0.94); }
+
+.center {
   flex: 1 1 0;
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
   color: var(--fg-muted);
-  font-size: var(--font-size-sm);
-  min-width: 0;
-  overflow: hidden;
-}
-
-.label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex-shrink: 1;
 }
 
 .cwd {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--font-size-sm);
-  color: var(--fg-dim);
+  color: var(--fg);
+  font-weight: 500;
   min-width: 0;
-  flex-shrink: 1;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.status-label {
+  color: var(--fg-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--fg-dim);
-  transition: background-color 0.25s, box-shadow 0.25s;
+  transition: background-color 0.25s;
 }
-.dot.on {
-  background: var(--success);
-  box-shadow: 0 0 0 2px rgba(78, 186, 101, 0.18);
-}
-.dot.off {
-  background: #555b66;
-}
-.dot.err {
-  background: var(--danger);
-  box-shadow: 0 0 0 2px rgba(255, 107, 128, 0.18);
-}
+.dot.on { background: var(--success); }
+.dot.off { background: var(--fg-dim); }
+.dot.err { background: var(--danger); }
 .dot.pulsing {
   background: var(--accent);
   animation: pulse 1.4s ease-in-out infinite;
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
-
-.settings {
-  background: transparent;
-  border: none;
-  color: var(--fg-muted);
-  font-size: 16px;
-  cursor: pointer;
-  /* Big enough for a finger on mobile; HIG minimum is 44px */
-  min-width: 36px;
-  min-height: 32px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  line-height: 1;
-  flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
-}
-.settings:hover {
-  color: var(--accent);
-  background: var(--bg-chip);
-}
-.settings:active {
-  transform: scale(0.94);
-}
-
 </style>

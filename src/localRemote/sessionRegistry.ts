@@ -10,6 +10,7 @@
 
 import type { PermissionBehavior } from './types.js'
 import * as events from './localRemoteEvents.js'
+import { logForDebugging } from '../utils/debug.js'
 
 export type PromptSubmitter = (text: string) => void
 
@@ -63,7 +64,16 @@ export function settlePermission(
   message?: string,
 ): boolean {
   const settler = permissionSettlers.get(requestId)
-  if (!settler) return false
+  if (!settler) {
+    // Детальне логування для діагностики
+    const keys = Array.from(permissionSettlers.keys());
+    console.error(
+      `[sessionRegistry] settlePermission FAILED: no settler for requestId=${requestId}. ` +
+      `Registered settlers: ${keys.length} (${keys.join(', ') || 'none'})`
+    );
+    return false;
+  }
+  logForDebugging(`[sessionRegistry] settlePermission OK: requestId=${requestId}`);
   const ok = settler(requestId, behavior, message)
   if (ok) {
     permissionSettlers.delete(requestId)
