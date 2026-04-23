@@ -136,7 +136,7 @@ export function createWorkerConnection(
           return
         }
         try {
-          submitter(event.text)
+          submitter(event.text, event.attachments)
         } catch (err) {
           logForDebugging(`[workerConnection] prompt submission failed: ${String(err)}`)
           send({ type: 'error', message: 'Prompt rejected by session.' })

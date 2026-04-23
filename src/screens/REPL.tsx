@@ -278,7 +278,7 @@ import { useIssueFlagBanner } from '../hooks/useIssueFlagBanner.js';
 import { CompanionSprite, CompanionFloatingBubble, MIN_COLS_FOR_FULL_SPRITE } from '../buddy/CompanionSprite.js';
 import { isBuddyEnabled } from '../buddy/feature.js';
 import { fireCompanionObserver } from '../buddy/observer.js';
-import { publishLoading as publishRemoteLoading, publishMessages as publishRemoteMessages, publishPendingPermission as publishRemotePendingPermission, publishResolvedPermission as publishRemoteResolvedPermission, setRemoteSubmitter, startLocalRemote, stopLocalRemote } from '../localRemote/index.js';
+import { publishLoading as publishRemoteLoading, publishMessages as publishRemoteMessages, publishPendingPermission as publishRemotePendingPermission, publishResolvedPermission as publishRemoteResolvedPermission, setRemoteSubmitter, startLocalRemote, stopLocalRemote, setPendingRemoteAttachments, getPendingRemoteAttachments } from '../localRemote/index.js';
 import { DevBar } from '../components/DevBar.js';
 // Session manager removed - using AppState now
 import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js';
@@ -1303,9 +1303,13 @@ export function REPL({
   // and we want setRemoteSubmitter to register exactly once on mount.
   const remoteOnSubmitRef = useRef<typeof onSubmit | null>(null);
   useEffect(() => {
-    const unregister = setRemoteSubmitter(text => {
+    const unregister = setRemoteSubmitter((text, attachments) => {
       const fn = remoteOnSubmitRef.current;
       if (!fn) return;
+      // Store attachments so onSubmit can inject them into pastedContents.
+      if (attachments && attachments.length > 0) {
+        setPendingRemoteAttachments(attachments);
+      }
       void fn(text, {
         setCursorOffset: () => { },
         clearBuffer: () => { },

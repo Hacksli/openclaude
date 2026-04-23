@@ -26,6 +26,8 @@ import {
   registerPermissionSettler,
   setPromptSubmitter,
   unregisterPermissionSettler,
+  getPendingRemoteAttachments,
+  setPendingRemoteAttachments,
   type PermissionSettler,
   type PromptSubmitter,
 } from './sessionRegistry.js'

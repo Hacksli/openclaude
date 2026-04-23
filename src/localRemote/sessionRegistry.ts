@@ -9,10 +9,11 @@
  */
 
 import type { PermissionBehavior } from './types.js'
+import type { ImageAttachment } from './types.js'
 import * as events from './localRemoteEvents.js'
 import { logForDebugging } from '../utils/debug.js'
 
-export type PromptSubmitter = (text: string) => void
+export type PromptSubmitter = (text: string, attachments?: ImageAttachment[]) => void
 
 export type PermissionSettler = (
   requestId: string,
@@ -21,6 +22,20 @@ export type PermissionSettler = (
 ) => boolean
 
 let promptSubmitter: PromptSubmitter | null = null
+
+// Pending image attachments sent from the remote client — consumed by REPL
+// on next submit so pastedContents can include them.
+let pendingRemoteAttachments: ImageAttachment[] | null = null
+
+export function getPendingRemoteAttachments(): ImageAttachment[] | null {
+  return pendingRemoteAttachments
+}
+
+export function setPendingRemoteAttachments(
+  attachments: ImageAttachment[] | null,
+): void {
+  pendingRemoteAttachments = attachments
+}
 
 // Multiple permission dialogs may be active at once (rare but possible).
 // Each registers its own settler keyed by requestId.

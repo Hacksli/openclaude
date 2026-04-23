@@ -175,7 +175,7 @@ export class SessionRouter {
           client.send({ type: 'error', sessionId: client.subscribedSession, message: 'Session not found or disconnected.' })
           return
         }
-        worker.send({ type: 'prompt', text: event.text })
+        worker.send({ type: 'prompt', text: event.text, attachments: event.attachments })
         break
       }
 

@@ -137,6 +137,82 @@ function onDenyClick() {
 
 // ─── Generic permission (non-AskUserQuestion) ────────────────────────────────
 
+type DiffLine = { type: 'removed' | 'added' | 'common'; text: string; marker: string }
+
+function computeDiff(oldStr: string, newStr: string): DiffLine[] {
+  const oldLines = oldStr.split('\n')
+  const newLines = newStr.split('\n')
+  const result: DiffLine[] = []
+  let i = 0
+  let j = 0
+
+  while (i < oldLines.length && j < newLines.length) {
+    if (oldLines[i] === newLines[j]) {
+      result.push({ type: 'common', text: oldLines[i], marker: ' ' })
+      i++
+      j++
+    } else {
+      let foundOldInNew = -1
+      for (let k = j; k < newLines.length && k < j + 30; k++) {
+        if (newLines[k] === oldLines[i]) {
+          foundOldInNew = k
+          break
+        }
+      }
+      let foundNewInOld = -1
+      for (let k = i; k < oldLines.length && k < i + 30; k++) {
+        if (oldLines[k] === newLines[j]) {
+          foundNewInOld = k
+          break
+        }
+      }
+
+      if (foundOldInNew !== -1 && (foundNewInOld === -1 || foundOldInNew - j <= foundNewInOld - i)) {
+        for (let k = j; k < foundOldInNew; k++) {
+          result.push({ type: 'added', text: newLines[k], marker: '+' })
+        }
+        result.push({ type: 'common', text: oldLines[i], marker: ' ' })
+        i++
+        j = foundOldInNew + 1
+      } else if (foundNewInOld !== -1) {
+        for (let k = i; k < foundNewInOld; k++) {
+          result.push({ type: 'removed', text: oldLines[k], marker: '-' })
+        }
+        result.push({ type: 'common', text: newLines[j], marker: ' ' })
+        j++
+        i = foundNewInOld + 1
+      } else {
+        result.push({ type: 'removed', text: oldLines[i], marker: '-' })
+        result.push({ type: 'added', text: newLines[j], marker: '+' })
+        i++
+        j++
+      }
+    }
+  }
+
+  while (i < oldLines.length) {
+    result.push({ type: 'removed', text: oldLines[i], marker: '-' })
+    i++
+  }
+  while (j < newLines.length) {
+    result.push({ type: 'added', text: newLines[j], marker: '+' })
+    j++
+  }
+
+  return result
+}
+
+const diffResult = computed<DiffLine[] | null>(() => {
+  if (askQuestions.value) return null
+  const v = props.request.input
+  if (!v || typeof v !== 'object') return null
+  const inp = v as Record<string, unknown>
+  if (typeof inp.old_string === 'string' && typeof inp.new_string === 'string') {
+    return computeDiff(inp.old_string, inp.new_string)
+  }
+  return null
+})
+
 const inputText = computed(() => {
   if (askQuestions.value) return ''
   const v = props.request.input
@@ -259,7 +335,19 @@ const inputText = computed(() => {
     <div v-if="request.description" class="description">
       {{ request.description }}
     </div>
-    <pre v-if="inputText" class="input">{{ inputText }}</pre>
+    <!-- Git-style diff view для Edit/FileWrite tool -->
+    <div v-if="diffResult" class="diff-block">
+      <div
+        v-for="(line, idx) in diffResult"
+        :key="idx"
+        class="diff-line"
+        :class="{ removed: line.type === 'removed', added: line.type === 'added' }"
+      >
+        <span class="diff-marker">{{ line.marker }}</span>
+        <span class="diff-text">{{ line.text }}</span>
+      </div>
+    </div>
+    <pre v-else-if="inputText" class="input">{{ inputText }}</pre>
 
     <div class="actions">
       <button
@@ -628,5 +716,62 @@ button {
   color: var(--accent);
   text-decoration: underline;
   background: transparent;
+}
+
+/* ─── Git diff view ──────────────────────────────────────────────────────── */
+
+.diff-block {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  font-family: var(--font-mono, 'SFMono-Regular', Consolas, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  max-height: 350px;
+  overflow: auto;
+}
+
+.diff-line {
+  display: flex;
+  align-items: baseline;
+  padding: 1px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.diff-line.removed {
+  background: rgba(255, 107, 128, 0.08);
+}
+.diff-line.added {
+  background: rgba(78, 186, 101, 0.08);
+}
+
+.diff-marker {
+  flex-shrink: 0;
+  width: 1.2em;
+  text-align: center;
+  user-select: none;
+  color: var(--fg-dim);
+}
+
+.diff-line.removed .diff-marker {
+  color: var(--danger);
+}
+.diff-line.added .diff-marker {
+  color: var(--success);
+}
+
+.diff-line.removed .diff-text {
+  color: #ff8a9a;
+}
+.diff-line.added .diff-text {
+  color: #7ce68a;
+}
+
+.diff-text {
+  color: var(--fg-muted);
+  padding-right: 8px;
 }
 </style>

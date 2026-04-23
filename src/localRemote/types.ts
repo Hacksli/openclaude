@@ -20,6 +20,14 @@ import type { Message } from '../types/message.js'
 
 export type PermissionBehavior = 'allow' | 'deny'
 
+/** Image attachment sent from browser client */
+export type ImageAttachment = {
+  type: 'image'
+  media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+  data: string // base64
+  filename?: string
+}
+
 export type RemotePermissionRequest = {
   requestId: string
   toolName: string
@@ -99,6 +107,8 @@ export type ClientEvent =
   | {
       type: 'prompt'
       text: string
+      /** Optional image attachments (e.g. pasted screenshot from browser). */
+      attachments?: ImageAttachment[]
     }
   | {
       type: 'permission_response'
@@ -175,6 +185,7 @@ export type DaemonToWorkerEvent =
   | {
       type: 'prompt'
       text: string
+      attachments?: ImageAttachment[]
     }
   | {
       type: 'permission_response'
