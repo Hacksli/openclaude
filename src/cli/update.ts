@@ -31,7 +31,7 @@ import { getInitialSettings } from 'src/utils/settings/settings.js'
 export async function update() {
   // Block updates for third-party providers. The update mechanism downloads
   // from the first-party distribution bucket, which would silently replace the
-  // Neural Network build (with the OpenAI shim) with the upstream Neural Network
+  // Neural Network Coder build (with the OpenAI shim) with the upstream Neural Network Coder
   // binary (without it).
   if (getAPIProvider() !== 'firstParty') {
     writeToStdout(
@@ -134,7 +134,7 @@ export async function update() {
     writeToStdout('\n')
 
     if (packageManager === 'homebrew') {
-      writeToStdout('Neural Network is managed by Homebrew.\n')
+      writeToStdout('Neural Network Coder is managed by Homebrew.\n')
       const latest = await getLatestVersion(channel)
       if (latest && !gte(MACRO.VERSION, latest)) {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
@@ -142,10 +142,10 @@ export async function update() {
         writeToStdout('To update, run:\n')
         writeToStdout(chalk.bold('  brew upgrade claude-code') + '\n')
       } else {
-        writeToStdout('Neural Network is up to date!\n')
+        writeToStdout('Neural Network Coder is up to date!\n')
       }
     } else if (packageManager === 'winget') {
-      writeToStdout('Neural Network is managed by winget.\n')
+      writeToStdout('Neural Network Coder is managed by winget.\n')
       const latest = await getLatestVersion(channel)
       if (latest && !gte(MACRO.VERSION, latest)) {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
@@ -155,10 +155,10 @@ export async function update() {
           chalk.bold('  winget upgrade Anthropic.NeuralNetworkCoder') + '\n',
         )
       } else {
-        writeToStdout('Neural Network is up to date!\n')
+        writeToStdout('Neural Network Coder is up to date!\n')
       }
     } else if (packageManager === 'apk') {
-      writeToStdout('Neural Network is managed by apk.\n')
+      writeToStdout('Neural Network Coder is managed by apk.\n')
       const latest = await getLatestVersion(channel)
       if (latest && !gte(MACRO.VERSION, latest)) {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
@@ -166,13 +166,13 @@ export async function update() {
         writeToStdout('To update, run:\n')
         writeToStdout(chalk.bold('  apk upgrade claude-code') + '\n')
       } else {
-        writeToStdout('Neural Network is up to date!\n')
+        writeToStdout('Neural Network Coder is up to date!\n')
       }
     } else {
       // pacman, deb, and rpm don't get specific commands because they each have
       // multiple frontends (pacman: yay/paru/makepkg, deb: apt/apt-get/aptitude/nala,
       // rpm: dnf/yum/zypper)
-      writeToStdout('Neural Network is managed by a package manager.\n')
+      writeToStdout('Neural Network Coder is managed by a package manager.\n')
       writeToStdout('Please use your package manager to update.\n')
     }
 
@@ -252,7 +252,7 @@ export async function update() {
 
       if (result.latestVersion === MACRO.VERSION) {
         writeToStdout(
-          chalk.green(`Neural Network is up to date (${MACRO.VERSION})`) + '\n',
+          chalk.green(`Neural Network Coder is up to date (${MACRO.VERSION})`) + '\n',
         )
       } else {
         writeToStdout(
@@ -322,7 +322,7 @@ export async function update() {
   // Check if versions match exactly, including any build metadata (like SHA)
   if (latestVersion === MACRO.VERSION) {
     writeToStdout(
-      chalk.green(`Neural Network is up to date (${MACRO.VERSION})`) + '\n',
+      chalk.green(`Neural Network Coder is up to date (${MACRO.VERSION})`) + '\n',
     )
     await gracefulShutdown(0)
   }
@@ -400,12 +400,12 @@ export async function update() {
       if (useLocalUpdate) {
         process.stderr.write('Try manually updating with:\n')
         process.stderr.write(
-          `  cd ~/.openclaude/local && npm update ${MACRO.PACKAGE_URL}\n`,
+          `  cd ~/.nnc/local && npm update ${MACRO.PACKAGE_URL}\n`,
         )
       } else {
         process.stderr.write('Try running with sudo or fix npm permissions\n')
         process.stderr.write(
-          'Or consider using native installation with: openclaude install\n',
+          'Or consider using native installation with: nnc install\n',
         )
       }
       await gracefulShutdown(1)
@@ -415,11 +415,11 @@ export async function update() {
       if (useLocalUpdate) {
         process.stderr.write('Try manually updating with:\n')
         process.stderr.write(
-          `  cd ~/.openclaude/local && npm update ${MACRO.PACKAGE_URL}\n`,
+          `  cd ~/.nnc/local && npm update ${MACRO.PACKAGE_URL}\n`,
         )
       } else {
         process.stderr.write(
-          'Or consider using native installation with: openclaude install\n',
+          'Or consider using native installation with: nnc install\n',
         )
       }
       await gracefulShutdown(1)

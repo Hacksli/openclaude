@@ -109,7 +109,7 @@ const teamMemPrompts = true
 
 /**
  * Shared guidance text appended to each memory directory prompt line.
- * Shipped because Neural Network was burning turns on `ls`/`mkdir -p` before writing.
+ * Shipped because Neural Network Coder was burning turns on `ls`/`mkdir -p` before writing.
  * Harness guarantees the directory exists via ensureMemoryDirExists().
  */
 export const DIR_EXISTS_GUIDANCE =

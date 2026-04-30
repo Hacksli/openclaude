@@ -224,7 +224,7 @@ export const KeybindingsSchema = lazySchema(() =>
         .describe('Array of keybinding blocks by context'),
     })
     .describe(
-      'Neural Network keybindings configuration. Customize keyboard shortcuts by context.',
+      'Neural Network Coder keybindings configuration. Customize keyboard shortcuts by context.',
     ),
 )
 

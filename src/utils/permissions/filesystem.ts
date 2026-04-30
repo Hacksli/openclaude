@@ -75,7 +75,7 @@ export const DANGEROUS_DIRECTORIES = [
   '.vscode',
   '.idea',
   '.nnc',
-  '.openclaude',
+  '.nnc',
 ] as const
 
 /**
@@ -208,8 +208,8 @@ export function isClaudeSettingsPath(filePath: string): boolean {
 
   // Use platform separator so endsWith checks work on both Unix (/) and Windows (\)
   if (
-    normalizedPath.endsWith(`${sep}.openclaude${sep}settings.json`) ||
-    normalizedPath.endsWith(`${sep}.openclaude${sep}settings.local.json`) ||
+    normalizedPath.endsWith(`${sep}.nnc${sep}settings.json`) ||
+    normalizedPath.endsWith(`${sep}.nnc${sep}settings.local.json`) ||
     normalizedPath.endsWith(`${sep}.claude${sep}settings.json`) ||
     normalizedPath.endsWith(`${sep}.claude${sep}settings.local.json`)
   ) {
@@ -223,7 +223,7 @@ export function isClaudeSettingsPath(filePath: string): boolean {
   )
 }
 
-// Always ask when Neural Network tries to edit its own config files
+// Always ask when Neural Network Coder tries to edit its own config files
 function isClaudeConfigFilePath(filePath: string): boolean {
   if (isClaudeSettingsPath(filePath)) {
     return true
@@ -235,9 +235,9 @@ function isClaudeConfigFilePath(filePath: string): boolean {
   const commandsDir = join(getOriginalCwd(), '.nnc', 'commands')
   const agentsDir = join(getOriginalCwd(), '.nnc', 'agents')
   const skillsDir = join(getOriginalCwd(), '.nnc', 'skills')
-  const openCommandsDir = join(getOriginalCwd(), '.openclaude', 'commands')
-  const openAgentsDir = join(getOriginalCwd(), '.openclaude', 'agents')
-  const openSkillsDir = join(getOriginalCwd(), '.openclaude', 'skills')
+  const openCommandsDir = join(getOriginalCwd(), '.nnc', 'commands')
+  const openAgentsDir = join(getOriginalCwd(), '.nnc', 'agents')
+  const openSkillsDir = join(getOriginalCwd(), '.nnc', 'skills')
 
   return (
     pathInWorkingPath(filePath, commandsDir) ||
@@ -300,7 +300,7 @@ function isProjectDirPath(absolutePath: string): boolean {
 
 /**
  * Checks if the scratchpad directory feature is enabled.
- * The scratchpad is a per-session directory for Neural Network to write temporary files.
+ * The scratchpad is a per-session directory for Neural Network Coder to write temporary files.
  * Controlled by the tengu_scratch Statsig gate.
  */
 export function isScratchpadEnabled(): boolean {
@@ -308,7 +308,7 @@ export function isScratchpadEnabled(): boolean {
 }
 
 /**
- * Returns the user-specific Neural Network temp directory name.
+ * Returns the user-specific Neural Network Coder temp directory name.
  * On Unix: 'claude-{uid}' to prevent multi-user permission conflicts
  * On Windows: 'claude' (tmpdir() is already per-user)
  */
@@ -323,11 +323,11 @@ export function getClaudeTempDirName(): string {
 }
 
 /**
- * Returns the Neural Network temp directory path with symlinks resolved.
+ * Returns the Neural Network Coder temp directory path with symlinks resolved.
  * Uses TMPDIR env var if set, otherwise:
  * - On Unix: /tmp/claude-{uid}/ (resolved to /private/tmp/claude-{uid}/ on macOS)
  * - On Windows: {tmpdir}/claude/ (e.g., C:\Users\{user}\AppData\Local\Temp\claude\)
- * This is a per-user temporary directory used by Neural Network for all temp files.
+ * This is a per-user temporary directory used by Neural Network Coder for all temp files.
  *
  * NOTE: We resolve symlinks to ensure this path matches the resolved paths used
  * in permission checks. On macOS, /tmp is a symlink to /private/tmp, so without
@@ -461,7 +461,7 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
         continue
       }
 
-      // Special case: .nnc/worktrees/ is a structural path (where Neural Network stores
+      // Special case: .nnc/worktrees/ is a structural path (where Neural Network Coder stores
       // git worktrees), not a user-created dangerous directory. Skip the .claude
       // segment when it's followed by 'worktrees'. Any nested .claude directories
       // within the worktree (not followed by 'worktrees') are still blocked.
@@ -615,8 +615,8 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
  *
  * This function performs comprehensive safety checks including:
  * - Suspicious Windows path patterns (NTFS streams, 8.3 names, long path prefixes, etc.)
- * - Neural Network config files (.nnc/settings.json, .nnc/commands/, .nnc/agents/)
- * - MCP CLI state files (managed internally by Neural Network)
+ * - Neural Network Coder config files (.nnc/settings.json, .nnc/commands/, .nnc/agents/)
+ * - MCP CLI state files (managed internally by Neural Network Coder)
  * - Dangerous files (.bashrc, .gitconfig, .git/, .vscode/, .idea/, etc.)
  *
  * IMPORTANT: This function checks BOTH the original path AND resolved symlink paths
@@ -646,7 +646,7 @@ export function checkPathSafetyForAutoEdit(
     }
   }
 
-  // Check for Neural Network config files on all paths
+  // Check for Neural Network Coder config files on all paths
   for (const pathToCheck of pathsToCheck) {
     if (isClaudeConfigFilePath(pathToCheck)) {
       return {
@@ -1266,7 +1266,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
   // also has a broader Edit(.claude) rule in userSettings (e.g. from sandbox
   // write-allow conversion), that rule would be found first and its source check
   // below would fail. Scope the search to session-only rules so the dialog's
-  // "allow Neural Network to edit its own settings for this session" option actually works.
+  // "allow Neural Network Coder to edit its own settings for this session" option actually works.
   const claudeFolderAllowRule = matchingRuleForInput(
     path,
     {
@@ -1307,7 +1307,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     }
   }
 
-  // 1.7. Check comprehensive safety validations (Windows patterns, Neural Network config, dangerous files)
+  // 1.7. Check comprehensive safety validations (Windows patterns, Neural Network Coder config, dangerous files)
   // This MUST come before checking allow rules to prevent users from accidentally granting
   // permission to edit protected files
   const safetyCheck = checkPathSafetyForAutoEdit(path, pathsToCheck)
@@ -1589,7 +1589,7 @@ export function checkEditableInternalPath(
   }
 
   // .nnc/launch.json — desktop preview config (dev server command + port).
-  // The desktop's preview_start MCP tool instructs Neural Network to create/update
+  // The desktop's preview_start MCP tool instructs Neural Network Coder to create/update
   // this file as part of the preview workflow. Without this carve-out the
   // .nnc/ DANGEROUS_DIRECTORIES check prompts for it, which in SDK mode
   // cascades: user clicks "Always allow" → setMode:acceptEdits suggestion

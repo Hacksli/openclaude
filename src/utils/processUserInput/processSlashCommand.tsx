@@ -539,7 +539,7 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
           precedingInputBlocks
         })
       }), createUserMessage({
-        content: `This skill can only be invoked by Neural Network, not directly by users. Ask the agent to use the "${commandName}" skill for you.`
+        content: `This skill can only be invoked by Neural Network Coder, not directly by users. Ask the agent to use the "${commandName}" skill for you.`
       })],
       shouldQuery: false,
       command

@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: internal-only import markers must not be reordered
 /**
  * Hooks are user-defined shell commands that can be executed at various points
- * in Neural Network's lifecycle.
+ * in Neural Network Coder's lifecycle.
  */
 import { basename } from 'path'
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
@@ -4328,7 +4328,7 @@ export function hasInstructionsLoadedHook(): boolean {
  * - Eager load at session start (getMemoryFiles in claudemd.ts)
  * - Eager reload after compaction (getMemoryFiles cache cleared by
  *   runPostCompactCleanup; next call reports load_reason: 'compact')
- * - Lazy load when Neural Network touches a file that triggers nested NNC.md or
+ * - Lazy load when Neural Network Coder touches a file that triggers nested NNC.md or
  *   conditional rules with paths: frontmatter (memoryFilesToAttachments in
  *   attachments.ts)
  */

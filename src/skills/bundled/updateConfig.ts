@@ -109,7 +109,7 @@ Plugin syntax: \`plugin-name@source\` where source is .nnc-code-marketplace\`, .
 
 const HOOKS_DOCS = `## Hooks Configuration
 
-Hooks run commands at specific points in Neural Network's lifecycle.
+Hooks run commands at specific points in Neural Network Coder's lifecycle.
 
 ### Hook Structure
 \`\`\`json
@@ -141,7 +141,7 @@ Hooks run commands at specific points in Neural Network's lifecycle.
 | PostToolUse | Tool name | Run after successful tool |
 | PostToolUseFailure | Tool name | Run after tool fails |
 | Notification | Notification type | Run on notifications |
-| Stop | - | Run when Neural Network stops (including clear, resume, compact) |
+| Stop | - | Run when Neural Network Coder stops (including clear, resume, compact) |
 | PreCompact | "manual"/"auto" | Before compaction |
 | PostCompact | "manual"/"auto" | After compaction (receives summary) |
 | UserPromptSubmit | - | When user submits |
@@ -306,7 +306,7 @@ Given an event, matcher, target file, and desired behavior, follow this flow. Ea
 
 const UPDATE_CONFIG_PROMPT = `# Update Config Skill
 
-Modify Neural Network configuration by updating settings.json files.
+Modify Neural Network Coder configuration by updating settings.json files.
 
 ## When Hooks Are Required (Not Memory)
 
@@ -446,7 +446,7 @@ export function registerUpdateConfigSkill(): void {
   registerBundledSkill({
     name: 'update-config',
     description:
-      'Use this skill to configure the Neural Network harness via settings.json. Automated behaviors ("from now on when X", "each time X", "whenever X", "before/after X") require hooks configured in settings.json - the harness executes these, not the agent, so memory/preferences cannot fulfill them. Also use for: permissions ("allow X", "add permission", "move permission to"), env vars ("set X=Y"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: "allow npm commands", "add bq permission to global settings", "move permission to user settings", "set DEBUG=true", "when the agent stops show X". For simple settings like theme/model, use Config tool.',
+      'Use this skill to configure the Neural Network Coder harness via settings.json. Automated behaviors ("from now on when X", "each time X", "whenever X", "before/after X") require hooks configured in settings.json - the harness executes these, not the agent, so memory/preferences cannot fulfill them. Also use for: permissions ("allow X", "add permission", "move permission to"), env vars ("set X=Y"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: "allow npm commands", "add bq permission to global settings", "move permission to user settings", "set DEBUG=true", "when the agent stops show X". For simple settings like theme/model, use Config tool.',
     allowedTools: ['Read'],
     userInvocable: true,
     async getPromptForCommand(args) {

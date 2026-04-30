@@ -20,7 +20,7 @@ interface InvalidConfigDialogProps {
 }
 
 /**
- * Dialog shown when the Neural Network config file contains invalid JSON
+ * Dialog shown when the Neural Network Coder config file contains invalid JSON
  */
 function InvalidConfigDialog(t0) {
   const $ = _c(19);

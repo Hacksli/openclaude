@@ -230,17 +230,17 @@ export type FileHistorySnapshotMessage = {
 }
 
 /**
- * Per-file attribution state tracking Neural Network's character contributions.
+ * Per-file attribution state tracking Neural Network Coder's character contributions.
  */
 export type FileAttributionState = {
   contentHash: string // SHA-256 hash of file content
-  claudeContribution: number // Characters written by Neural Network
+  claudeContribution: number // Characters written by Neural Network Coder
   mtime: number // File modification time
 }
 
 /**
  * Attribution snapshot message stored in session transcript.
- * Tracks character-level contributions by Neural Network for commit attribution.
+ * Tracks character-level contributions by Neural Network Coder for commit attribution.
  */
 export type AttributionSnapshotMessage = {
   type: 'attribution-snapshot'

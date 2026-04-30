@@ -51,6 +51,7 @@ import {
   createSystemMessage,
   createUserMessage,
 } from '../messages.js'
+import { logForDebugging } from '../debug.js'
 import { queryCheckpoint } from '../queryProfiler.js'
 import { parseSlashCommand } from '../slashCommandParsing.js'
 import {
@@ -353,8 +354,9 @@ async function processUserInputBase(
     ? Object.values(pastedContents).filter(isValidImagePaste)
     : []
   const imagePasteIds = imageContents.map(img => img.id)
+  logForDebugging(`[processUserInput] pastedContents keys=${Object.keys(pastedContents ?? {}).join(',')}, imageContents count=${imageContents.length}, imagePasteIds=${imagePasteIds.join(',')}`)
 
-  // Store images to disk so Neural Network can reference the path in context
+  // Store images to disk so Neural Network Coder can reference the path in context
   // (for manipulation with CLI tools, uploading to PRs, etc.)
   const storedImagePaths = pastedContents
     ? await storeImages(pastedContents)

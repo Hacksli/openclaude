@@ -4,7 +4,7 @@ const god = {
   type: 'local',
   name: 'god',
   description:
-    'Enable god mode: bypass all permission prompts and persist in .openclaude/settings.local.json',
+    'Enable god mode: bypass all permission prompts and persist in .nnc/settings.local.json',
   aliases: ['yolo'],
   supportsNonInteractive: false,
   load: () => import('./god.js'),

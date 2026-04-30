@@ -21,7 +21,10 @@ export type PermissionSettler = (
   message?: string,
 ) => boolean
 
+export type CancelHandler = () => void
+
 let promptSubmitter: PromptSubmitter | null = null
+let cancelHandler: CancelHandler | null = null
 
 // Pending image attachments sent from the remote client — consumed by REPL
 // on next submit so pastedContents can include them.
@@ -47,6 +50,14 @@ export function setPromptSubmitter(fn: PromptSubmitter | null): void {
 
 export function getPromptSubmitter(): PromptSubmitter | null {
   return promptSubmitter
+}
+
+export function setCancelHandler(fn: CancelHandler | null): void {
+  cancelHandler = fn
+}
+
+export function getCancelHandler(): CancelHandler | null {
+  return cancelHandler
 }
 
 export function registerPermissionSettler(

@@ -58,7 +58,7 @@ const permissionSetupModule = false
 
 /**
  * Schema for prompt-based permission requests.
- * Used by Neural Network to request semantic permissions when exiting plan mode.
+ * Used by Neural Network Coder to request semantic permissions when exiting plan mode.
  */
 const allowedPromptSchema = lazySchema(() =>
   z.object({

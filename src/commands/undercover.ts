@@ -11,7 +11,7 @@ const call: LocalCommandCall = async args => {
   if (arg === '' || arg === 'status') {
     return {
       type: 'text',
-      value: `Інкогніто: ${getUndercoverActive() ? 'увімкнено' : 'вимкнено'}\nВикористай "/undercover on" або "/undercover off" для перемикання. За замовчуванням увімкнено; запусти з OPENCLAUDE_UNDERCOVER=0 щоб вимкнути.`,
+      value: `Інкогніто: ${getUndercoverActive() ? 'увімкнено' : 'вимкнено'}\nВикористай "/undercover on" або "/undercover off" для перемикання. За замовчуванням увімкнено; запусти з NNC_UNDERCOVER=0 щоб вимкнути.`,
     }
   }
 

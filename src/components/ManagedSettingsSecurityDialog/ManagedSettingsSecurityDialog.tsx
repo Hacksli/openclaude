@@ -96,7 +96,7 @@ export function ManagedSettingsSecurityDialog(t0) {
       label: "Yes, I trust these settings",
       value: "accept"
     }, {
-      label: "No, exit Neural Network",
+      label: "No, exit Neural Network Coder",
       value: "exit"
     }];
     $[11] = t15;

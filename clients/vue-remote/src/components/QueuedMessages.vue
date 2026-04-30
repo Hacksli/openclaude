@@ -1,5 +1,9 @@
 <script setup lang="ts">
-defineProps<{ queue: string[] }>()
+import type { ImageAttachment } from '../types'
+
+defineProps<{
+  queue: { text: string; attachments?: ImageAttachment[] }[]
+}>()
 defineEmits<{ remove: [index: number] }>()
 </script>
 
@@ -12,7 +16,12 @@ defineEmits<{ remove: [index: number] }>()
       class="queue-item"
     >
       <span class="queue-index">{{ i + 1 }}</span>
-      <span class="queue-text">{{ msg }}</span>
+      <span class="queue-text">
+        {{ msg.text || '(зображення)' }}
+        <span v-if="msg.attachments && msg.attachments.length > 0" class="queue-attachments">
+          +{{ msg.attachments.length }} 🖼
+        </span>
+      </span>
       <button
         class="queue-remove"
         type="button"
@@ -83,6 +92,12 @@ defineEmits<{ remove: [index: number] }>()
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+.queue-attachments {
+  color: var(--accent-dim);
+  font-size: 11px;
+  margin-left: 4px;
 }
 
 .queue-remove {

@@ -3,7 +3,7 @@
  * This file has no dependencies to avoid circular imports.
  */
 
-// Neural Network.ai server names are prefixed with this string
+// Neural Network Coder.ai server names are prefixed with this string
 const CLAUDEAI_SERVER_PREFIX = 'claude.ai '
 
 /**

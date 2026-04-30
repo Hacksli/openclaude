@@ -278,7 +278,7 @@ import { useIssueFlagBanner } from '../hooks/useIssueFlagBanner.js';
 import { CompanionSprite, CompanionFloatingBubble, MIN_COLS_FOR_FULL_SPRITE } from '../buddy/CompanionSprite.js';
 import { isBuddyEnabled } from '../buddy/feature.js';
 import { fireCompanionObserver } from '../buddy/observer.js';
-import { publishLoading as publishRemoteLoading, publishMessages as publishRemoteMessages, publishPendingPermission as publishRemotePendingPermission, publishResolvedPermission as publishRemoteResolvedPermission, setRemoteSubmitter, startLocalRemote, stopLocalRemote, setPendingRemoteAttachments, getPendingRemoteAttachments } from '../localRemote/index.js';
+import { publishLoading as publishRemoteLoading, publishMessages as publishRemoteMessages, publishPendingPermission as publishRemotePendingPermission, publishResolvedPermission as publishRemoteResolvedPermission, setRemoteSubmitter, setCancelHandler, startLocalRemote, stopLocalRemote, setPendingRemoteAttachments, getPendingRemoteAttachments } from '../localRemote/index.js';
 import { DevBar } from '../components/DevBar.js';
 // Session manager removed - using AppState now
 import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js';
@@ -304,7 +304,7 @@ const HISTORY_STUB = {
   maybeLoadOlder: (_: ScrollBoxHandle) => { }
 };
 // Window after a user-initiated scroll during which type-into-empty does NOT
-// repin to bottom. Josh Rosen's workflow: Neural Network emits long output → scroll
+// repin to bottom. Josh Rosen's workflow: Neural Network Coder emits long output → scroll
 // up to read the start → start typing → before this fix, snapped to bottom.
 // https://anthropic.slack.com/archives/C07VBSHV7EV/p1773545449871739
 const RECENT_SCROLL_REPIN_WINDOW_MS = 3000;
@@ -795,7 +795,7 @@ export function REPL({
   // Deferring startup checks is handled below (after promptTypingSuppressionActive
   // is declared) to avoid temporal dead zone issues.
 
-  // Allow Neural Network in Chrome MCP to send prompts through MCP notifications
+  // Allow Neural Network Coder in Chrome MCP to send prompts through MCP notifications
   // and sync permission mode changes to the Chrome extension
   usePromptsFromClaudeInChrome(isRemoteSession ? EMPTY_MCP_CLIENTS : mcpClients, toolPermissionContext.mode);
 
@@ -1041,7 +1041,7 @@ export function REPL({
   } | null>(null);
 
   // Track local JSX commands separately so tools can't overwrite them.
-  // This enables "immediate" commands (like /btw) to persist while Neural Network is processing.
+  // This enables "immediate" commands (like /btw) to persist while Neural Network Coder is processing.
   const localJSXCommandRef = useRef<{
     jsx: React.ReactNode | null;
     shouldHidePromptInput: boolean;
@@ -1184,7 +1184,7 @@ export function REPL({
   // session from mid-conversation context.
   const haikuTitleAttemptedRef = useRef((initialMessages?.length ?? 0) > 0);
   const agentTitle = mainThreadAgentDefinition?.agentType;
-  const terminalTitle = sessionTitle ?? agentTitle ?? haikuTitle ?? 'OpenClaude';
+  const terminalTitle = sessionTitle ?? agentTitle ?? haikuTitle ?? 'Neural Network Coder';
   const isWaitingForApproval = toolUseConfirmQueue.length > 0 || promptQueue.length > 0 || pendingWorkerRequest || pendingSandboxRequest;
   // Local-jsx commands (like /plugin, /config) show user-facing dialogs that
   // wait for input. Require jsx != null — if the flag is stuck true but jsx
@@ -1197,7 +1197,7 @@ export function REPL({
   // here because onQueryImpl reads them (background session description,
   // haiku title extraction gate).
 
-  // Prevent macOS from sleeping while Neural Network is working
+  // Prevent macOS from sleeping while Neural Network Coder is working
   useEffect(() => {
     if (isLoading && !isWaitingForApproval && !isShowingLocalJSXCommand) {
       startPreventSleep();
@@ -1304,6 +1304,7 @@ export function REPL({
   const remoteOnSubmitRef = useRef<typeof onSubmit | null>(null);
   useEffect(() => {
     const unregister = setRemoteSubmitter((text, attachments) => {
+      logForDebugging(`[setRemoteSubmitter] text="${text.slice(0, 40)}", attachments=${attachments?.length ?? 0}`);
       const fn = remoteOnSubmitRef.current;
       if (!fn) return;
       // Store attachments so onSubmit can inject them into pastedContents.
@@ -1313,15 +1314,20 @@ export function REPL({
       void fn(text, {
         setCursorOffset: () => { },
         clearBuffer: () => { },
-        resetHistory: () => { }
+        resetHistory: () => { },
       });
     });
+    setCancelHandler(() => {
+      logForDebugging('[REPL] cancel handler invoked from remote client');
+      onCancel();
+    });
     // --remote / --remote-on flag: auto-start the bridge on session mount.
-    if (process.env.OPENCLAUDE_REMOTE_ON === '1') {
+    if (process.env.NNC_REMOTE_ON === '1') {
       void startLocalRemote()
     }
     return () => {
       unregister();
+      setCancelHandler(null);
       void stopLocalRemote();
     };
   }, []);
@@ -2088,7 +2094,7 @@ export function REPL({
   const loadedNestedMemoryPathsRef = useRef(new Set<string>());
 
   // Helper to restore read file state from messages (used for resume flows)
-  // This allows Neural Network to edit files that were read in previous sessions
+  // This allows Neural Network Coder to edit files that were read in previous sessions
   const restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
     const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE);
     readFileState.current = mergeFileStateCaches(readFileState.current, extracted);
@@ -2794,7 +2800,7 @@ export function REPL({
       }
     }
 
-    // Mark onboarding as complete when any user message is sent to Neural Network
+    // Mark onboarding as complete when any user message is sent to Neural Network Coder
     void maybeMarkProjectOnboardingComplete();
 
     // Extract a session title from the first real user message. One-shot
@@ -2803,7 +2809,7 @@ export function REPL({
     // which was broken by SessionStart hook messages (prepended via
     // useDeferredHookMessages) and attachment messages (appended by
     // processTextPrompt) — both pushed length past 1 on turn one, so the
-    // title silently fell through to the "Neural Network" default.
+    // title silently fell through to the "Neural Network Coder" default.
     if (!titleDisabled && !sessionTitle && !agentTitle && !haikuTitleAttemptedRef.current) {
       const firstUserMessage = newMessages.find(m => m.type === 'user' && !m.isMeta);
       const text = firstUserMessage?.type === 'user' ? getContentText(firstUserMessage.message.content) : null;
@@ -3278,14 +3284,44 @@ export function REPL({
       proactiveModule?.resumeProactive();
     }
 
+    // Merge any remote attachments sent from the web client into the local
+    // pastedContents so BOTH paths (remote mode and local handlePromptSubmit)
+    // receive images. Must happen before any mode checks.
+    const remoteAttachments = getPendingRemoteAttachments();
+    let effectivePastedContents = pastedContents;
+    let effectiveInput = input;
+    if (remoteAttachments && remoteAttachments.length > 0) {
+      setPendingRemoteAttachments(null);
+      const merged = { ...pastedContents };
+      let nextId = Math.max(0, ...Object.keys(pastedContents).map(Number)) + 1;
+      const imagePlaceholders: string[] = [];
+      for (const att of remoteAttachments) {
+        merged[nextId] = {
+          id: nextId,
+          type: 'image' as const,
+          content: att.data,
+          mediaType: att.media_type,
+          filename: att.filename,
+        };
+        imagePlaceholders.push(`[Image #${nextId}]`);
+        nextId++;
+      }
+      effectivePastedContents = merged;
+      setPastedContents(merged);
+      // Append [Image #N] placeholders to input so handlePromptSubmit
+      // doesn't filter them out as "orphaned" images.
+      effectiveInput = input + (input.trim() ? '\n' : '') + imagePlaceholders.join('\n');
+      logForDebugging(`[REPL onSubmit] merged ${remoteAttachments.length} remote attachments, ids=${Object.keys(merged).filter(k => merged[Number(k)]?.type === 'image').join(',')}, effectiveInput="${effectiveInput.slice(0, 80)}"`);
+    }
+
     // Handle immediate commands - these bypass the queue and execute right away
-    // even while Neural Network is processing. Commands opt-in via `immediate: true`.
+    // even while Neural Network Coder is processing. Commands opt-in via `immediate: true`.
     // Commands triggered via keybindings are always treated as immediate.
     if (!speculationAccept && input.trim().startsWith('/')) {
       // Expand [Pasted text #N] refs so immediate commands (e.g. /btw) receive
       // the pasted content, not the placeholder. The non-immediate path gets
       // this expansion later in handlePromptSubmit.
-      const trimmedInput = expandPastedTextRefs(input, pastedContents).trim();
+      const trimmedInput = expandPastedTextRefs(input, effectivePastedContents).trim();
       const spaceIndex = trimmedInput.indexOf(' ');
       const commandName = spaceIndex === -1 ? trimmedInput.slice(1) : trimmedInput.slice(1, spaceIndex);
       const commandArgs = spaceIndex === -1 ? '' : trimmedInput.slice(spaceIndex + 1).trim();
@@ -3439,7 +3475,7 @@ export function REPL({
     if (!options?.fromKeybinding) {
       addToHistory({
         display: speculationAccept ? input : prependModeCharacterToInput(input, inputMode),
-        pastedContents: speculationAccept ? {} : pastedContents
+        pastedContents: speculationAccept ? {} : effectivePastedContents
       });
       // Add the just-submitted command to the front of the ghost-text
       // cache so it's suggested immediately (not after the 60s TTL).
@@ -3541,7 +3577,7 @@ export function REPL({
       return isCommandEnabled(c) && (c.name === name || c.aliases?.includes(name!) || getCommandName(c) === name);
     })?.type === 'local-jsx')) {
       // Build content blocks when there are pasted attachments (images)
-      const pastedValues = Object.values(pastedContents);
+      const pastedValues = Object.values(effectivePastedContents);
       const imageContents = pastedValues.filter(c => c.type === 'image');
       const imagePasteIds = imageContents.length > 0 ? imageContents.map(c => c.id) : undefined;
       let messageContent: string | ContentBlockParam[] = input.trim();
@@ -3611,7 +3647,7 @@ export function REPL({
     // Ensure SessionStart hook context is available before the first API call.
     await awaitPendingHooks();
     await handlePromptSubmit({
-      input,
+      input: effectiveInput,
       helpers,
       queryGuard,
       isExternalLoading,
@@ -3623,7 +3659,7 @@ export function REPL({
       getToolUseContext,
       messages: messagesRef.current,
       mainLoopModel,
-      pastedContents,
+      pastedContents: effectivePastedContents,
       ideSelection,
       setUserInputOnProcessing,
       setAbortController,
@@ -4034,9 +4070,9 @@ export function REPL({
     }
   }, [submitCount]);
 
-  // Show notification when Neural Network is done responding and user is idle
+  // Show notification when Neural Network Coder is done responding and user is idle
   useEffect(() => {
-    // Don't set up notification if Neural Network is busy
+    // Don't set up notification if Neural Network Coder is busy
     if (isLoading) return;
 
     // Only enable notifications after the first new interaction in this session
@@ -4050,7 +4086,7 @@ export function REPL({
       // Check if user has interacted since the response ended
       const lastUserInteraction = getLastInteractionTime();
       if (lastUserInteraction > lastQueryCompletionTime) {
-        // User has interacted since Neural Network finished - they're not idle, don't notify
+        // User has interacted since Neural Network Coder finished - they're not idle, don't notify
         return;
       }
 
@@ -4243,7 +4279,7 @@ export function REPL({
   useEffect(() => {
     const handleSuspend = () => {
       // Print suspension instructions
-      process.stdout.write(`\nNeural Network has been suspended. Run \`fg\` to bring Neural Network back.\nNote: ctrl + z now suspends Neural Network, ctrl + _ undoes input.\n`);
+      process.stdout.write(`\nNeural Network Coder has been suspended. Run \`fg\` to bring Neural Network Coder back.\nNote: ctrl + z now suspends Neural Network Coder, ctrl + _ undoes input.\n`);
     };
     const handleResume = () => {
       // Force complete component tree replacement instead of terminal clear
@@ -4696,7 +4732,7 @@ export function REPL({
                   it would sit at the last visible transcript row right above
                   the ▔ divider, showing "❯ /config" as redundant clutter
                   (the modal IS the /config UI). Outside modals it stays so
-                  the user sees their input echoed while Neural Network processes. */}
+                  the user sees their input echoed while Neural Network Coder processes. */}
         {!disabled && placeholderText && !centeredModal && <UserTextMessage param={{
           text: placeholderText,
           type: 'text'

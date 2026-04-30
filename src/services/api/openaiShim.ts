@@ -1,5 +1,5 @@
 /**
- * OpenAI-compatible API shim for Neural Network.
+ * OpenAI-compatible API shim for Neural Network Coder.
  *
  * Translates Anthropic SDK calls (anthropic.beta.messages.create) into
  * OpenAI-compatible chat completion requests and streams back events
@@ -162,6 +162,10 @@ interface OpenAIMessage {
   }>
   tool_call_id?: string
   name?: string
+  // DeepSeek thinking mode: the reasoner chain-of-thought must be replayed
+  // on the last assistant turn or the API rejects the request with
+  // "The `reasoning_content` in the thinking mode must be passed back to the API."
+  reasoning_content?: string
 }
 
 interface OpenAITool {
@@ -306,9 +310,27 @@ function isGeminiMode(): boolean {
   )
 }
 
+// Detects DeepSeek provider via OPENAI_BASE_URL or model name. In thinking mode
+// the API requires the prior assistant turn's `reasoning_content` to be replayed.
+// When DeepSeek is used through a proxy like OpenRouter, the hostname does not
+// match, so we also check the resolved model name.
+function isDeepseekProvider(model?: string): boolean {
+  if (model && /deepseek/i.test(model)) return true
+  const baseUrl = process.env.OPENAI_BASE_URL
+  if (!baseUrl) return false
+  try {
+    const parsed = new URL(baseUrl)
+    return parsed.hostname === 'api.deepseek.com' ||
+      parsed.hostname.endsWith('.deepseek.com')
+  } catch {
+    return false
+  }
+}
+
 function convertMessages(
   messages: Array<{ role: string; message?: { role?: string; content?: unknown }; content?: unknown }>,
   system: unknown,
+  model?: string,
 ): OpenAIMessage[] {
   const result: OpenAIMessage[] = []
 
@@ -318,8 +340,26 @@ function convertMessages(
     result.push({ role: 'system', content: sysText })
   }
 
-  for (const msg of messages) {
-    // Neural Network wraps messages in { role, message: { role, content } }
+  // DeepSeek thinking mode: find index of the last assistant message so we can
+  // replay its reasoning_content. Older assistant turns must NOT include it
+  // (DeepSeek does not concatenate prior-turn reasoning into context).
+  const preserveDeepseekReasoning = isDeepseekProvider(model)
+  let lastAssistantInputIdx = -1
+  if (preserveDeepseekReasoning) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      const innerM = m.message ?? m
+      const rM = (innerM as { role?: string }).role ?? m.role
+      if (rM === 'assistant') {
+        lastAssistantInputIdx = i
+        break
+      }
+    }
+  }
+
+  for (let msgIdx = 0; msgIdx < messages.length; msgIdx++) {
+    const msg = messages[msgIdx]
+    // Neural Network Coder wraps messages in { role, message: { role, content } }
     const inner = msg.message ?? msg
     const role = (inner as { role?: string }).role ?? msg.role
     const content = (inner as { content?: unknown }).content
@@ -367,6 +407,19 @@ function convertMessages(
             const c = convertContentBlocks(textContent)
             return typeof c === 'string' ? c : Array.isArray(c) ? c.map((p: { text?: string }) => p.text ?? '').join('') : ''
           })(),
+        }
+
+        // DeepSeek thinking mode: replay the reasoning_content of the most
+        // recent assistant turn so the reasoner does not 400 on continuation.
+        if (
+          preserveDeepseekReasoning &&
+          msgIdx === lastAssistantInputIdx &&
+          thinkingBlock &&
+          typeof (thinkingBlock as { thinking?: unknown }).thinking === 'string' &&
+          (thinkingBlock as { thinking: string }).thinking.length > 0
+        ) {
+          assistantMsg.reasoning_content =
+            (thinkingBlock as { thinking: string }).thinking
         }
 
         if (toolUses.length > 0) {
@@ -460,6 +513,13 @@ function convertMessages(
 
       if (msg.tool_calls?.length) {
         prev.tool_calls = [...(prev.tool_calls ?? []), ...msg.tool_calls]
+      }
+
+      // Preserve DeepSeek reasoning_content when merging consecutive assistant
+      // messages. The later message wins because we only ever attach it on the
+      // final assistant turn.
+      if (msg.reasoning_content) {
+        prev.reasoning_content = msg.reasoning_content
       }
     } else {
       coalesced.push(msg)
@@ -1343,6 +1403,7 @@ class OpenAIShimMessages {
         content?: unknown
       }>,
       params.system,
+      request.resolvedModel,
     )
 
     const body: Record<string, unknown> = {
@@ -1404,6 +1465,31 @@ class OpenAIShimMessages {
 
     if (params.temperature !== undefined) body.temperature = params.temperature
     if (params.top_p !== undefined) body.top_p = params.top_p
+
+    // DeepSeek V4 Pro thinking mode: forward the Anthropic-style `thinking`
+    // block and/or OpenAI-style `reasoning_effort`. Without these, the model
+    // won't engage its reasoner; with them, the response includes
+    // `reasoning_content` that must be replayed on subsequent turns
+    // (handled in convertMessages).
+    if (isDeepseekProvider(request.resolvedModel)) {
+      const rawParams = params as Record<string, unknown>
+      const thinking = rawParams.thinking
+      if (thinking && typeof thinking === 'object') {
+        body.thinking = thinking
+      }
+      const reasoningEffort = rawParams.reasoning_effort
+      if (typeof reasoningEffort === 'string') {
+        body.reasoning_effort = reasoningEffort
+      } else if (thinking && typeof thinking === 'object') {
+        // Map Anthropic `budget_tokens` → DeepSeek `reasoning_effort`
+        const t = thinking as { type?: string; budget_tokens?: number }
+        if (t.type === 'enabled' && typeof t.budget_tokens === 'number') {
+          body.reasoning_effort =
+            t.budget_tokens >= 16000 ? 'high' :
+            t.budget_tokens >= 4000 ? 'medium' : 'low'
+        }
+      }
+    }
 
     if (params.tools && params.tools.length > 0) {
       const converted = convertTools(

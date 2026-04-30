@@ -5,7 +5,7 @@ import { optionForPermissionSaveDestination } from '../components/permissions/ru
 import { isClaudeSettingsPath } from './permissions/filesystem.ts'
 import { getValidationTip } from './settings/validationTips.ts'
 
-describe('Neural Network settings path surfaces', () => {
+describe('Neural Network Coder settings path surfaces', () => {
   test('isClaudeSettingsPath recognizes project .nnc settings files', () => {
     expect(
       isClaudeSettingsPath(
@@ -20,10 +20,10 @@ describe('Neural Network settings path surfaces', () => {
     ).toBe(true)
   })
 
-  test('permission save destinations point user settings to ~/.openclaude', () => {
+  test('permission save destinations point user settings to ~/.nnc', () => {
     expect(optionForPermissionSaveDestination('userSettings')).toEqual({
       label: 'User settings',
-      description: 'Saved in ~/.openclaude/settings.json',
+      description: 'Saved in ~/.nnc/settings.json',
       value: 'userSettings',
     })
   })
@@ -43,8 +43,8 @@ describe('Neural Network settings path surfaces', () => {
   })
 })
 
-describe('Neural Network validation tips', () => {
-  test('permissions.defaultMode invalid value keeps suggestion but no Neural Network docs link', () => {
+describe('Neural Network Coder validation tips', () => {
+  test('permissions.defaultMode invalid value keeps suggestion but no Neural Network Coder docs link', () => {
     const tip = getValidationTip({
       path: 'permissions.defaultMode',
       code: 'invalid_value',

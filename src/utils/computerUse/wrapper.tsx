@@ -219,7 +219,7 @@ export function buildSessionContext(): ComputerUseSessionContext {
           tuc().abortController.abort();
         });
         tuc().sendOSNotification?.({
-          message: escRegistered ? 'Neural Network is using your computer · press Esc to stop' : 'Neural Network is using your computer · press Ctrl+C to stop',
+          message: escRegistered ? 'Neural Network Coder is using your computer · press Esc to stop' : 'Neural Network Coder is using your computer · press Ctrl+C to stop',
           notificationType: 'computer_use_enter'
         });
       }

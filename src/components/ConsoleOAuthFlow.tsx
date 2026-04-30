@@ -96,7 +96,7 @@ export function ConsoleOAuthFlow({
   const [cursorOffset, setCursorOffset] = useState(0);
   const [oauthService] = useState(() => new OAuthService());
   const [loginWithClaudeAi, setLoginWithClaudeAi] = useState(() => {
-    // Use Neural Network AI auth for setup-token mode to support user:inference scope
+    // Use Neural Network Coder AI auth for setup-token mode to support user:inference scope
     return mode === 'setup-token' || forceLoginMethod === 'claudeai';
   });
   // After a few seconds we suggest the user to copy/paste url if the
@@ -262,7 +262,7 @@ export function ConsoleOAuthFlow({
           state: 'success'
         });
         void sendNotification({
-          message: 'Neural Network login successful',
+          message: 'Neural Network Coder login successful',
           notificationType: 'auth_success'
         }, terminal);
       }

@@ -47,7 +47,7 @@ const DEMO_PATCH: StructuredPatchHunk = {
   lines: [
     ' function greet() {',
     '-  console.log("Hello, World!");',
-    '+  console.log("Hello, Neural Network!");',
+    '+  console.log("Hello, Neural Network Coder!");',
     ' }',
   ],
 }

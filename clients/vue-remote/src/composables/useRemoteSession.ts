@@ -1,4 +1,4 @@
-// Connects to a Neural Network `/remote` server over WebSocket and exposes
+// Connects to a Neural Network Coder `/remote` server over WebSocket and exposes
 // its state as Vue refs. Handles:
 //   - bearer-token auth via ?token= query
 //   - automatic WS upgrade (wss when the origin is https)
@@ -12,6 +12,7 @@ import { t } from '../i18n'
 import type {
   ClientEvent,
   ConnectionState,
+  ImageAttachment,
   PermissionBehavior,
   RemotePermissionRequest,
   ServerEvent,
@@ -44,21 +45,25 @@ export interface RemoteSession {
   sessions: Ref<SessionSummary[]>
   /** The currently selected session id (empty = none). */
   selectedSessionId: Ref<string>
+  /** When true, all incoming permission requests are auto-approved. */
+  autoAllow: Ref<boolean>
 
   connect: (url: string, token: string) => void
   disconnect: () => void
-  sendPrompt: (text: string) => boolean
+  sendPrompt: (text: string, attachments?: ImageAttachment[]) => boolean
   selectSession: (sessionId: string) => void
   respondToPermission: (
     requestId: string,
     behavior: PermissionBehavior,
     message?: string,
   ) => boolean
+  setAutoAllow: (value: boolean) => void
   /** Gracefully shutdown the daemon (requires authentication). */
+  cancel: () => boolean
   shutdownDaemon: (reason?: string) => Promise<boolean>
   /** Close a specific worker session from the browser. */
   closeSession: (sessionId: string, reason?: string) => boolean
-  /** Ask the daemon to open a new local terminal running openclaude. */
+  /** Ask the daemon to open a new local terminal running nnc. */
   createSession: () => boolean
 }
 
@@ -78,6 +83,7 @@ export function useRemoteSession(): RemoteSession {
   const currentUrl = ref('')
   const sessions = ref<SessionSummary[]>([])
   const selectedSessionId = ref('')
+  const autoAllow = ref(false)
 
   let ws: WebSocket | null = null
   let desiredUrl = ''
@@ -291,11 +297,20 @@ export function useRemoteSession(): RemoteSession {
       case 'messages':
         messages.value = event.messages ?? []
         return
-      case 'permission_req':
+      case 'permission_req': {
+        // Auto-allow: when enabled, immediately approve simple permission
+        // requests. Skip auto-allow for AskUserQuestion — those require
+        // actual user input (multiple-choice questions, free text, etc.).
+        const isAskUserQuestion = event.request.toolName === 'AskUserQuestion'
+        if (autoAllow.value && !isAskUserQuestion) {
+          send({ type: 'permission_response', requestId: event.request.requestId, behavior: 'allow' })
+          return
+        }
         // Додаємо в кінець черги — так декілька підряд не перезапишуть
         // один одного; UI бачить завжди перший (head-of-queue).
         pendingPermissions.value = [...pendingPermissions.value, event.request]
         return
+      }
       case 'permission_clear':
         pendingPermissions.value = pendingPermissions.value.filter(r => r.requestId !== event.requestId)
         // Скидаємо "очікування відповіді", якщо сервер підтвердив саме цей
@@ -421,10 +436,10 @@ export function useRemoteSession(): RemoteSession {
     // CONNECTING — чекаємо, open-handler сам відправить select_session.
   }
 
-  function sendPrompt(text: string): boolean {
+  function sendPrompt(text: string, attachments?: ImageAttachment[]): boolean {
     const trimmed = text.trim()
-    if (!trimmed) return false
-    return send({ type: 'prompt', text: trimmed })
+    if (!trimmed && (!attachments || attachments.length === 0)) return false
+    return send({ type: 'prompt', text: trimmed, attachments })
   }
 
   function respondToPermission(
@@ -543,6 +558,14 @@ export function useRemoteSession(): RemoteSession {
     window.addEventListener('focus', () => pokeConnection('focus'))
   }
 
+  function setAutoAllow(value: boolean) {
+    autoAllow.value = value
+  }
+
+  function cancel(): boolean {
+    return send({ type: 'cancel' })
+  }
+
   return {
     connectionState,
     isLoading,
@@ -555,11 +578,14 @@ export function useRemoteSession(): RemoteSession {
     currentUrl,
     sessions,
     selectedSessionId,
+    autoAllow,
     connect,
     disconnect,
+    cancel,
     sendPrompt,
     selectSession,
     respondToPermission,
+    setAutoAllow,
     shutdownDaemon,
     closeSession,
     createSession,

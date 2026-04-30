@@ -6,8 +6,8 @@ import { logError } from '../../utils/log.js'
 import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
 
 /**
- * Fetch the user's first Neural Network token date and store in config.
- * This is called after successful login to cache when they started using Neural Network.
+ * Fetch the user's first Neural Network Coder token date and store in config.
+ * This is called after successful login to cache when they started using Neural Network Coder.
  */
 export async function fetchAndStoreClaudeCodeFirstTokenDate(): Promise<void> {
   try {

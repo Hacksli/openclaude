@@ -192,7 +192,7 @@ export async function countConcurrentSessions(): Promise<number> {
       count++
     } else if (getPlatform() !== 'wsl') {
       // Stale file from a crashed session — sweep it. Skip on WSL: if
-      // ~/.nnc/sessions/ is shared with Windows-native Neural Network (symlink
+      // ~/.nnc/sessions/ is shared with Windows-native Neural Network Coder (symlink
       // or CLAUDE_CONFIG_DIR), a Windows PID won't be probeable from WSL
       // and we'd falsely delete a live session's file. This is just
       // telemetry so conservative undercount is acceptable.

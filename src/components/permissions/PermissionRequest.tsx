@@ -130,7 +130,7 @@ function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
     return 'Потрібне підтвердження плану';
   }
   if (toolUseConfirm.tool === EnterPlanModeTool) {
-    return 'Neural Network wants to enter plan mode';
+    return 'Neural Network Coder wants to enter plan mode';
   }
   if (false && toolUseConfirm.tool === ReviewArtifactTool) {
     return 'Потрібне підтвердження для перегляду артефакту';

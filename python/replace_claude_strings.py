@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Replace user-facing "Claude" mentions in OpenClaude .ts/.tsx files.
+Replace user-facing "Claude" mentions in Neural Network Coder .ts/.tsx files.
 Rules:
   - Replace in UI strings (JSX text, description strings, user messages)
   - Keep model names (Claude 3 Opus, Claude 3.5 Haiku, etc.)
@@ -14,7 +14,7 @@ import os
 import re
 import sys
 
-BASE = r"C:\Users\User\Documents\Project\GitHub\openclaude"
+BASE = r"C:\Users\User\Documents\Project\GitHub\nnc"
 
 # ---------------------------------------------------------------------------
 # Files / directories to skip entirely
@@ -60,9 +60,9 @@ REPLACEMENTS = [
     ("How is Claude doing this session? (optional)", "Як пройшла ця сесія? (необов'язково)"),
 
     # --- English context (longer / more specific first) ---
-    ("Claude is done using your computer",    "Neural Network is done using your computer"),
-    ("Claude is using your computer",         "Neural Network is using your computer"),
-    ("Claude is waiting for your input",      "Neural Network is waiting for your input"),
+    ("Claude is done using your computer",    "Neural Network Coder is done using your computer"),
+    ("Claude is using your computer",         "Neural Network Coder is using your computer"),
+    ("Claude is waiting for your input",      "Neural Network Coder is waiting for your input"),
     ("Copy Claude's last response to clipboard", "Copy last response to clipboard"),
     ("Claude's last response",                "last response"),
     ("Edit Claude memory files",              "Edit memory files"),
@@ -114,12 +114,12 @@ REPLACEMENTS = [
      "Pauses and asks you to write small pieces of code for hands-on practice"),
     ("Relive your year of coding with Claude.",
      "Relive your year of coding."),
-    ("Neural Network can be used with your Claude subscription or billed based on API usage through your Console account.",
-     "Neural Network can be used with your subscription or billed based on API usage through your Console account."),
+    ("Neural Network Coder can be used with your Claude subscription or billed based on API usage through your Console account.",
+     "Neural Network Coder can be used with your subscription or billed based on API usage through your Console account."),
     ("Voice mode requires a Claude.ai account. Please run /login to sign in.",
      "Voice mode requires an account. Please run /login to sign in."),
-    ("Neural Network web sessions require authentication with a Claude.ai account.",
-     "Neural Network web sessions require authentication. API key authentication is not sufficient."),
+    ("Neural Network Coder web sessions require authentication with a Claude.ai account.",
+     "Neural Network Coder web sessions require authentication. API key authentication is not sufficient."),
 
     # --- Batch 2: UI strings found by find_remaining_ui_claude.py ---
     # Permission strings
@@ -205,13 +205,13 @@ REPLACEMENTS = [
 
     # "Help improve Claude"
     ("Help improve Claude: OFF",
-     "Help improve Neural Network: OFF"),
+     "Help improve Neural Network Coder: OFF"),
     ("Help improve Claude: ON",
-     "Help improve Neural Network: ON"),
+     "Help improve Neural Network Coder: ON"),
     ("Help improve Claude: OFF (for emails with your domain)",
-     "Help improve Neural Network: OFF (for emails with your domain)"),
+     "Help improve Neural Network Coder: OFF (for emails with your domain)"),
     ("Help improve Claude",
-     "Help improve Neural Network"),
+     "Help improve Neural Network Coder"),
 
     # "Claude model"
     ("Claude model \xB7 ",
@@ -254,7 +254,7 @@ REPLACEMENTS = [
     ("' Welcome to Open Claude",
      "' Welcome"),
     ("Open Claude'",
-     "OpenClaude'"),
+     "Neural Network Coder'"),
 
     # Terminal
     ("to return to Claude ",
@@ -407,12 +407,12 @@ REPLACEMENTS = [
 
     # --- Batch 4: remaining real UI strings ---
     ("Open Claude'",
-     "OpenClaude'"),
+     "Neural Network Coder'"),
     ("(Open Claude)'",
-     "(OpenClaude)'"),
+     "(Neural Network Coder)'"),
     # LogoV2 "Open Claude"
     ('"Open Claude")} ${color("inactive"',
-     '"OpenClaude")} ${color("inactive"'),
+     '"Neural Network Coder")} ${color("inactive"'),
     # LogoV2 detach hint "Claude uses"
     ("Claude uses ${process.env.CLAUDE_CODE_TMUX_PREFIX}",
      "it uses ${process.env.CLAUDE_CODE_TMUX_PREFIX}"),

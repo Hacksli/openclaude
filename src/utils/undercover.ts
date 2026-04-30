@@ -3,16 +3,16 @@
  *
  * When active:
  *  - The system prompt omits "You are powered by claude-…" lines and any
- *    mention of Neural Network model families, Neural Network, or fast mode.
+ *    mention of Neural Network Coder model families, Neural Network Coder, or fast mode.
  *  - Commit / PR prompts get a prefix instructing the assistant not to add
  *    AI-authorship markers.
- *  - Co-Authored-By trailers and "Generated with Neural Network" attribution
+ *  - Co-Authored-By trailers and "Generated with Neural Network Coder" attribution
  *    are stripped from commits and PRs.
  *  - The prompt footer shows an "undercover" indicator.
  *
  * Activation:
  *  - ON by default.
- *  - OPENCLAUDE_UNDERCOVER=0 (or "false") at launch forces OFF.
+ *  - NNC_UNDERCOVER=0 (or "false") at launch forces OFF.
  *  - Toggled at runtime by the /undercover slash command, which flips the
  *    flag held in bootstrap/state.ts.
  *
@@ -31,14 +31,14 @@ export function getUndercoverInstructions(): string {
   return `## UNDERCOVER MODE
 
 Write as an ordinary human developer. Do NOT identify yourself as an AI,
-a language model, Neural Network, or any other assistant. Do not leave authorship
+a language model, Neural Network Coder, or any other assistant. Do not leave authorship
 markers that hint the output was machine-generated.
 
 NEVER include in commit messages, PR titles, PR bodies, or code comments:
 - Any mention that you are an AI, LLM, or assistant
-- The names "Neural Network", "Neural Network", "Anthropic", or any model codename
+- The names "Neural Network Coder", "Neural Network Coder", "Anthropic", or any model codename
 - Model version strings (e.g., "claude-opus-4-6", "sonnet-4-5")
-- Phrases like "Generated with", "🤖 Generated", "Co-Authored-By: Neural Network …"
+- Phrases like "Generated with", "🤖 Generated", "Co-Authored-By: Neural Network Coder …"
 - "As an AI, …" disclaimers or meta-commentary about being an assistant
 
 Write commit messages and code as a human developer would — describe only
@@ -50,10 +50,10 @@ GOOD:
 - "Refactor parser for better error messages"
 
 BAD (never write these):
-- "Generated with Neural Network / Neural Network"
+- "Generated with Neural Network Coder / Neural Network Coder"
 - "Co-Authored-By: Claude Opus 4.6 <…>"
 - "As an AI language model, I've refactored …"
-- "🤖 Generated with Neural Network"
+- "🤖 Generated with Neural Network Coder"
 `
 }
 

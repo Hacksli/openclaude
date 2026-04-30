@@ -2,7 +2,7 @@
 import { computed, onUnmounted, ref } from 'vue'
 
 // Fallback list used only when the server doesn't send a verb
-// (e.g. connecting to an older openclaude version).
+// (e.g. connecting to an older nnc version).
 const FALLBACK_VERBS = [
   'Чаклуємо', 'Шаманимо', 'Химичимо', 'Варимо борщ', 'Ліпимо вареники',
   'Смажимо деруни', 'Заварюємо каву', 'Мішаємо зілля', 'Кодимо', 'Думаємо',

@@ -1,8 +1,8 @@
 {
-  "name": "@openclaude/vue-remote",
+  "name": "@nnc/vue-remote",
   "version": "0.1.0",
   "private": true,
-  "description": "Vue 3 PWA client for openclaude's /remote bridge",
+  "description": "Vue 3 PWA client for nnc's /remote bridge",
   "type": "module",
   "scripts": {
     "dev": "vite",

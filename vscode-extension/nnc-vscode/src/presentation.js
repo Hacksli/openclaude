@@ -33,7 +33,7 @@ function buildActionModel({ canLaunchInWorkspaceRoot, workspaceProfilePath } = {
   return {
     primary: {
       id: 'launch',
-      label: 'Launch Neural Network',
+      label: 'Launch Neural Network Coder',
       detail: 'Use the resolved project-aware launch directory',
       tone: 'accent',
       disabled: false,
@@ -108,8 +108,8 @@ function buildControlCenterViewModel(status = {}) {
 
   return {
     header: {
-      eyebrow: 'Neural Network Control Center',
-      title: 'Project-aware Neural Network companion',
+      eyebrow: 'Neural Network Coder Control Center',
+      title: 'Project-aware Neural Network Coder companion',
       subtitle:
         'Useful local status, predictable launch behavior, and quick access to the workflows you actually use.',
     },
@@ -176,7 +176,7 @@ function buildControlCenterViewModel(status = {}) {
         rows: [
           {
             key: 'runtime',
-            label: 'Neural Network executable',
+            label: 'Neural Network Coder executable',
             summary: runtimeSummary,
             detail: runtimeDetail,
             tone: getRuntimeTone(status.installed),

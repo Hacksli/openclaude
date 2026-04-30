@@ -7,7 +7,7 @@ import {
 
 /**
  * God mode: auto-approve every tool call in this session AND persist the
- * setting to .openclaude/settings.local.json so future sessions in this
+ * setting to .nnc/settings.local.json so future sessions in this
  * project launch straight into bypassPermissions without CLI flags.
  *
  * Equivalent to running the CLI with --dangerously-skip-permissions.
@@ -26,7 +26,7 @@ export const call: LocalCommandCall = async (_, context) => {
     }),
   }))
 
-  // 2. Persist to .openclaude/settings.local.json (gitignored, per-machine).
+  // 2. Persist to .nnc/settings.local.json (gitignored, per-machine).
   //    Merge into any existing permissions block rather than overwriting.
   const existing = getSettingsForSource('localSettings') ?? {}
   const existingPermissions = existing.permissions ?? {}
@@ -48,7 +48,7 @@ export const call: LocalCommandCall = async (_, context) => {
       type: 'text',
       value:
         'Режим бога увімкнено лише для цієї сесії — не вдалося зберегти ' +
-        `.openclaude/settings.local.json: ${error.message}`,
+        `.nnc/settings.local.json: ${error.message}`,
     }
   }
 
@@ -57,7 +57,7 @@ export const call: LocalCommandCall = async (_, context) => {
     value:
       'Режим бога увімкнено. Всі дозволи тепер оминаються — як із прапорцем ' +
       '--dangerously-skip-permissions. Налаштування збережено в ' +
-      '.openclaude/settings.local.json, тому наступні сесії в цьому проєкті ' +
+      '.nnc/settings.local.json, тому наступні сесії в цьому проєкті ' +
       'стартують так само.',
   }
 }

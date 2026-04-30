@@ -373,16 +373,16 @@ function extractGeminiCliCredentials(credFile: GeminiCliCredFile | null): OAuthC
  * Resolve Gemini CLI OAuth client credentials (needed for token refresh).
  *
  * Priority:
- *   1. OPENCLAUDE_GEMINI_OAUTH_CLIENT_ID / OPENCLAUDE_GEMINI_OAUTH_CLIENT_SECRET
+ *   1. NNC_GEMINI_OAUTH_CLIENT_ID / NNC_GEMINI_OAUTH_CLIENT_SECRET
  *   2. GEMINI_CLI_OAUTH_CLIENT_ID / GEMINI_CLI_OAUTH_CLIENT_SECRET
  *   3. client_id from id_token JWT + client_secret from gemini-cli-core npm package
  */
 export function resolveOAuthClientConfig(credFile?: GeminiCliCredFile | null): OAuthClientConfig | null {
   const envClientId =
-    sanitize(process.env.OPENCLAUDE_GEMINI_OAUTH_CLIENT_ID) ??
+    sanitize(process.env.NNC_GEMINI_OAUTH_CLIENT_ID) ??
     sanitize(process.env.GEMINI_CLI_OAUTH_CLIENT_ID)
   const envClientSecret =
-    sanitize(process.env.OPENCLAUDE_GEMINI_OAUTH_CLIENT_SECRET) ??
+    sanitize(process.env.NNC_GEMINI_OAUTH_CLIENT_SECRET) ??
     sanitize(process.env.GEMINI_CLI_OAUTH_CLIENT_SECRET)
 
   if (envClientId && envClientSecret) {

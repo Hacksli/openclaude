@@ -7,7 +7,7 @@ import {
   validateProviderEnvOrExit,
 } from '../utils/providerValidation.js'
 
-// Neural Network: polyfill globalThis.File for Node < 20.
+// Neural Network Coder: polyfill globalThis.File for Node < 20.
 // undici v7 references `File` at module evaluation time (webidl type
 // assertions). Node 18 lacks the global, causing a ReferenceError inside
 // the bundled __commonJS require chain which deadlocks the process when a
@@ -35,7 +35,7 @@ if (typeof globalThis.File === 'undefined') {
   }
 }
 
-// Neural Network: disable experimental API betas by default.
+// Neural Network Coder: disable experimental API betas by default.
 // Tool search (defer_loading), global cache scope, and context management
 // require internal API support not available to external accounts → 500.
 // Users can opt-in with CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=false.
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   if (args.length === 1 && (args[0] === '--version' || args[0] === '-v' || args[0] === '-V')) {
     // MACRO.VERSION is inlined at build time
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${MACRO.DISPLAY_VERSION ?? MACRO.VERSION} (Open Neural Network)`);
+    console.log(`${MACRO.DISPLAY_VERSION ?? MACRO.VERSION} (Neural Network Coder)`);
     return;
   }
 
@@ -241,7 +241,7 @@ async function main(): Promise<void> {
       process.stderr.write(
         '\nПомилка: не вдалося завантажити облікові дані Gemini CLI OAuth.\n' +
         'Переконайтеся, що ви авторизовані в Gemini CLI: gemini auth login\n' +
-        'Потім знову запустіть openclaude.\n\n',
+        'Потім знову запустіть nnc.\n\n',
       )
       // Continue anyway — the first API call will fail with a clear error
     }
@@ -488,12 +488,12 @@ async function main(): Promise<void> {
   // --remote / --remote-on: start the interactive REPL and auto-activate the
   // local-remote bridge so the session is immediately available in a browser.
   if (args.includes('--remote') || args.includes('--remote-on')) {
-    process.env.OPENCLAUDE_REMOTE_ON = '1'
+    process.env.NNC_REMOTE_ON = '1'
     // Strip the flag so commander/main don't see an unknown option.
     process.argv = process.argv.filter(a => a !== '--remote' && a !== '--remote-on')
   }
 
-  // Fast-path for `openclaude remote-daemon [--stop|--status]`.
+  // Fast-path for `nnc remote-daemon [--stop|--status]`.
   // Standalone daemon for the /remote multi-session bridge.
   if (args[0] === 'remote-daemon' || args[0] === '--remote-daemon') {
     const { remoteDaemonCli } = await import('../localRemote/daemon/main.js');
@@ -513,7 +513,7 @@ async function main(): Promise<void> {
   }
 
   // No special flags detected, load and run the full CLI
-  if (process.env.OPENCLAUDE_DISABLE_EARLY_INPUT !== '1') {
+  if (process.env.NNC_DISABLE_EARLY_INPUT !== '1') {
     const {
       startCapturingEarlyInput
     } = await import('../utils/earlyInput.js');

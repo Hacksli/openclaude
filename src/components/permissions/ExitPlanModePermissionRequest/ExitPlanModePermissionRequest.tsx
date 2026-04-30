@@ -729,7 +729,7 @@ export function buildPlanApprovalOptions({
   });
   if (showUltraplan) {
     options.push({
-      label: 'No, refine with Ultraplan on Neural Network on the web',
+      label: 'No, refine with Ultraplan on Neural Network Coder on the web',
       value: 'ultraplan'
     });
   }

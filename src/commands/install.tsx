@@ -44,11 +44,11 @@ export function getInstallationPath(): string {
   const homeDir = homedir();
   if (isWindows) {
     // Convert to Windows-style path
-    const windowsPath = join(homeDir, '.local', 'bin', 'openclaude.exe');
+    const windowsPath = join(homeDir, '.local', 'bin', 'nnc.exe');
     // Replace forward slashes with backslashes for Windows display
     return windowsPath.replace(/\//g, '\\');
   }
-  return '~/.local/bin/openclaude';
+  return '~/.local/bin/nnc';
 }
 function SetupNotes(t0) {
   const $ = _c(5);
@@ -210,12 +210,12 @@ function Install({
   useEffect(() => {
     if (state.type === 'success') {
       // Give success message time to render before exiting
-      setTimeout(onDone, 2000, 'Neural Network installation completed successfully', {
+      setTimeout(onDone, 2000, 'Neural Network Coder installation completed successfully', {
         display: 'system' as const
       });
     } else if (state.type === 'error') {
       // Give error message time to render before exiting
-      setTimeout(onDone, 3000, 'Neural Network installation failed', {
+      setTimeout(onDone, 3000, 'Neural Network Coder installation failed', {
         display: 'system' as const
       });
     }
@@ -226,7 +226,7 @@ function Install({
       {state.type === 'cleaning-npm' && <Text color="warning">Cleaning up old npm installations...</Text>}
 
       {state.type === 'installing' && <Text color="claude">
-          Installing Neural Network native build {state.version}...
+          Installing Neural Network Coder native build {state.version}...
         </Text>}
 
       {state.type === 'setting-up' && <Text color="claude">Setting up launcher and shell integration...</Text>}
@@ -237,7 +237,7 @@ function Install({
           <Box>
             <StatusIcon status="success" withSpace />
             <Text color="success" bold>
-              Neural Network successfully installed!
+              Neural Network Coder successfully installed!
             </Text>
           </Box>
           <Box marginLeft={2} flexDirection="column" gap={1}>
@@ -279,7 +279,7 @@ function Install({
 export const install = {
   type: 'local-jsx' as const,
   name: 'install',
-  description: 'Install Neural Network native build',
+  description: 'Install Neural Network Coder native build',
   argumentHint: '[options]',
   async call(onDone: (result: string, options?: {
     display?: CommandResultDisplay;

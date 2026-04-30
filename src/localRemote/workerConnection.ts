@@ -1,5 +1,5 @@
 /**
- * WebSocket client that connects a running Neural Network session (worker)
+ * WebSocket client that connects a running Neural Network Coder session (worker)
  * to the remote daemon.
  *
  * Translates local session events (via localRemoteEvents) into
@@ -135,11 +135,23 @@ export function createWorkerConnection(
           send({ type: 'error', message: 'No active session.' })
           return
         }
+        logForDebugging(`[workerConnection] prompt event text="${event.text.slice(0, 40)}", attachments=${event.attachments?.length ?? 0}`)
         try {
           submitter(event.text, event.attachments)
         } catch (err) {
           logForDebugging(`[workerConnection] prompt submission failed: ${String(err)}`)
           send({ type: 'error', message: 'Prompt rejected by session.' })
+        }
+        break
+      }
+
+      case 'cancel': {
+        const handler = getCancelHandler()
+        if (handler) {
+          logForDebugging('[workerConnection] cancel event received from daemon')
+          handler()
+        } else {
+          logForDebugging('[workerConnection] cancel event received but no handler registered')
         }
         break
       }

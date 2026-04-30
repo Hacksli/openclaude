@@ -1,6 +1,6 @@
 # Web Search Providers
 
-Neural Network supports multiple search backends through a provider adapter system.
+Neural Network Coder supports multiple search backends through a provider adapter system.
 
 ## Supported Providers
 

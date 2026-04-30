@@ -1,11 +1,11 @@
 /**
- * Spawn a new, visible terminal window running `openclaude` in a fresh
+ * Spawn a new, visible terminal window running `nnc` in a fresh
  * session. Invoked by the daemon when a browser client requests
  * `new_session`. Platform-specific: uses `cmd /c start` on Windows,
  * `osascript` → Terminal.app on macOS, and `x-terminal-emulator` on Linux.
  *
  * Fire-and-forget: we detach + unref the spawn handle so the child outlives
- * the daemon process. The newly-spawned openclaude worker will connect back
+ * the daemon process. The newly-spawned nnc worker will connect back
  * to this daemon over the standard /remote bridge and appear in the session
  * list automatically — no further IPC is needed.
  */
@@ -31,18 +31,18 @@ export function spawnSessionTerminal(opts?: { cwd?: string }): SpawnResult {
   const envForChild: NodeJS.ProcessEnv = {
     ...process.env,
     CLAUDE_CODE_SKIP_MODEL_PICKER: '1',
-    OPENCLAUDE_REMOTE_ON: '1',
+    NNC_REMOTE_ON: '1',
   }
 
   try {
     if (platform === 'win32') {
-      // `start "" cmd /k openclaude` opens a new cmd window that stays open
-      // after openclaude exits (/k). The empty "" is the window title —
+      // `start "" cmd /k nnc` opens a new cmd window that stays open
+      // after nnc exits (/k). The empty "" is the window title —
       // required by `start` because it otherwise treats the next quoted
       // token as the title.
       const child = spawn(
         'cmd.exe',
-        ['/c', 'start', '', 'cmd.exe', '/k', 'openclaude'],
+        ['/c', 'start', '', 'cmd.exe', '/k', 'nnc'],
         {
           cwd,
           detached: true,
@@ -59,10 +59,10 @@ export function spawnSessionTerminal(opts?: { cwd?: string }): SpawnResult {
     if (platform === 'darwin') {
       // Escape backslashes and double quotes for the AppleScript literal.
       const escapedCwd = cwd.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-      // `env FOO=1 BAR=1 openclaude` передає змінні, бо AppleScript
+      // `env FOO=1 BAR=1 nnc` передає змінні, бо AppleScript
       // do-script запускає окремий shell, який не успадковує env дочірнього
       // процесу osascript.
-      const script = `tell application "Terminal" to do script "cd \\"${escapedCwd}\\" && env CLAUDE_CODE_SKIP_MODEL_PICKER=1 OPENCLAUDE_REMOTE_ON=1 openclaude"`
+      const script = `tell application "Terminal" to do script "cd \\"${escapedCwd}\\" && env CLAUDE_CODE_SKIP_MODEL_PICKER=1 NNC_REMOTE_ON=1 nnc"`
       const child = spawn('osascript', ['-e', script], {
         detached: true,
         stdio: 'ignore',
@@ -77,7 +77,7 @@ export function spawnSessionTerminal(opts?: { cwd?: string }): SpawnResult {
     // which on most desktops resolves to the user's preferred terminal.
     const child = spawn(
       'x-terminal-emulator',
-      ['-e', 'openclaude'],
+      ['-e', 'nnc'],
       {
         cwd,
         detached: true,

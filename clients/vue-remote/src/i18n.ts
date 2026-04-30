@@ -35,6 +35,7 @@ export const t = {
     placeholderDisabled: 'Перепідключення…',
     send: 'Надіслати',
     interrupt: 'Перервати',
+    attach: 'Прикріпити файл',
   },
 
   // Messages

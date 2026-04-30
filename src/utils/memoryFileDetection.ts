@@ -123,7 +123,7 @@ function isAgentMemFile(filePath: string): boolean {
 }
 
 /**
- * Check if a file is a Neural Network-managed memory file (NOT user-managed instruction files).
+ * Check if a file is a Neural Network Coder-managed memory file (NOT user-managed instruction files).
  * Includes: auto-memory (memdir), agent memory, session memory/transcripts.
  * Excludes: NNC.md, CLAUDE.local.md, .nnc/rules/*.md (user-managed).
  *

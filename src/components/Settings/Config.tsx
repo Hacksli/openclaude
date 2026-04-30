@@ -1119,7 +1119,7 @@ export function Config({
     });
     // Check for API key changes
     // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
-    // processes but ignored by Neural Network itself (see auth.ts).
+    // processes but ignored by Neural Network Coder itself (see auth.ts).
     const effectiveApiKey = isRunningOnHomespace() ? undefined : process.env.ANTHROPIC_API_KEY;
     const initialUsingCustomKey = Boolean(effectiveApiKey && initialConfig.current.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
     const currentUsingCustomKey = Boolean(effectiveApiKey && globalConfig.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
@@ -1762,7 +1762,7 @@ function teammateModelDisplayString(value: string | null | undefined): string {
 }
 const THEME_LABELS: Record<string, string> = {
   auto: 'Auto (match terminal)',
-  fire: 'Fire (sunset — Neural Network default)',
+  fire: 'Fire (sunset — Neural Network Coder default)',
   dark: 'Dark mode',
   light: 'Light mode',
   'dark-daltonized': 'Dark mode (colorblind-friendly)',

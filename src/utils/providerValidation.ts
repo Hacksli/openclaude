@@ -94,7 +94,7 @@ export async function getProviderValidationError(
       return (
         'Gemini CLI OAuth: access token not found.\n' +
         'Переконайтеся, що ви увійшли в Gemini CLI: gemini auth login\n' +
-        'Потім повторно запустіть openclaude з CLAUDE_CODE_USE_GEMINI_OAUTH=1.'
+        'Потім повторно запустіть nnc з CLAUDE_CODE_USE_GEMINI_OAUTH=1.'
       )
     }
     return null

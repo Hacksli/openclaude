@@ -175,6 +175,7 @@ export class SessionRouter {
           client.send({ type: 'error', sessionId: client.subscribedSession, message: 'Session not found or disconnected.' })
           return
         }
+        logForDebugging(`[sessionRouter] forward prompt to worker, text="${event.text.slice(0, 40)}", attachments=${event.attachments?.length ?? 0}`)
         worker.send({ type: 'prompt', text: event.text, attachments: event.attachments })
         break
       }
@@ -260,8 +261,17 @@ export class SessionRouter {
         break
       }
 
+      case 'cancel': {
+        const worker = this.workers.get(client.subscribedSession)
+        if (worker) {
+          logForDebugging(`[sessionRouter] cancel request for session ${client.subscribedSession}`)
+          worker.send({ type: 'cancel' })
+        }
+        break
+      }
+
       case 'new_session': {
-        // Open a fresh local terminal running `openclaude`. The new worker
+        // Open a fresh local terminal running `nnc`. The new worker
         // will connect back to this daemon and appear in the session list
         // via broadcastSessionList — no explicit ack beyond `error` on fail.
         logForDebugging('[sessionRouter] new_session request from client')

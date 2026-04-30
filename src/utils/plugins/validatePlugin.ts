@@ -232,7 +232,7 @@ export async function validatePluginManifest(
           path: key,
           message:
             `Field '${key}' belongs in the marketplace entry (marketplace.json), ` +
-            `not plugin.json. It's harmless here but unused — Neural Network ` +
+            `not plugin.json. It's harmless here but unused — Neural Network Coder ` +
             `ignores it at load time.`,
         })
       }
@@ -255,13 +255,13 @@ export async function validatePluginManifest(
     const manifest = result.data
 
     // Warn if name isn't strict kebab-case. CC's schema only rejects spaces,
-    // but the Neural Network.ai marketplace sync rejects non-kebab names. Surfacing
+    // but the Neural Network Coder.ai marketplace sync rejects non-kebab names. Surfacing
     // this here lets authors catch it in CI before the sync fails on them.
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(manifest.name)) {
       warnings.push({
         path: 'name',
         message:
-          `Plugin name "${manifest.name}" is not kebab-case. Neural Network accepts ` +
+          `Plugin name "${manifest.name}" is not kebab-case. Neural Network Coder accepts ` +
           `it, but the marketplace sync requires kebab-case ` +
           `(lowercase letters, digits, and hyphens only, e.g., "my-plugin").`,
       })

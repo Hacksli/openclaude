@@ -147,7 +147,7 @@ export async function enrollTrustedDevice(): Promise<void> {
         device_id?: string
       }>(
         `${baseUrl}/api/auth/trusted_devices`,
-        { display_name: `Neural Network on ${hostname()} · ${process.platform}` },
+        { display_name: `Neural Network Coder on ${hostname()} · ${process.platform}` },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

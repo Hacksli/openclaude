@@ -772,7 +772,7 @@ function PromptInput({
     if (false && ultraplanTriggers.length) {
       addNotification({
         key: 'ultraplan-active',
-        text: 'This prompt will launch an ultraplan session in Neural Network on the web',
+        text: 'This prompt will launch an ultraplan session in Neural Network Coder on the web',
         priority: 'immediate',
         timeoutMs: 5000
       });

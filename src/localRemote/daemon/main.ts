@@ -2,11 +2,11 @@
  * Entry point for the remote daemon process.
  *
  * Can be invoked in two ways:
- *   1. CLI: `openclaude remote-daemon [--stop|--status]`
+ *   1. CLI: `nnc remote-daemon [--stop|--status]`
  *   2. Auto-spawn: detached child process started by a worker.
  *
  * The daemon holds the HTTP+WS port and routes messages between
- * Neural Network worker processes and browser clients.
+ * Neural Network Coder worker processes and browser clients.
  */
 
 import { loadLocalRemoteSettings, tokenPreview } from '../localRemoteConfig.js'
@@ -133,7 +133,7 @@ export async function runDaemon(): Promise<void> {
 }
 
 /**
- * CLI dispatcher for `openclaude remote-daemon [--stop|--status]`.
+ * CLI dispatcher for `nnc remote-daemon [--stop|--status]`.
  */
 export async function remoteDaemonCli(args: string[]): Promise<void> {
   const arg = args[0]?.replace(/^-+/, '').toLowerCase() ?? ''

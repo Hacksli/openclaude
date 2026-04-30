@@ -19,16 +19,16 @@ const USAGE = [
   '/remote reload    — restart remote daemon process',
   '',
   'The remote daemon holds the HTTP+WS port and routes sessions.',
-  'All Neural Network instances connect to it as workers.',
+  'All Neural Network Coder instances connect to it as workers.',
   '',
   'Configure port/host via "localRemote" in ~/.nnc/settings (or ~/.nnc/config).',
   'The server binds to 127.0.0.1 by default. For phone/VPS access, set host to 0.0.0.0',
   'and front the port with Cloudflare Tunnel, SSH tunnel, or a reverse proxy.',
   '',
   'Manual daemon control:',
-  '  openclaude remote-daemon          — start daemon in foreground',
-  '  openclaude remote-daemon --stop   — stop daemon',
-  '  openclaude remote-daemon --status — show daemon status',
+  '  nnc remote-daemon          — start daemon in foreground',
+  '  nnc remote-daemon --stop   — stop daemon',
+  '  nnc remote-daemon --status — show daemon status',
 ].join('\n')
 
 function formatStart(res: {
@@ -48,7 +48,7 @@ function formatStart(res: {
     '',
     'Open the URL in a browser, pick a session from the list, and you have a',
     'mirror of this session with two-way messaging and remote tool-permission',
-    'approvals. Multiple Neural Network instances share the same daemon.',
+    'approvals. Multiple Neural Network Coder instances share the same daemon.',
     `Rotate the token with "/remote rotate" if it leaks.`,
   )
   return lines.join('\n')

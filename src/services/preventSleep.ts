@@ -1,5 +1,5 @@
 /**
- * Prevents macOS from sleeping while Neural Network is working.
+ * Prevents macOS from sleeping while Neural Network Coder is working.
  *
  * Uses the built-in `caffeinate` command to create a power assertion that
  * prevents idle sleep. This keeps the Mac awake during API requests and

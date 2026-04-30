@@ -5,7 +5,7 @@
  *   - Static PWA at `GET /` (reuses localRemoteServer static serving logic)
  *   - `GET /healthz` (unauthenticated — for worker probe)
  *   - `GET /api/sessions` (authenticated — session list)
- *   - `WS /ws/worker?token=…` — inbound from Neural Network processes
+ *   - `WS /ws/worker?token=…` — inbound from Neural Network Coder processes
  *   - `WS /ws/client?token=…&sessionId=…` — inbound from browsers
  */
 

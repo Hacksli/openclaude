@@ -183,6 +183,7 @@ export async function handlePromptSubmit(
       ([, c]) => c.type !== 'image' || referencedIds.has(c.id),
     ),
   )
+  logForDebugging(`[handlePromptSubmit] input="${input.slice(0, 60)}", rawPasteIds=${Object.keys(rawPastedContents).join(',')}, referencedIds=${[...referencedIds].join(',')}, filteredPasteIds=${Object.keys(pastedContents).join(',')}`)
 
   const hasImages = Object.values(pastedContents).some(isValidImagePaste)
   if (input.trim() === '') {

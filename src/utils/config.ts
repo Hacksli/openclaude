@@ -419,9 +419,9 @@ export type GlobalConfig = {
   showSpinnerTree?: boolean // Whether to show the teammate spinner tree instead of pills
 
   // First start time tracking
-  firstStartTime?: string // ISO timestamp when Neural Network was first started on this machine
+  firstStartTime?: string // ISO timestamp when Neural Network Coder was first started on this machine
 
-  messageIdleNotifThresholdMs: number // How long the user has to have been idle to get a notification that Neural Network is done generating
+  messageIdleNotifThresholdMs: number // How long the user has to have been idle to get a notification that Neural Network Coder is done generating
 
   githubActionSetupCount?: number // Number of times the user has set up the GitHub Action
   slackAppInstallCount?: number // Number of times the user has clicked to install the Slack app
@@ -442,8 +442,8 @@ export type GlobalConfig = {
   inputNeededNotifEnabled?: boolean
   agentPushNotifEnabled?: boolean
 
-  // Neural Network usage tracking
-  claudeCodeFirstTokenDate?: string // ISO timestamp of the user's first Neural Network OAuth token
+  // Neural Network Coder usage tracking
+  claudeCodeFirstTokenDate?: string // ISO timestamp of the user's first Neural Network Coder OAuth token
 
   // Model switch callout tracking (internal-only)
   modelSwitchCalloutDismissed?: boolean // Whether user chose "Don't show again"
@@ -545,7 +545,7 @@ export type GlobalConfig = {
   officialMarketplaceAutoInstallLastAttemptTime?: number // Timestamp of last attempt
   officialMarketplaceAutoInstallNextRetryTime?: number // Earliest time to retry again
 
-  // Neural Network in Chrome settings
+  // Neural Network Coder in Chrome settings
   hasCompletedClaudeInChromeOnboarding?: boolean // Whether Chrome Extension onboarding has been shown
   claudeInChromeDefaultEnabled?: boolean // Whether Chrome Extension is enabled by default (undefined means platform default)
   cachedChromeExtensionInstalled?: boolean // Cached result of whether Chrome extension is installed
@@ -561,7 +561,7 @@ export type GlobalConfig = {
   lspRecommendationNeverPlugins?: string[] // Plugin IDs to never suggest
   lspRecommendationIgnoredCount?: number // Track ignored recommendations (stops after 5)
 
-  // Neural Network hint protocol state (<nnc-hint /> tags from CLIs/SDKs).
+  // Neural Network Coder hint protocol state (<nnc-hint /> tags from CLIs/SDKs).
   // Nested by hint type so future types (docs, mcp, ...) slot in without new
   // top-level keys.
   claudeCodeHints?: {

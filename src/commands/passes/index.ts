@@ -10,9 +10,9 @@ export default {
   get description() {
     const reward = getCachedReferrerReward()
     if (reward) {
-      return 'Share a free week of Neural Network with friends and earn extra usage'
+      return 'Share a free week of Neural Network Coder with friends and earn extra usage'
     }
-    return 'Share a free week of Neural Network with friends'
+    return 'Share a free week of Neural Network Coder with friends'
   },
   get isHidden() {
     const { eligible, hasCache } = checkCachedPassesEligibility()

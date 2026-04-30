@@ -3,7 +3,7 @@ const plugin = {
   type: 'local-jsx',
   name: 'plugin',
   aliases: ['plugins', 'marketplace'],
-  description: 'Manage Neural Network plugins',
+  description: 'Manage Neural Network Coder plugins',
   immediate: true,
   load: () => import('./plugin.js')
 } satisfies Command;

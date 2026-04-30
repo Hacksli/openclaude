@@ -342,7 +342,7 @@ export const FileEditTool = buildTool({
       }
     }
 
-    // Additional validation for Neural Network settings files
+    // Additional validation for Neural Network Coder settings files
     const settingsValidationResult = validateInputForSettingsFileEdit(
       fullFilePath,
       file,

@@ -1,0 +1,179 @@
+{
+  "name": "nnc-vscode",
+  "displayName": "Neural Network Coder",
+  "description": "Practical VS Code companion for Neural Network Coder with project-aware launch behavior and a real Control Center.",
+  "version": "0.2.0",
+  "publisher": "devnull-bootloader",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Themes",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:nnc.start",
+    "onCommand:nnc.startInWorkspaceRoot",
+    "onCommand:nnc.openDocs",
+    "onCommand:nnc.openSetupDocs",
+    "onCommand:nnc.openWorkspaceProfile",
+    "onCommand:nnc.openControlCenter",
+    "onCommand:nnc.newChat",
+    "onCommand:nnc.openChat",
+    "onCommand:nnc.resumeSession",
+    "onCommand:nnc.abortChat",
+    "onView:nnc.controlCenter",
+    "onView:nnc.chat"
+  ],
+  "main": "./src/extension.js",
+  "files": [
+    "README.md",
+    "media/**",
+    "src/extension.js",
+    "src/presentation.js",
+    "src/state.js",
+    "src/chat/**",
+    "themes/**"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "nnc.start",
+        "title": "Neural Network Coder: Launch in Terminal",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.startInWorkspaceRoot",
+        "title": "Neural Network Coder: Launch in Workspace Root",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.openDocs",
+        "title": "Neural Network Coder: Open Repository",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.openSetupDocs",
+        "title": "Neural Network Coder: Open Setup Guide",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.openWorkspaceProfile",
+        "title": "Neural Network Coder: Open Workspace Profile",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.openControlCenter",
+        "title": "Neural Network Coder: Open Control Center",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.newChat",
+        "title": "Neural Network Coder: New Chat",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.openChat",
+        "title": "Neural Network Coder: Open Chat Panel",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.resumeSession",
+        "title": "Neural Network Coder: Resume Session",
+        "category": "Neural Network Coder"
+      },
+      {
+        "command": "nnc.abortChat",
+        "title": "Neural Network Coder: Abort Generation",
+        "category": "Neural Network Coder"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "nnc",
+          "title": "Neural Network Coder",
+          "icon": "media/nnc.svg"
+        }
+      ]
+    },
+    "views": {
+      "nnc": [
+        {
+          "id": "nnc.chat",
+          "name": "Chat",
+          "type": "webview"
+        },
+        {
+          "id": "nnc.controlCenter",
+          "name": "Control Center",
+          "type": "webview"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "nnc.openChat",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l"
+      }
+    ],
+    "configuration": {
+      "title": "Neural Network Coder",
+      "properties": {
+        "nnc.launchCommand": {
+          "type": "string",
+          "default": "nnc",
+          "description": "Command run in the integrated terminal when launching Neural Network Coder."
+        },
+        "nnc.terminalName": {
+          "type": "string",
+          "default": "Neural Network Coder",
+          "description": "Integrated terminal tab name for Neural Network Coder sessions."
+        },
+        "nnc.useOpenAIShim": {
+          "type": "boolean",
+          "default": false,
+          "description": "Optionally set CLAUDE_CODE_USE_OPENAI=1 in launched Neural Network Coder terminals."
+        },
+        "nnc.permissionMode": {
+          "type": "string",
+          "default": "acceptEdits",
+          "enum": ["default", "acceptEdits", "bypassPermissions", "plan"],
+          "enumDescriptions": [
+            "Prompt for permission on each tool use (requires manual approval)",
+            "Auto-approve file edits, prompt for other operations (recommended)",
+            "Auto-approve all operations without prompting",
+            "Read-only mode — no file modifications allowed"
+          ],
+          "description": "Permission mode for chat sessions. Controls which tool operations are auto-approved."
+        }
+      }
+    },
+    "themes": [
+      {
+        "label": "Neural Network Coder Terminal Black",
+        "uiTheme": "vs-dark",
+        "path": "./themes/Neural Network Coder-Terminal-Black.json"
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node --test ./src/*.test.js",
+    "lint": "node scripts/lint.js",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "keywords": [
+    "nnc",
+    "terminal",
+    "theme",
+    "cli",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hacksli/nnc"
+  },
+  "license": "MIT"
+}

@@ -1,5 +1,5 @@
 /**
- * Binds the local HTTP+WebSocket server to the running Neural Network session.
+ * Binds the local HTTP+WebSocket server to the running Neural Network Coder session.
  *
  * Responsibilities:
  *   - Translate `localRemoteEvents` (messagesChanged, permissionPending, etc.)
@@ -109,7 +109,7 @@ export function bindLocalRemoteBridge(
           server.send({
             type: 'error',
             sessionId: context.sessionId,
-            message: 'No active session. Open Neural Network first.',
+            message: 'No active session. Open Neural Network Coder first.',
           })
           return
         }

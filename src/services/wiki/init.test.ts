@@ -14,7 +14,7 @@ afterEach(async () => {
 })
 
 async function makeProjectDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'openclaude-wiki-init-'))
+  const dir = await mkdtemp(join(tmpdir(), 'nnc-wiki-init-'))
   tempDirs.push(dir)
   return dir
 }
@@ -32,11 +32,11 @@ test('initializeWiki creates the expected wiki scaffold', async () => {
     '.nnc/wiki/pages/architecture.md',
   ])
   expect(await readFile(paths.schemaFile, 'utf8')).toContain(
-    '# Neural Network Wiki Schema',
+    '# Neural Network Coder Wiki Schema',
   )
   expect(await readFile(paths.indexFile, 'utf8')).toContain('Wiki')
   expect(await readFile(paths.logFile, 'utf8')).toContain(
-    'Wiki initialized by Neural Network',
+    'Wiki initialized by Neural Network Coder',
   )
   expect(await readFile(join(paths.pagesDir, 'architecture.md'), 'utf8')).toContain(
     '# Architecture',

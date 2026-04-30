@@ -60,9 +60,9 @@ export function getAttributionTexts(): AttributionTexts {
   }
 
   // AI-authorship attribution is OFF by default — commits and PRs go out
-  // without "Co-Authored-By: Neural Network …" or "🤖 Generated with Neural Network".
+  // without "Co-Authored-By: Neural Network Coder …" or "🤖 Generated with Neural Network Coder".
   // Opt back in explicitly via settings.attribution.commit / .pr when you
-  // want the markers. (OPENCLAUDE_DISABLE_CO_AUTHORED_BY is now a no-op: the
+  // want the markers. (NNC_DISABLE_CO_AUTHORED_BY is now a no-op: the
   // behaviour it used to produce is the default.)
   const defaultCommit = ''
   const defaultAttribution = ''
@@ -270,12 +270,12 @@ async function getTranscriptStats(): Promise<{
 }
 
 /**
- * Get enhanced PR attribution text with Neural Network contribution stats.
+ * Get enhanced PR attribution text with Neural Network Coder contribution stats.
  *
- * Format: "🤖 Generated with Neural Network (93% 3-shotted by claude-opus-4-5)"
+ * Format: "🤖 Generated with Neural Network Coder (93% 3-shotted by claude-opus-4-5)"
  *
  * Rules:
- * - Shows Neural Network contribution percentage from commit attribution
+ * - Shows Neural Network Coder contribution percentage from commit attribution
  * - Shows N-shotted where N is the prompt count (1-shotted, 2-shotted, etc.)
  * - Shows short model name (e.g., claude-opus-4-5)
  * - Returns default attribution if stats can't be computed
@@ -314,7 +314,7 @@ export async function getEnhancedPRAttribution(
   }
 
   const defaultAttribution =
-    '🤖 Generated with [Neural Network](https://github.com/Gitlawb/openclaude)'
+    '🤖 Generated with [Neural Network Coder](https://github.com/Hacksli/nnc)'
 
   // Get AppState first
   const appState = getAppState()
@@ -355,12 +355,12 @@ export async function getEnhancedPRAttribution(
     return defaultAttribution
   }
 
-  // Build the enhanced attribution: "🤖 Generated with Neural Network (93% 3-shotted by claude-opus-4-5, 2 memories recalled)"
+  // Build the enhanced attribution: "🤖 Generated with Neural Network Coder (93% 3-shotted by claude-opus-4-5, 2 memories recalled)"
   const memSuffix =
     memoryAccessCount > 0
       ? `, ${memoryAccessCount} ${memoryAccessCount === 1 ? 'memory' : 'memories'} recalled`
       : ''
-  const summary = `🤖 Generated with [Neural Network](https://github.com/Gitlawb/openclaude) (${claudePercent}% ${promptCount}-shotted by ${shortModelName}${memSuffix})`
+  const summary = `🤖 Generated with [Neural Network Coder](https://github.com/Hacksli/nnc) (${claudePercent}% ${promptCount}-shotted by ${shortModelName}${memSuffix})`
 
   // Append trailer lines for squash-merge survival. Only for allowlisted repos
   // (INTERNAL_MODEL_REPOS) and only in builds with COMMIT_ATTRIBUTION enabled —

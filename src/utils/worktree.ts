@@ -1217,7 +1217,7 @@ export async function hasWorktreeChanges(
 
 /**
  * Fast-path handler for --worktree --tmux.
- * Creates the worktree and execs into tmux running Neural Network inside.
+ * Creates the worktree and execs into tmux running Neural Network Coder inside.
  * This is called early in cli.tsx before loading the full CLI.
  */
 export async function execIntoTmuxWorktree(args: string[]): Promise<{
@@ -1382,8 +1382,8 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Check if tmux prefix conflicts with Neural Network keybindings
-  // Neural Network binds: ctrl+b (task:background), ctrl+c, ctrl+d, ctrl+t, ctrl+o, ctrl+r, ctrl+s, ctrl+g, ctrl+e
+  // Check if tmux prefix conflicts with Neural Network Coder keybindings
+  // Neural Network Coder binds: ctrl+b (task:background), ctrl+c, ctrl+d, ctrl+t, ctrl+o, ctrl+r, ctrl+s, ctrl+g, ctrl+e
   const claudeBindings = [
     'C-b',
     'C-c',
@@ -1397,7 +1397,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
   ]
   const prefixConflicts = claudeBindings.includes(tmuxPrefix)
 
-  // Set env vars for the inner Neural Network to display tmux info in welcome message
+  // Set env vars for the inner Neural Network Coder to display tmux info in welcome message
   const tmuxEnv = {
     ...process.env,
     CLAUDE_CODE_TMUX_SESSION: tmuxSessionName,
@@ -1441,7 +1441,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
   const shouldSetupDevPanes = isAnt && isClaudeCliInternal && !sessionExists
 
   if (shouldSetupDevPanes) {
-    // Create detached session with Neural Network in first pane
+    // Create detached session with Neural Network Coder in first pane
     spawnSync(
       'tmux',
       [
@@ -1480,7 +1480,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       cwd: worktreeDir,
     })
 
-    // Select the first pane (Neural Network)
+    // Select the first pane (Neural Network Coder)
     spawnSync('tmux', ['select-pane', '-t', `${tmuxSessionName}:0.0`], {
       cwd: worktreeDir,
     })

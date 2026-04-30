@@ -167,7 +167,7 @@ export async function createDefaultEnvironment(): Promise<boolean> {
   }
 }
 
-/** Returns true when the user has valid Neural Network OAuth credentials. */
+/** Returns true when the user has valid Neural Network Coder OAuth credentials. */
 export async function isSignedIn(): Promise<boolean> {
   try {
     await prepareApiRequest()

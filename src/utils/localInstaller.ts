@@ -38,20 +38,20 @@ export function getCandidateLocalInstallDirs(options?: {
 
 function getCandidateLocalBinaryPaths(localInstallDir: string): string[] {
   return [
-    join(localInstallDir, 'node_modules', '.bin', 'openclaude'),
+    join(localInstallDir, 'node_modules', '.bin', 'nnc'),
     join(localInstallDir, 'node_modules', '.bin', 'claude'),
   ]
 }
 
 export function isManagedLocalInstallationPath(execPath: string): boolean {
   return (
-    execPath.includes('/.openclaude/local/node_modules/') ||
+    execPath.includes('/.nnc/local/node_modules/') ||
     execPath.includes('/.nnc/local/node_modules/')
   )
 }
 
 export function getLocalClaudePath(): string {
-  return join(getLocalInstallDir(), 'openclaude')
+  return join(getLocalInstallDir(), 'nnc')
 }
 
 /**
@@ -94,7 +94,7 @@ export async function ensureLocalPackageEnvironment(): Promise<boolean> {
     await writeIfMissing(
       join(localInstallDir, 'package.json'),
       jsonStringify(
-        { name: 'openclaude-local', version: '0.0.1', private: true },
+        { name: 'nnc-local', version: '0.0.1', private: true },
         null,
         2,
       ),
@@ -104,7 +104,7 @@ export async function ensureLocalPackageEnvironment(): Promise<boolean> {
     const wrapperPath = getLocalClaudePath()
     const created = await writeIfMissing(
       wrapperPath,
-      `#!/bin/sh\nexec "${localInstallDir}/node_modules/.bin/openclaude" "$@"`,
+      `#!/bin/sh\nexec "${localInstallDir}/node_modules/.bin/nnc" "$@"`,
       0o755,
     )
     if (created) {
@@ -120,7 +120,7 @@ export async function ensureLocalPackageEnvironment(): Promise<boolean> {
 }
 
 /**
- * Install or update Neural Network CLI package in the local directory
+ * Install or update Neural Network Coder CLI package in the local directory
  * @param channel - Release channel to use (latest or stable)
  * @param specificVersion - Optional specific version to install (overrides channel)
  */

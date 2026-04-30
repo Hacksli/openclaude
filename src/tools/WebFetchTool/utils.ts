@@ -21,7 +21,7 @@ import { makeSecondaryModelPrompt } from './prompt.js'
 // Custom error classes for domain blocking
 class DomainBlockedError extends Error {
   constructor(domain: string) {
-    super(`Neural Network is unable to fetch from ${domain}`)
+    super(`Neural Network Coder is unable to fetch from ${domain}`)
     this.name = 'DomainBlockedError'
   }
 }
@@ -101,7 +101,7 @@ function getTurndownService(): Promise<InstanceType<TurndownCtor>> {
 // for a data exfiltration. However, this is too restrictive for some customers'
 // legitimate use cases, such as JWT-signed URLs (e.g., cloud service signed URLs)
 // that can be much longer. We already require user approval for each domain,
-// which provides a primary security boundary. In addition, Neural Network has
+// which provides a primary security boundary. In addition, Neural Network Coder has
 // other data exfil channels, and this one does not seem relatively high risk,
 // so I'm removing that length restriction. -ab
 const MAX_URL_LENGTH = 2000
@@ -438,7 +438,7 @@ export async function getURLMarkdownContent(
   ;(response as { data: unknown }).data = null
   const contentType = response.headers['content-type'] ?? ''
 
-  // Binary content: save raw bytes to disk with a proper extension so Neural Network
+  // Binary content: save raw bytes to disk with a proper extension so Neural Network Coder
   // can inspect the file later. We still fall through to the utf-8 decode +
   // Haiku path below — for PDFs in particular the decoded string has enough
   // ASCII structure (/Title, text streams) that Haiku can summarize it, and

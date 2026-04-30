@@ -193,7 +193,7 @@ type State = {
   // SDK-provided betas (e.g., context-1m-2025-08-07)
   sdkBetas: string[] | undefined
   // Undercover mode toggle. Default ON. Toggled at runtime via /undercover.
-  // OPENCLAUDE_UNDERCOVER=0 at launch disables it. See src/utils/undercover.ts.
+  // NNC_UNDERCOVER=0 at launch disables it. See src/utils/undercover.ts.
   undercoverActive: boolean
   // Main thread agent type (from --agent flag or settings)
   mainThreadAgentType: string | undefined
@@ -386,9 +386,9 @@ function getInitialState(): State {
     slowOperations: [],
     // SDK-provided betas
     sdkBetas: undefined,
-    // Undercover mode: default ON; OPENCLAUDE_UNDERCOVER=0 disables at launch.
-    undercoverActive: process.env.OPENCLAUDE_UNDERCOVER !== '0' &&
-      process.env.OPENCLAUDE_UNDERCOVER?.toLowerCase() !== 'false',
+    // Undercover mode: default ON; NNC_UNDERCOVER=0 disables at launch.
+    undercoverActive: process.env.NNC_UNDERCOVER !== '0' &&
+      process.env.NNC_UNDERCOVER?.toLowerCase() !== 'false',
     // Main thread agent type
     mainThreadAgentType: undefined,
     // Remote mode
@@ -980,7 +980,7 @@ export function setMeter(
     description: 'Number of git commits created',
   })
   STATE.costCounter = createCounter('claude_code.cost.usage', {
-    description: 'Cost of the Neural Network session',
+    description: 'Cost of the Neural Network Coder session',
     unit: 'USD',
   })
   STATE.tokenCounter = createCounter('claude_code.token.usage', {

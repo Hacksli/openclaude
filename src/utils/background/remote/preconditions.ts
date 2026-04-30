@@ -16,7 +16,7 @@ import { getOAuthHeaders } from '../../teleport/api.js'
 import { fetchEnvironments } from '../../teleport/environments.js'
 
 /**
- * Checks if user needs to log in with Neural Network.ai
+ * Checks if user needs to log in with Neural Network Coder.ai
  * Extracted from getTeleportErrors() in TeleportError.tsx
  * @returns true if login is required, false otherwise
  */

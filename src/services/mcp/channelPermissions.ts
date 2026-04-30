@@ -12,8 +12,8 @@
  * relay content. Servers opt in by declaring
  * capabilities.experimental['claude/channel/permission'].
  *
- * Kenneth's "would this let Neural Network self-approve?": the approving party is
- * the human via the channel, not Neural Network. But the trust boundary isn't the
+ * Kenneth's "would this let Neural Network Coder self-approve?": the approving party is
+ * the human via the channel, not Neural Network Coder. But the trust boundary isn't the
  * terminal — it's the allowlist (tengu_harbor_ledger). A compromised
  * channel server CAN fabricate "yes <id>" without the human seeing the
  * prompt. Accepted risk: a compromised channel already has unlimited

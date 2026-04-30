@@ -372,14 +372,14 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
     return [getDefaultOptionForUser(fastMode), ...getCopilotModelOptions()]
   }
 
-  // When using Ollama, show models from the Ollama server instead of Neural Network models
+  // When using Ollama, show models from the Ollama server instead of Neural Network Coder models
   if (getAPIProvider() === 'openai' && isOllamaProvider()) {
     const defaultOption = getDefaultOptionForUser(fastMode)
     const ollamaModels = getCachedOllamaModelOptions()
     if (ollamaModels.length > 0) {
       return [defaultOption, ...ollamaModels]
     }
-    // Fallback: if models not yet fetched, show current model instead of Neural Network models
+    // Fallback: if models not yet fetched, show current model instead of Neural Network Coder models
     const currentModel = getUserSpecifiedModelSetting() ?? getInitialMainLoopModel()
     if (currentModel != null) {
       return [

@@ -1,8 +1,8 @@
 /**
- * Neural Network startup screen — filled-block text logo with sunset gradient.
+ * Neural Network Coder startup screen — filled-block text logo with sunset gradient.
  * Called once at CLI startup before the Ink UI renders.
  *
- * Addresses: https://github.com/Gitlawb/openclaude/issues/55
+ * Addresses: https://github.com/Hacksli/nnc/issues/55
  */
 
 import { isLocalProviderUrl, resolveProviderRequest } from '../services/api/providerConfig.js'
@@ -227,10 +227,10 @@ export function printStartupScreen(): void {
   out.push(`${rgb(...BORDER)}\u2554${'\u2550'.repeat(W - 2)}\u2557${RESET}`)
 
   // Centered version header
-  const versionStr = `Neural Network v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}`
+  const versionStr = `Neural Network Coder v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}`
   const innerW = W - 2
   const vPad = Math.max(0, Math.floor((innerW - versionStr.length) / 2))
-  const vRow = `${' '.repeat(vPad)}${DIM}${rgb(...DIMCOL)}Neural Network ${RESET}${rgb(...ACCENT)}v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}${RESET}`
+  const vRow = `${' '.repeat(vPad)}${DIM}${rgb(...DIMCOL)}Neural Network Coder ${RESET}${rgb(...ACCENT)}v${MACRO.DISPLAY_VERSION ?? MACRO.VERSION}${RESET}`
   out.push(boxRow(vRow, W, vPad + versionStr.length))
 
   out.push(`${rgb(...BORDER)}\u2560${'\u2550'.repeat(W - 2)}\u2563${RESET}`)
@@ -261,7 +261,7 @@ export function printStartupScreen(): void {
   }
 
   const strategyModeFlagPresent =
-    process.env.OPENCLAUDE_STRATEGY_MODE === '1' ||
+    process.env.NNC_STRATEGY_MODE === '1' ||
     process.argv.includes('--strategymode')
   if (strategyModeFlagPresent) {
     ;[r, l] = lbl('\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u044f', '\u0430\u043a\u0442\u0438\u0432\u043d\u0430', [200, 255, 100])
@@ -269,7 +269,7 @@ export function printStartupScreen(): void {
   }
 
   const cloudeconfFlagPresent =
-    process.env.OPENCLAUDE_READ_CLAUDE_CONF === '1' ||
+    process.env.NNC_READ_CLAUDE_CONF === '1' ||
     process.argv.includes('--cloudeconf')
   if (cloudeconfFlagPresent) {
     ;[r, l] = lbl('.claude', '\u0447\u0438\u0442\u0430\u043d\u043d\u044f \u0443\u0432\u0456\u043c\u043a\u043d\u0435\u043d\u043e', [200, 255, 100])

@@ -1,6 +1,6 @@
 /**
- * Adapter layer that wraps @anthropic-ai/sandbox-runtime with Neural Network CLI-specific integrations.
- * This file provides the bridge between the external sandbox-runtime package and Neural Network CLI's
+ * Adapter layer that wraps @anthropic-ai/sandbox-runtime with Neural Network Coder CLI-specific integrations.
+ * This file provides the bridge between the external sandbox-runtime package and Neural Network Coder CLI's
  * settings system, tool integration, and additional features.
  */
 
@@ -81,9 +81,9 @@ function permissionRuleExtractPrefix(permissionRule: string): string | null {
 }
 
 /**
- * Resolve Neural Network-specific path patterns for sandbox-runtime.
+ * Resolve Neural Network Coder-specific path patterns for sandbox-runtime.
  *
- * Neural Network uses special path prefixes in permission rules:
+ * Neural Network Coder uses special path prefixes in permission rules:
  * - `//path` → absolute from filesystem root (becomes `/path`)
  * - `/path` → relative to settings file directory (becomes `$SETTINGS_DIR/path`)
  * - `~/path` → passed through (sandbox-runtime handles this)
@@ -164,7 +164,7 @@ function shouldAllowManagedReadPathsOnly(): boolean {
 }
 
 /**
- * Convert Neural Network settings format to SandboxRuntimeConfig format
+ * Convert Neural Network Coder settings format to SandboxRuntimeConfig format
  * (Function exported for testing)
  *
  * @param settings Merged settings (used for sandbox config like network, ripgrep, etc.)
@@ -220,7 +220,7 @@ export function convertToSandboxRuntimeConfig(
   }
 
   // Extract filesystem paths from Edit and Read rules
-  // Always include current directory and Neural Network temp directory as writable
+  // Always include current directory and Neural Network Coder temp directory as writable
   // The temp directory is needed for Shell.ts cwd tracking files
   const allowWrite: string[] = ['.', getClaudeTempDir()]
   const denyWrite: string[] = []
@@ -228,7 +228,7 @@ export function convertToSandboxRuntimeConfig(
   const allowRead: string[] = []
 
   // Always deny writes to settings.json files to prevent sandbox escape
-  // This blocks settings in the original working directory (where Neural Network started)
+  // This blocks settings in the original working directory (where Neural Network Coder started)
   const settingsPaths = SETTING_SOURCES.map(source =>
     getSettingsFilePathForSource(source),
   ).filter((p): p is string => p !== undefined)
@@ -247,7 +247,7 @@ export function convertToSandboxRuntimeConfig(
   // Block writes to .nnc/skills in both original and current working directories.
   // The sandbox-runtime's getDangerousDirectories() protects .nnc/commands and
   // .nnc/agents but not .nnc/skills. Skills have the same privilege level
-  // (auto-discovered, auto-loaded, full Neural Network capabilities) so they need the
+  // (auto-discovered, auto-loaded, full Neural Network Coder capabilities) so they need the
   // same OS-level sandbox protection.
   denyWrite.push(resolve(originalCwd, '.nnc', 'skills'))
   if (cwd !== originalCwd) {
@@ -256,7 +256,7 @@ export function convertToSandboxRuntimeConfig(
 
   // SECURITY: Git's is_git_directory() treats cwd as a bare repo if it has
   // HEAD + objects/ + refs/. An attacker planting these (plus a config with
-  // core.fsmonitor) escapes the sandbox when Neural Network's unsandboxed git runs.
+  // core.fsmonitor) escapes the sandbox when Neural Network Coder's unsandboxed git runs.
   //
   // Unconditionally denying these paths makes sandbox-runtime mount
   // /dev/null at non-existent ones, which (a) leaves a 0-byte HEAD stub on
@@ -381,7 +381,7 @@ export function convertToSandboxRuntimeConfig(
 }
 
 // ============================================================================
-// Neural Network CLI-specific state
+// Neural Network Coder CLI-specific state
 // ============================================================================
 
 let initializationPromise: Promise<void> | undefined
@@ -398,7 +398,7 @@ const bareGitRepoScrubPaths: string[] = []
 
 /**
  * Delete bare-repo files planted at cwd during a sandboxed command, before
- * Neural Network's unsandboxed git calls can see them. See the SECURITY block above
+ * Neural Network Coder's unsandboxed git calls can see them. See the SECURITY block above
  * bareGitRepoFiles. anthropics/claude-code#29316.
  */
 function scrubBareGitRepoFiles(): void {
@@ -823,7 +823,7 @@ async function reset(): Promise<void> {
 
 /**
  * Add a command to the excluded commands list (commands that should not be sandboxed)
- * This is a Neural Network CLI-specific function that updates local settings.
+ * This is a Neural Network Coder CLI-specific function that updates local settings.
  */
 export function addToExcludedCommands(
   command: string,
@@ -922,7 +922,7 @@ export interface ISandboxManager {
 }
 
 /**
- * Neural Network CLI sandbox manager - wraps sandbox-runtime with Neural Network-specific features
+ * Neural Network Coder CLI sandbox manager - wraps sandbox-runtime with Neural Network Coder-specific features
  */
 export const SandboxManager: ISandboxManager = {
   // Custom implementations

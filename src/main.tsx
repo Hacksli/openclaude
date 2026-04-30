@@ -958,7 +958,7 @@ async function run(): Promise<CommanderCommand> {
     }
     profileCheckpoint('preAction_after_settings_sync');
   });
-  program.name('claude').description(`Neural Network - starts an interactive session by default, use -p/--print for non-interactive output`).argument('[prompt]', 'Your prompt', String)
+  program.name('claude').description(`Neural Network Coder - starts an interactive session by default, use -p/--print for non-interactive output`).argument('[prompt]', 'Your prompt', String)
   // Subcommands inherit helpOption via commander's copyInheritedSettings —
   // setting it once here covers mcp, plugin, auth, and all other subcommands.
   .helpOption('-h, --help', 'Display help for command').option('-d, --debug [filter]', 'Enable debug mode with optional category filtering (e.g., "api,hooks" or "!1p,!file")', (_value: string | true) => {
@@ -1011,20 +1011,20 @@ async function run(): Promise<CommanderCommand> {
     if ((options as {
       strategymode?: boolean;
     }).strategymode) {
-      process.env.OPENCLAUDE_STRATEGY_MODE = '1';
+      process.env.NNC_STRATEGY_MODE = '1';
     }
 
     if ((options as {
       cloudeconf?: boolean;
     }).cloudeconf) {
-      process.env.OPENCLAUDE_READ_CLAUDE_CONF = '1';
+      process.env.NNC_READ_CLAUDE_CONF = '1';
     }
 
     // Ignore "code" as a prompt - treat it the same as no prompt
     if (prompt === 'code') {
       logEvent('tengu_code_prompt_ignored', {});
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.warn(chalk.yellow('Tip: You can launch Neural Network with just `nnc`'));
+      console.warn(chalk.yellow('Tip: You can launch Neural Network Coder with just `nnc`'));
       prompt = undefined;
     }
 
@@ -1527,7 +1527,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Extract Neural Network in Chrome option and enforce claude.ai subscriber check (unless user is ant)
+    // Extract Neural Network Coder in Chrome option and enforce claude.ai subscriber check (unless user is ant)
     const chromeOpts = options as {
       chrome?: boolean;
     };
@@ -2128,7 +2128,7 @@ async function run(): Promise<CommanderCommand> {
     // picker's "this was a strategy session" tag to persist across resumes
     // where the user didn't re-pass --strategymode; recording `false` would
     // clobber the original session's tag on the next reAppend.
-    if (process.env.OPENCLAUDE_STRATEGY_MODE === '1') {
+    if (process.env.NNC_STRATEGY_MODE === '1') {
       saveStrategyMode(true);
     }
     let advisorModel: string | undefined;
@@ -3409,7 +3409,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // --remote and --teleport both create/resume Neural Network Web (CCR) sessions.
+      // --remote and --teleport both create/resume Neural Network Coder Web (CCR) sessions.
       // Remote Control (--rc) is a separate feature gated in initReplBridge.ts.
       if (remote !== null || teleport) {
         await waitForPolicyLimitsToLoad();
@@ -3812,7 +3812,7 @@ async function run(): Promise<CommanderCommand> {
         pendingHookMessages
       }, renderAndRun);
     }
-  }).version(`${MACRO.DISPLAY_VERSION ?? MACRO.VERSION} (Open Neural Network)`, '-v, --version', 'Output the version number');
+  }).version(`${MACRO.DISPLAY_VERSION ?? MACRO.VERSION} (Neural Network Coder)`, '-v, --version', 'Output the version number');
 
   // Worktree flags
   program.option('-w, --worktree [name]', 'Create a new git worktree for this session (optionally specify a name)');
@@ -3899,7 +3899,7 @@ async function run(): Promise<CommanderCommand> {
   // nnc mcp
 
   const mcp = program.command('mcp').description('Configure and manage MCP servers').configureHelp(createSortedHelpConfig()).enablePositionalOptions();
-  mcp.command('serve').description(`Start the Neural Network MCP server`).option('-d, --debug', 'Enable debug mode', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).action(async ({
+  mcp.command('serve').description(`Start the Neural Network Coder MCP server`).option('-d, --debug', 'Enable debug mode', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).action(async ({
     debug,
     verbose
   }: {
@@ -3967,7 +3967,7 @@ async function run(): Promise<CommanderCommand> {
 
   // claude server
   if (false) {
-    program.command('server').description('Start a Neural Network session server').option('--port <number>', 'HTTP port', '0').option('--host <string>', 'Bind address', '0.0.0.0').option('--auth-token <token>', 'Bearer token for auth').option('--unix <path>', 'Listen on a unix domain socket').option('--workspace <dir>', 'Default working directory for sessions that do not specify cwd').option('--idle-timeout <ms>', 'Idle timeout for detached sessions in ms (0 = never expire)', '600000').option('--max-sessions <n>', 'Maximum concurrent sessions (0 = unlimited)', '32').action(async (opts: {
+    program.command('server').description('Start a Neural Network Coder session server').option('--port <number>', 'HTTP port', '0').option('--host <string>', 'Bind address', '0.0.0.0').option('--auth-token <token>', 'Bearer token for auth').option('--unix <path>', 'Listen on a unix domain socket').option('--workspace <dir>', 'Default working directory for sessions that do not specify cwd').option('--idle-timeout <ms>', 'Idle timeout for detached sessions in ms (0 = never expire)', '600000').option('--max-sessions <n>', 'Maximum concurrent sessions (0 = unlimited)', '32').action(async (opts: {
       port: string;
       host: string;
       authToken?: string;
@@ -4051,11 +4051,11 @@ async function run(): Promise<CommanderCommand> {
   // this action it means the argv rewrite didn't fire (e.g. user ran
   // `nnc ssh` with no host) — just print usage.
   if (false) {
-    program.command('ssh <host> [dir]').description('Run Neural Network on a remote host over SSH. Deploys the binary and ' + 'tunnels API auth back through your local machine — no remote setup needed.').option('--permission-mode <mode>', 'Permission mode for the remote session').option('--dangerously-skip-permissions', 'Skip all permission prompts on the remote (dangerous)').option('--local', 'e2e test mode — spawn the child CLI locally (skip ssh/deploy). ' + 'Exercises the auth proxy and unix-socket plumbing without a remote host.').action(async () => {
+    program.command('ssh <host> [dir]').description('Run Neural Network Coder on a remote host over SSH. Deploys the binary and ' + 'tunnels API auth back through your local machine — no remote setup needed.').option('--permission-mode <mode>', 'Permission mode for the remote session').option('--dangerously-skip-permissions', 'Skip all permission prompts on the remote (dangerous)').option('--local', 'e2e test mode — spawn the child CLI locally (skip ssh/deploy). ' + 'Exercises the auth proxy and unix-socket plumbing without a remote host.').action(async () => {
       // Argv rewriting in main() should have consumed `ssh <host>` before
       // commander runs. Reaching here means host was missing or the
       // rewrite predicate didn't match.
-      process.stderr.write('Usage: claude ssh <user@host | ssh-config-alias> [dir]\n\n' + "Runs Neural Network on a remote Linux host. You don't need to install\n" + 'anything on the remote or run `nnc auth login` there — the binary is\n' + 'deployed over SSH and API auth tunnels back through your local machine.\n');
+      process.stderr.write('Usage: claude ssh <user@host | ssh-config-alias> [dir]\n\n' + "Runs Neural Network Coder on a remote Linux host. You don't need to install\n" + 'anything on the remote or run `nnc auth login` there — the binary is\n' + 'deployed over SSH and API auth tunnels back through your local machine.\n');
       process.exit(1);
     });
   }
@@ -4064,7 +4064,7 @@ async function run(): Promise<CommanderCommand> {
   // Interactive mode (without -p) is handled by early argv rewriting in main()
   // which redirects to the main command with full TUI support.
   if (false) {
-    program.command('open <cc-url>').description('Connect to a Neural Network server (internal — use cc:// URLs)').option('-p, --print [prompt]', 'Print mode (headless)').option('--output-format <format>', 'Output format: text, json, stream-json', 'text').action(async (ccUrl: string, opts: {
+    program.command('open <cc-url>').description('Connect to a Neural Network Coder server (internal — use cc:// URLs)').option('-p, --print [prompt]', 'Print mode (headless)').option('--output-format <format>', 'Output format: text, json, stream-json', 'text').action(async (ccUrl: string, opts: {
       print?: string | boolean;
       outputFormat: string;
     }) => {
@@ -4153,7 +4153,7 @@ async function run(): Promise<CommanderCommand> {
   const coworkOption = () => new Option('--cowork', 'Use cowork_plugins directory').hideHelp();
 
   // Plugin validate command
-  const pluginCmd = program.command('plugin').alias('plugins').description('Manage Neural Network plugins').configureHelp(createSortedHelpConfig());
+  const pluginCmd = program.command('plugin').alias('plugins').description('Manage Neural Network Coder plugins').configureHelp(createSortedHelpConfig());
   pluginCmd.command('validate <path>').description('Validate a plugin or marketplace manifest').addOption(coworkOption()).action(async (manifestPath: string, options: {
     cowork?: boolean;
   }) => {
@@ -4176,7 +4176,7 @@ async function run(): Promise<CommanderCommand> {
   });
 
   // Marketplace subcommands
-  const marketplaceCmd = pluginCmd.command('marketplace').description('Manage Neural Network marketplaces').configureHelp(createSortedHelpConfig());
+  const marketplaceCmd = pluginCmd.command('marketplace').description('Manage Neural Network Coder marketplaces').configureHelp(createSortedHelpConfig());
   marketplaceCmd.command('add <source>').description('Add a marketplace from a URL, path, or GitHub repo').addOption(coworkOption()).option('--sparse <paths...>', 'Limit checkout to specific directories via git sparse-checkout (for monorepos). Example: --sparse .nnc-plugin plugins').option('--scope <scope>', 'Where to declare the marketplace: user (default), project, or local').action(async (source: string, options: {
     cowork?: boolean;
     sparse?: string[];
@@ -4351,7 +4351,7 @@ async function run(): Promise<CommanderCommand> {
   }
 
   // Doctor command - check installation health
-  program.command('doctor').description('Check the health of your Neural Network auto-updater. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
+  program.command('doctor').description('Check the health of your Neural Network Coder auto-updater. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
     const [{
       doctorHandler
     }, {
@@ -4400,7 +4400,7 @@ async function run(): Promise<CommanderCommand> {
   }
 
   // claude install
-  program.command('install [target]').description('Install Neural Network native build. Use [target] to specify version (stable, latest, or specific version)').option('--force', 'Force installation even if already installed').action(async (target: string | undefined, options: {
+  program.command('install [target]').description('Install Neural Network Coder native build. Use [target] to specify version (stable, latest, or specific version)').option('--force', 'Force installation even if already installed').action(async (target: string | undefined, options: {
     force?: boolean;
   }) => {
     const {

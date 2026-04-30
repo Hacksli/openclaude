@@ -1,5 +1,5 @@
 /**
- * Tiny typed event bus used to decouple the Neural Network session (REPL,
+ * Tiny typed event bus used to decouple the Neural Network Coder session (REPL,
  * PermissionRequest component, etc.) from the local-remote server.
  *
  * The session emits; the bridge subscribes. No React, no global singletons

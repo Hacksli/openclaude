@@ -97,7 +97,7 @@ import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
 
 export const CLAUDE_CODE_DOCS_MAP_URL =
-  process.env.OPENCLAUDE_DOCS_URL || 'https://code.claude.com/docs/en/claude_code_docs_map.md'
+  process.env.NNC_DOCS_URL || 'https://code.claude.com/docs/en/claude_code_docs_map.md'
 
 /**
  * Boundary marker separating static (cross-org cacheable) content from dynamic content.
@@ -211,7 +211,7 @@ function getSimpleDoingTasksSection(): string {
   ]
 
   const userHelpSubitems = [
-    `/help: Get help with using Neural Network`,
+    `/help: Get help with using Neural Network Coder`,
     `To give feedback, users should ${MACRO.ISSUES_EXPLAINER}`,
   ]
 
@@ -243,7 +243,7 @@ function getSimpleDoingTasksSection(): string {
       : []),
     ...(process.env.USER_TYPE === 'ant'
       ? [
-          `If the user reports a bug, slowness, or unexpected behavior with Neural Network itself (as opposed to asking you to fix their own code), recommend the appropriate slash command: /issue for model-related problems (odd outputs, wrong tool choices, hallucinations, refusals), or /share to upload the full session transcript for product bugs, crashes, slowness, or general issues. Only recommend these when the user is describing a problem with Neural Network.`,
+          `If the user reports a bug, slowness, or unexpected behavior with Neural Network Coder itself (as opposed to asking you to fix their own code), recommend the appropriate slash command: /issue for model-related problems (odd outputs, wrong tool choices, hallucinations, refusals), or /share to upload the full session transcript for product bugs, crashes, slowness, or general issues. Only recommend these when the user is describing a problem with Neural Network Coder.`,
         ]
       : []),
     `If the user asks for help or wants to give feedback inform them of the following:`,
@@ -513,7 +513,7 @@ export async function getSystemPrompt(
 ): Promise<string[]> {
   if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
     return [
-      `You are Neural Network, an open-source coding agent and CLI.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
+      `You are Neural Network Coder, an open-source coding agent and CLI.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
     ]
   }
 
@@ -629,7 +629,7 @@ ${CYBER_RISK_INSTRUCTION}`,
     outputStyleConfig.keepCodingInstructions === true
       ? getSimpleDoingTasksSection()
       : null,
-    isEnvTruthy(process.env.OPENCLAUDE_STRATEGY_MODE)
+    isEnvTruthy(process.env.NNC_STRATEGY_MODE)
       ? getStrategyModeSection()
       : null,
     getActionsSection(),
@@ -759,13 +759,13 @@ export async function computeSimpleEnvInfo(
     knowledgeCutoffMessage,
     isUndercover()
       ? null
-      : `The most recent Neural Network model family is Claude 4.5/4.6. Model IDs — Opus 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.opus}', Sonnet 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.sonnet}', Haiku 4.5: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.haiku}'. When building AI applications, default to the latest and most capable Neural Network models.`,
+      : `The most recent Neural Network Coder model family is Claude 4.5/4.6. Model IDs — Opus 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.opus}', Sonnet 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.sonnet}', Haiku 4.5: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.haiku}'. When building AI applications, default to the latest and most capable Neural Network Coder models.`,
     isUndercover()
       ? null
-      : `Neural Network is available as a CLI in the terminal and can be used across local development environments and IDE workflows.`,
+      : `Neural Network Coder is available as a CLI in the terminal and can be used across local development environments and IDE workflows.`,
     isUndercover()
       ? null
-      : `Fast mode for Neural Network uses the same ${FRONTIER_MODEL_NAME} model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
+      : `Fast mode for Neural Network Coder uses the same ${FRONTIER_MODEL_NAME} model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
   ].filter(item => item !== null)
 
   return [
@@ -821,7 +821,7 @@ export function getUnameSR(): string {
   return `${osType()} ${osRelease()}`
 }
 
-export const DEFAULT_AGENT_PROMPT = `You are an agent for Neural Network, an open-source coding agent and CLI. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.`
+export const DEFAULT_AGENT_PROMPT = `You are an agent for Neural Network Coder, an open-source coding agent and CLI. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.`
 
 export async function enhanceSystemPromptWithEnvDetails(
   existingSystemPrompt: string[],
@@ -858,7 +858,7 @@ export async function enhanceSystemPromptWithEnvDetails(
 
 /**
  * Returns instructions for using the scratchpad directory if enabled.
- * The scratchpad is a per-session directory where Neural Network can write temporary files.
+ * The scratchpad is a per-session directory where Neural Network Coder can write temporary files.
  */
 export function getScratchpadInstructions(): string | null {
   if (!isScratchpadEnabled()) {

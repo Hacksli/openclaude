@@ -119,7 +119,7 @@ export default class App extends PureComponent<Props, State> {
   // Default to readable-mode stdin (legacy Ink behavior). The data-mode path
   // is kept as an explicit opt-in because some terminals can enter a state
   // where startup input appears frozen when data mode is the default.
-  stdinMode: 'readable' | 'data' = process.env.OPENCLAUDE_USE_DATA_STDIN === '1' || process.env.OPENCLAUDE_USE_READABLE_STDIN === '0' ? 'data' : 'readable';
+  stdinMode: 'readable' | 'data' = process.env.NNC_USE_DATA_STDIN === '1' || process.env.NNC_USE_READABLE_STDIN === '0' ? 'data' : 'readable';
   // Timeout durations for incomplete sequences (ms)
   readonly NORMAL_TIMEOUT = 50; // Short timeout for regular esc sequences
   readonly PASTE_TIMEOUT = 500; // Longer timeout for paste operations
@@ -442,7 +442,7 @@ export default class App extends PureComponent<Props, State> {
       this.props.stdout.write(SHOW_CURSOR + DFE + DISABLE_MOUSE_TRACKING);
     }
 
-    // Emit suspend event for Neural Network to handle. Mostly just has a notification
+    // Emit suspend event for Neural Network Coder to handle. Mostly just has a notification
     this.internal_eventEmitter.emit('suspend');
 
     // Set up resume handler
@@ -463,7 +463,7 @@ export default class App extends PureComponent<Props, State> {
         this.props.stdout.write(EFE);
       }
 
-      // Emit resume event for Neural Network to handle
+      // Emit resume event for Neural Network Coder to handle
       this.internal_eventEmitter.emit('resume');
       process.removeListener('SIGCONT', resumeHandler);
     };

@@ -15,7 +15,7 @@ const OPENAI_CONTEXT_WINDOWS: Record<string, number> = {
   // GitHub Copilot — values from https://api.githubcopilot.com/models (2026-04-09)
   // Namespaced so they don't collide with bare model names from other providers.
   'github:copilot':                           128_000,
-  // Neural Network
+  // Neural Network Coder
   'github:copilot:claude-sonnet-4':           216_000,
   'github:copilot:claude-haiku-4':            200_000,
   'github:copilot:claude-haiku-4.5':          144_000,
@@ -47,7 +47,7 @@ const OPENAI_CONTEXT_WINDOWS: Record<string, number> = {
   // Grok
   'github:copilot:grok-code-fast-1':         256_000,
 
-  // LiteLLM format — when Neural Network talks to a LiteLLM proxy, Copilot models
+  // LiteLLM format — when Neural Network Coder talks to a LiteLLM proxy, Copilot models
   // keep their "<provider>/<model>" naming convention (standard LiteLLM routing)
   // instead of the "github:copilot:<model>" namespaced form used by /onboard-github.
   // Entries below cover the aliases currently exposed by LiteLLM's github_copilot
@@ -66,7 +66,7 @@ const OPENAI_CONTEXT_WINDOWS: Record<string, number> = {
   'github_copilot/gemini-3-flash':           128_000,
   'github_copilot/grok-code-fast-1':         256_000,
 
-  // NOTE: bare Neural Network model names (e.g. 'claude-sonnet-4') are intentionally
+  // NOTE: bare Neural Network Coder model names (e.g. 'claude-sonnet-4') are intentionally
   // omitted. Different OpenAI-compatible providers may impose different context
   // limits for the same model name, so we cannot safely hardcode values here.
 
@@ -212,7 +212,7 @@ const OPENAI_CONTEXT_WINDOWS: Record<string, number> = {
 const OPENAI_MAX_OUTPUT_TOKENS: Record<string, number> = {
   // GitHub Copilot — values from https://api.githubcopilot.com/models (2026-04-09)
   'github:copilot':                            16_384,
-  // Neural Network
+  // Neural Network Coder
   'github:copilot:claude-sonnet-4':            16_000,
   'github:copilot:claude-haiku-4':             64_000,
   'github:copilot:claude-haiku-4.5':           32_768,
@@ -257,7 +257,7 @@ const OPENAI_MAX_OUTPUT_TOKENS: Record<string, number> = {
   'github_copilot/gemini-3-flash':            64_000,
   'github_copilot/grok-code-fast-1':          64_000,
 
-  // NOTE: bare Neural Network model names omitted — see context windows comment above.
+  // NOTE: bare Neural Network Coder model names omitted — see context windows comment above.
 
   // OpenAI
   'gpt-5.4':                 128_000,

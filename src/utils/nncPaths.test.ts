@@ -24,44 +24,44 @@ afterEach(() => {
   mock.restore()
 })
 
-describe('Neural Network paths', () => {
-  test('defaults user config home to ~/.openclaude', async () => {
+describe('Neural Network Coder paths', () => {
+  test('defaults user config home to ~/.nnc', async () => {
     delete process.env.CLAUDE_CONFIG_DIR
     const { resolveClaudeConfigHomeDir } = await importFreshEnvUtils()
 
     expect(
       resolveClaudeConfigHomeDir({
         homeDir: homedir(),
-        openClaudeExists: true,
+        nncExists: true,
         legacyClaudeExists: false,
       }),
-    ).toBe(join(homedir(), '.openclaude'))
+    ).toBe(join(homedir(), '.nnc'))
   })
 
-  test('falls back to ~/.nnc when legacy config exists and ~/.openclaude does not', async () => {
+  test('falls back to ~/.nnc when legacy config exists and ~/.nnc does not', async () => {
     delete process.env.CLAUDE_CONFIG_DIR
     const { resolveClaudeConfigHomeDir } = await importFreshEnvUtils()
 
     expect(
       resolveClaudeConfigHomeDir({
         homeDir: homedir(),
-        openClaudeExists: false,
+        nncExists: false,
         legacyClaudeExists: true,
       }),
     ).toBe(join(homedir(), '.nnc'))
   })
 
   test('uses CLAUDE_CONFIG_DIR override when provided', async () => {
-    process.env.CLAUDE_CONFIG_DIR = '/tmp/custom-openclaude'
+    process.env.CLAUDE_CONFIG_DIR = '/tmp/custom-nnc'
     const { getClaudeConfigHomeDir, resolveClaudeConfigHomeDir } =
       await importFreshEnvUtils()
 
-    expect(getClaudeConfigHomeDir()).toBe('/tmp/custom-openclaude')
+    expect(getClaudeConfigHomeDir()).toBe('/tmp/custom-nnc')
     expect(
       resolveClaudeConfigHomeDir({
-        configDirEnv: '/tmp/custom-openclaude',
+        configDirEnv: '/tmp/custom-nnc',
       }),
-    ).toBe('/tmp/custom-openclaude')
+    ).toBe('/tmp/custom-nnc')
   })
 
   test('project and local settings paths use .nnc', async () => {
@@ -75,24 +75,24 @@ describe('Neural Network paths', () => {
     )
   })
 
-  test('local installer uses openclaude wrapper path', async () => {
-    // Force .openclaude config home so the test doesn't fall back to
-    // ~/.nnc when ~/.openclaude doesn't exist on this machine.
-    process.env.CLAUDE_CONFIG_DIR = join(homedir(), '.openclaude')
+  test('local installer uses nnc wrapper path', async () => {
+    // Force .nnc config home so the test doesn't fall back to
+    // ~/.nnc when ~/.nnc doesn't exist on this machine.
+    process.env.CLAUDE_CONFIG_DIR = join(homedir(), '.nnc')
     const { getLocalClaudePath } = await importFreshLocalInstaller()
 
     expect(getLocalClaudePath()).toBe(
-      join(homedir(), '.openclaude', 'local', 'openclaude'),
+      join(homedir(), '.nnc', 'local', 'nnc'),
     )
   })
 
-  test('local installation detection matches .openclaude path', async () => {
+  test('local installation detection matches .nnc path', async () => {
     const { isManagedLocalInstallationPath } =
       await importFreshLocalInstaller()
 
     expect(
       isManagedLocalInstallationPath(
-        `${join(homedir(), '.openclaude', 'local')}/node_modules/.bin/openclaude`,
+        `${join(homedir(), '.nnc', 'local')}/node_modules/.bin/nnc`,
       ),
     ).toBe(true)
   })
@@ -103,21 +103,21 @@ describe('Neural Network paths', () => {
 
     expect(
       isManagedLocalInstallationPath(
-        `${join(homedir(), '.nnc', 'local')}/node_modules/.bin/openclaude`,
+        `${join(homedir(), '.nnc', 'local')}/node_modules/.bin/nnc`,
       ),
     ).toBe(true)
   })
 
-  test('candidate local install dirs include both openclaude and legacy claude paths', async () => {
+  test('candidate local install dirs include both nnc and legacy claude paths', async () => {
     const { getCandidateLocalInstallDirs } = await importFreshLocalInstaller()
 
     expect(
       getCandidateLocalInstallDirs({
-        configHomeDir: join(homedir(), '.openclaude'),
+        configHomeDir: join(homedir(), '.nnc'),
         homeDir: homedir(),
       }),
     ).toEqual([
-      join(homedir(), '.openclaude', 'local'),
+      join(homedir(), '.nnc', 'local'),
       join(homedir(), '.nnc', 'local'),
     ])
   })

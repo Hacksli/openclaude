@@ -1,7 +1,7 @@
 /**
  * Public entry point for the local-remote bridge.
  *
- * In daemon mode, Neural Network sessions (workers) connect outbound to a
+ * In daemon mode, Neural Network Coder sessions (workers) connect outbound to a
  * standalone daemon process that holds the HTTP+WS port. The daemon
  * routes messages between workers and browser clients and exposes
  * `/api/sessions` for session discovery.
@@ -25,6 +25,7 @@ import { getSpinnerVerbs } from '../constants/spinnerVerbs.js'
 import {
   registerPermissionSettler,
   setPromptSubmitter,
+  setCancelHandler,
   unregisterPermissionSettler,
   getPendingRemoteAttachments,
   setPendingRemoteAttachments,
@@ -84,7 +85,7 @@ export async function startLocalRemote(overrides?: {
   if (!daemonReady) {
     throw new Error(
       `Could not reach or start the remote daemon on ${host}:${port}. ` +
-      `Try starting it manually: openclaude remote-daemon`
+      `Try starting it manually: nnc remote-daemon`
     )
   }
 
@@ -93,7 +94,7 @@ export async function startLocalRemote(overrides?: {
     daemonUrl: `ws://${daemonHost}:${port}`,
     token,
     cwd: process.cwd(),
-    title: `Neural Network @ ${process.cwd()}`,
+    title: `Neural Network Coder @ ${process.cwd()}`,
   })
 
   logForDebugging(`[localRemote] connected to daemon at ${daemonHost}:${port}`)
@@ -145,7 +146,7 @@ export async function reloadLocalRemote(): Promise<void> {
   // Перезапустити демон
   const daemonReady = await autoSpawnDaemon()
   if (!daemonReady) {
-    throw new Error('Не вдалося перезапустити демон. Спробуйте запустити вручну: openclaude remote-daemon')
+    throw new Error('Не вдалося перезапустити демон. Спробуйте запустити вручну: nnc remote-daemon')
   }
 
   // Перепідключити worker, якщо він був підключений
@@ -172,6 +173,13 @@ export function isLocalRemoteRunning(): boolean {
 export function setRemoteSubmitter(fn: PromptSubmitter | null): () => void {
   setPromptSubmitter(fn)
   return () => setPromptSubmitter(null)
+}
+
+export { setCancelHandler }
+
+export {
+  getPendingRemoteAttachments,
+  setPendingRemoteAttachments,
 }
 
 // Кешований стан сесії. Оновлюється КОЖНИМ викликом publishMessages/

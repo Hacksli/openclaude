@@ -2,7 +2,7 @@
  * Plugin install counts data layer
  *
  * This module fetches and caches plugin install counts from the official
- * Neural Network plugins statistics repository. The cache is refreshed if older
+ * Neural Network Coder plugins statistics repository. The cache is refreshed if older
  * than 24 hours.
  *
  * Cache location: ~/.nnc/plugins/install-counts-cache.json

@@ -9,8 +9,8 @@ test('truncateMiddle keeps the profile filename visible', () => {
   const { truncateMiddle } = loadPresentation();
 
   assert.equal(
-    truncateMiddle('/Users/example/projects/openclaude/workspace/.openclaude-profile.json', 30),
-    '.../.openclaude-profile.json',
+    truncateMiddle('/Users/example/projects/nnc/workspace/.nnc-profile.json', 30),
+    '.../.nnc-profile.json',
   );
 });
 
@@ -18,8 +18,8 @@ test('truncateMiddle keeps the filename visible for Windows-style paths', () => 
   const { truncateMiddle } = loadPresentation();
 
   assert.equal(
-    truncateMiddle('C:\\Users\\example\\openclaude\\workspace\\.openclaude-profile.json', 30),
-    '...\\.openclaude-profile.json',
+    truncateMiddle('C:\\Users\\example\\nnc\\workspace\\.nnc-profile.json', 30),
+    '...\\.nnc-profile.json',
   );
 });
 
@@ -50,7 +50,7 @@ test('buildActionModel hides workspace-profile action when no profile exists', (
 
   assert.deepEqual(model.primary, {
     id: 'launch',
-    label: 'Launch Neural Network',
+    label: 'Launch Neural Network Coder',
     detail: 'Use the resolved project-aware launch directory',
     tone: 'accent',
     disabled: false,
@@ -63,13 +63,13 @@ test('buildActionModel includes workspace-profile action when a profile exists',
 
   const model = buildActionModel({
     canLaunchInWorkspaceRoot: true,
-    workspaceProfilePath: 'C:\\Users\\example\\openclaude\\workspace\\.openclaude-profile.json',
+    workspaceProfilePath: 'C:\\Users\\example\\nnc\\workspace\\.nnc-profile.json',
   });
 
   assert.deepEqual(model.openProfile, {
     id: 'openProfile',
     label: 'Open Workspace Profile',
-    detail: 'Inspect ...\\.openclaude-profile.json',
+    detail: 'Inspect ...\\.nnc-profile.json',
     tone: 'neutral',
     disabled: false,
   });
@@ -78,18 +78,18 @@ test('buildActionModel includes workspace-profile action when a profile exists',
 function createStatus(overrides = {}) {
   return {
     installed: true,
-    executable: 'openclaude',
-    launchCommand: 'openclaude --project-aware',
-    terminalName: 'Neural Network',
+    executable: 'nnc',
+    launchCommand: 'nnc --project-aware',
+    terminalName: 'Neural Network Coder',
     shimEnabled: false,
-    workspaceFolder: '/workspace/openclaude',
+    workspaceFolder: '/workspace/nnc',
     workspaceSourceLabel: 'active editor workspace',
-    launchCwd: '/workspace/openclaude',
-    launchCwdLabel: '/workspace/openclaude',
+    launchCwd: '/workspace/nnc',
+    launchCwdLabel: '/workspace/nnc',
     canLaunchInWorkspaceRoot: true,
     profileStatusLabel: 'Found',
-    profileStatusHint: '/workspace/openclaude/.openclaude-profile.json',
-    workspaceProfilePath: '/workspace/openclaude/.openclaude-profile.json',
+    profileStatusHint: '/workspace/nnc/.nnc-profile.json',
+    workspaceProfilePath: '/workspace/nnc/.nnc-profile.json',
     providerState: {
       label: 'Codex',
       detail: 'gpt-5.4',
@@ -166,14 +166,14 @@ test('buildControlCenterViewModel uses a concise project summary before full pat
         {
           key: 'workspace',
           label: 'Workspace folder',
-          summary: 'openclaude',
-          detail: '/workspace/openclaude · active editor workspace',
+          summary: 'nnc',
+          detail: '/workspace/nnc · active editor workspace',
         },
         {
           key: 'profileStatus',
           label: 'Workspace profile',
           summary: 'Found',
-          detail: '/workspace/openclaude/.openclaude-profile.json',
+          detail: '/workspace/nnc/.nnc-profile.json',
           tone: 'neutral',
         },
       ],
@@ -183,9 +183,9 @@ test('buildControlCenterViewModel uses a concise project summary before full pat
       rows: [
         {
           key: 'runtime',
-          label: 'Neural Network executable',
+          label: 'Neural Network Coder executable',
           summary: 'Installed',
-          detail: 'openclaude',
+          detail: 'nnc',
           tone: 'positive',
         },
         {
@@ -208,8 +208,8 @@ test('buildControlCenterViewModel keeps launch command only in summary cards', (
   assert.deepEqual(viewModel.summaryCards.find(card => card.key === 'launchCommand'), {
     key: 'launchCommand',
     label: 'Launch command',
-    value: 'openclaude --project-aware',
-    detail: 'Integrated terminal: Neural Network',
+    value: 'nnc --project-aware',
+    detail: 'Integrated terminal: Neural Network Coder',
   });
 
   assert.equal(

@@ -134,6 +134,10 @@ export type ClientEvent =
       reason?: string
     }
   | {
+      type: 'cancel'
+      /** Cancel the current turn in the selected session. */
+    }
+  | {
       type: 'new_session'
     }
 
@@ -201,6 +205,10 @@ export type DaemonToWorkerEvent =
   | {
       type: 'shutdown'
       reason?: string
+    }
+  | {
+      type: 'cancel'
+      /** Ask the worker to abort the current turn. */
     }
   | {
       /**

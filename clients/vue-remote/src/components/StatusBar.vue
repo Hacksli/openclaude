@@ -7,10 +7,14 @@ const props = defineProps<{
   connectionState: ConnectionState
   isLoading: boolean
   sessionCwd?: string | null
+  autoAllow?: boolean
+  allCollapsed?: boolean
 }>()
 
 const emit = defineEmits<{
   openDrawer: []
+  toggleAutoAllow: []
+  toggleCollapse: []
 }>()
 
 // Визначаємо лише статус крапки. Текстовий лейбл показуємо ТІЛЬКИ коли
@@ -52,6 +56,38 @@ const statusLabel = computed(() => {
       <span v-if="sessionCwd" class="cwd">{{ sessionCwd }}</span>
       <span v-if="statusLabel" class="status-label">{{ statusLabel }}</span>
     </div>
+
+    <button
+      v-if="autoAllow !== undefined"
+      type="button"
+      class="auto-allow-btn"
+      :class="{ active: autoAllow }"
+      :aria-label="autoAllow ? 'Автодозвіл увімкнено' : 'Автодозвіл вимкнено'"
+      :title="autoAllow ? 'Автодозвіл увімкнено' : 'Автодозвіл вимкнено'"
+      @click="emit('toggleAutoAllow')"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="collapse-btn"
+      :class="{ active: allCollapsed }"
+      :aria-label="allCollapsed ? 'Розгорнути всі блоки' : 'Згорнути всі блоки'"
+      :title="allCollapsed ? 'Розгорнути всі блоки' : 'Згорнути всі блоки'"
+      @click="emit('toggleCollapse')"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <template v-if="allCollapsed">
+          <polyline points="6 9 12 15 18 9" />
+        </template>
+        <template v-else>
+          <polyline points="18 15 12 9 6 15" />
+        </template>
+      </svg>
+    </button>
 
     <span :class="dotClass" :title="statusLabel ?? t.status.connected"></span>
   </header>
@@ -143,5 +179,54 @@ const statusLabel = computed(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
+}
+
+.auto-allow-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--fg-dim);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.auto-allow-btn:hover {
+  background: var(--bg-elev);
+  color: var(--fg);
+}
+.auto-allow-btn:active { transform: scale(0.92); }
+.auto-allow-btn.active {
+  color: var(--success);
+}
+.collapse-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--fg-dim);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.collapse-btn:hover {
+  background: var(--bg-elev);
+  color: var(--fg);
+}
+.collapse-btn:active {
+  transform: scale(0.92);
+}
+.collapse-btn.active {
+  color: var(--accent);
 }
 </style>

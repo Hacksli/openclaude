@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, inject, ref, type Ref } from 'vue'
 import type { RenderedMessage } from '../composables/renderMessage'
 import { formatDurationUk, t } from '../i18n'
 import Markdown from './Markdown.vue'
@@ -8,15 +8,25 @@ defineProps<{
   message: RenderedMessage
 }>()
 
+// Global collapse state injected from App.vue
+const allCollapsed = inject<Ref<boolean>>('allCollapsed')
+
 // All blocks expanded by default (like the TUI). Track collapsed ones.
 const collapsed = ref<Record<number, boolean>>({})
 
 function isExpanded(idx: number): boolean {
+  if (allCollapsed?.value) {
+    return collapsed.value[idx] === false
+  }
   return !collapsed.value[idx]
 }
 
 function toggle(idx: number) {
-  collapsed.value[idx] = !collapsed.value[idx]
+  if (allCollapsed?.value) {
+    collapsed.value[idx] = collapsed.value[idx] === false ? true : false
+  } else {
+    collapsed.value[idx] = !collapsed.value[idx]
+  }
 }
 
 function resultPreview(text: string): string {

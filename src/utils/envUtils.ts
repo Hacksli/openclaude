@@ -7,7 +7,6 @@ export function resolveConfigHomeDir(options?: {
   configDirEnv?: string
   homeDir?: string
   nncExists?: boolean
-  openClaudeExists?: boolean
   legacyClaudeExists?: boolean
 }): string {
   if (options?.configDirEnv) {
@@ -16,20 +15,14 @@ export function resolveConfigHomeDir(options?: {
 
   const homeDir = options?.homeDir ?? homedir()
   const nncDir = join(homeDir, '.nnc')
-  const openClaudeDir = join(homeDir, '.openclaude')
   const legacyClaudeDir = join(homeDir, '.claude')
   const nncExists = options?.nncExists ?? existsSync(nncDir)
-  const openClaudeExists =
-    options?.openClaudeExists ?? existsSync(openClaudeDir)
   const legacyClaudeExists =
     options?.legacyClaudeExists ?? existsSync(legacyClaudeDir)
 
-  // Priority: explicit env > ~/.nnc (new default) > ~/.openclaude (legacy) > ~/.claude (oldest legacy)
+  // Priority: explicit env > ~/.nnc (new default) > ~/.claude (legacy)
   if (nncExists) {
     return nncDir.normalize('NFC')
-  }
-  if (openClaudeExists) {
-    return openClaudeDir.normalize('NFC')
   }
   if (legacyClaudeExists) {
     return legacyClaudeDir.normalize('NFC')
@@ -43,7 +36,7 @@ export function resolveConfigHomeDir(options?: {
 export function resolveClaudeConfigHomeDir(options?: {
   configDirEnv?: string
   homeDir?: string
-  openClaudeExists?: boolean
+  nncExists?: boolean
   legacyClaudeExists?: boolean
 }): string {
   return resolveConfigHomeDir(options)
@@ -72,7 +65,7 @@ export function getTeamsDir(): string {
  * Writes always go to the primary config home — this is read-only merge.
  */
 export function getExtraReadConfigDirs(): string[] {
-  if (!isEnvTruthy(process.env.OPENCLAUDE_READ_CLAUDE_CONF)) return []
+  if (!isEnvTruthy(process.env.NNC_READ_CLAUDE_CONF)) return []
   const claudeDir = join(homedir(), '.claude').normalize('NFC')
   if (claudeDir === getClaudeConfigHomeDir()) return []
   if (!existsSync(claudeDir)) return []
@@ -185,7 +178,7 @@ export function isRunningOnHomespace(): boolean {
 }
 
 /**
- * Conservative check for whether Neural Network is running inside a protected
+ * Conservative check for whether Neural Network Coder is running inside a protected
  * (privileged or ASL3+) COO namespace or cluster.
  *
  * Conservative means: when signals are ambiguous, assume protected. We would

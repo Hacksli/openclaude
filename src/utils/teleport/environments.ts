@@ -33,7 +33,7 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
   const accessToken = getClaudeAIOAuthTokens()?.accessToken
   if (!accessToken) {
     throw new Error(
-      'Neural Network web sessions require authentication. API key authentication is not sufficient. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
+      'Neural Network Coder web sessions require authentication. API key authentication is not sufficient. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
     )
   }
 

@@ -17,7 +17,7 @@ import { isTelemetryDisabled } from '../../utils/privacyLevel.js'
  * - Privacy level is no-telemetry or essential-traffic
  */
 export function isAnalyticsDisabled(): boolean {
-  // Open Neural Network does not send product telemetry.
+  // Neural Network Coder does not send product telemetry.
   return true
 }
 

@@ -9,7 +9,7 @@ import os
 import re
 import sys
 
-BASE = r"C:\Users\User\Documents\Project\GitHub\openclaude"
+BASE = r"C:\Users\User\Documents\Project\GitHub\nnc"
 
 SKIP_FILES = {
     os.path.normcase(os.path.join(BASE, p))

@@ -34,9 +34,21 @@ function timeAgo(startedAt: number): string {
   return `${Math.floor(hours / 24)}д тому`
 }
 
+const PAGE_SIZE = 10
+const page = ref(1)
+
 const sortedSessions = computed(() =>
   [...props.sessions].sort((a, b) => b.startedAt - a.startedAt)
 )
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(sortedSessions.value.length / PAGE_SIZE))
+)
+
+const paginatedSessions = computed(() => {
+  const start = (page.value - 1) * PAGE_SIZE
+  return sortedSessions.value.slice(start, start + PAGE_SIZE)
+})
 
 function onClose(sessionId: string) {
   if (closingId.value === sessionId) return
@@ -71,7 +83,7 @@ function onClose(sessionId: string) {
 
     <ul v-else class="list">
       <li
-        v-for="s in sortedSessions"
+        v-for="s in paginatedSessions"
         :key="s.id"
         :class="{ active: s.id === selectedId, closing: closingId === s.id }"
         @click="emit('select', s.id)"
@@ -83,7 +95,7 @@ function onClose(sessionId: string) {
         <div class="row-meta">
           <!-- Замість PID показуємо модель (+ dot-індикатор cloud/local).
                Fallback — PID, якщо worker ще не встиг прислати metadata
-               (стара версія openclaude без snapshot-push). -->
+               (стара версія nnc без snapshot-push). -->
           <span v-if="s.model" class="model-chip" :class="{ local: s.isLocal }">
             <span class="model-dot" aria-hidden="true"></span>
             <span class="model-name">{{ s.model }}</span>
@@ -105,6 +117,32 @@ function onClose(sessionId: string) {
         </button>
       </li>
     </ul>
+
+    <nav v-if="totalPages > 1" class="pagination" aria-label="Пагінація сесій">
+      <button
+        type="button"
+        class="page-btn"
+        :disabled="page <= 1"
+        @click="page--"
+        aria-label="Попередня сторінка"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <span class="page-info">{{ page }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="page-btn"
+        :disabled="page >= totalPages"
+        @click="page++"
+        aria-label="Наступна сторінка"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+    </nav>
   </section>
 </template>
 
@@ -362,5 +400,48 @@ function onClose(sessionId: string) {
 .list li.closing {
   opacity: 0.5;
   border-color: var(--danger);
+}
+
+/* ─── Pagination ────────────────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.page-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--bg-elev);
+  color: var(--fg);
+}
+.page-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 13px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+  text-align: center;
 }
 </style>

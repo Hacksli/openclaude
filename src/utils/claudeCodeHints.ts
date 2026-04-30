@@ -1,7 +1,7 @@
 /**
- * Neural Network hints protocol.
+ * Neural Network Coder hints protocol.
  *
- * CLIs and SDKs running under Neural Network can emit a self-closing
+ * CLIs and SDKs running under Neural Network Coder can emit a self-closing
  * `<nnc-hint />` tag to stderr (merged into stdout by the shell
  * tools). The harness scans tool output for these tags, strips them before
  * the output reaches the model, and surfaces an install prompt to the

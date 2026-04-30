@@ -1,5 +1,5 @@
 /**
- * Neural Network build script — bundles the TypeScript source into a single
+ * Neural Network Coder build script — bundles the TypeScript source into a single
  * distributable JS file using Bun's bundler.
  *
  * Handles:
@@ -193,7 +193,7 @@ const result = await Bun.build({
     'MACRO.BUILD_TIME': JSON.stringify(new Date().toISOString()),
     'MACRO.ISSUES_EXPLAINER':
       JSON.stringify('report the issue at https://github.com/anthropics/claude-code/issues'),
-    'MACRO.PACKAGE_URL': JSON.stringify('@gitlawb/openclaude'),
+    'MACRO.PACKAGE_URL': JSON.stringify('@hacksli/neural-network-coder'),
     'MACRO.NATIVE_PACKAGE_URL': 'undefined',
   },
   plugins: [
@@ -506,13 +506,14 @@ if (!result.success) {
   }
   process.exitCode = 1
 } else {
-  console.log(`✓ Built openclaude v${version} → dist/cli.mjs`)
+  console.log(`✓ Built nnc v${version} → dist/cli.mjs`)
   // Copy local-remote client assets next to the bundle so the shipped npm
   // package can serve the PWA. The server's CLIENT_DIR_CANDIDATES expects
   // `client/` next to cli.mjs for installed copies and falls back to the
   // source tree in dev mode.
   const fsMod = await import('fs')
   const pathMod = await import('path')
+  const { spawnSync } = await import('child_process')
   const clientSrc = pathMod.join(import.meta.dir, '..', 'src', 'localRemote', 'client')
   const clientDest = pathMod.join(import.meta.dir, '..', 'dist', 'client')
   if (fsMod.existsSync(clientSrc)) {
@@ -533,6 +534,24 @@ if (!result.success) {
     }
     copyDir(clientSrc, clientDest)
     console.log(`  📦 copied local-remote client → dist/client/`)
+  }
+
+  // Reload the remote daemon so browsers get the fresh client assets.
+  const cliPath = pathMod.join(import.meta.dir, '..', 'dist', 'cli.mjs')
+  if (fsMod.existsSync(cliPath)) {
+    const reload = spawnSync(process.execPath, [cliPath, 'remote', 'reload'], {
+      stdio: 'pipe',
+      shell: false,
+    })
+    if (reload.status === 0) {
+      console.log('  🔄 remote daemon reloaded')
+    } else {
+      // Daemon likely not running; silently skip.
+      const err = reload.stderr?.toString().trim()
+      if (err) {
+        console.log(`  ⚠ remote reload skipped: ${err.slice(0, 120)}`)
+      }
+    }
   }
 }
 

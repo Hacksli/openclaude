@@ -225,7 +225,7 @@ export async function setupGitHubActions(
         workflows.push({
           path: '.github/workflows/claude.yml',
           content: WORKFLOW_CONTENT,
-          message: 'Neural Network PR Assistant workflow',
+          message: 'Neural Network Coder PR Assistant workflow',
         })
       }
 
@@ -233,7 +233,7 @@ export async function setupGitHubActions(
         workflows.push({
           path: '.github/workflows/claude-code-review.yml',
           content: CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT,
-          message: 'Neural Network Review workflow',
+          message: 'Neural Network Coder Review workflow',
         })
       }
 

@@ -67,9 +67,9 @@ bun run scripts/build.ts
 ```
 
 Далі треба **перезапустити демона**, щоб він підхопив нові файли.
-Глобально встановлений `openclaude` віддає асети зі своєї інсталяційної
+Глобально встановлений `nnc` віддає асети зі своєї інсталяційної
 папки, тож для швидкого тестування скопіюйте вміст `dist/client/` у
-`<npm-root>/@gitlawb/openclaude/dist/client/` (або перевстановіть пакет).
+`<npm-root>/@hacksli/neural-network-coder/dist/client/` (або перевстановіть пакет).
 
 ### Варіант 2 — тільки Vue (швидка ітерація)
 
@@ -104,7 +104,7 @@ taskkill /PID <pid> /F
 rm ~/.nnc/remote-daemon.pid
 
 # Стартонути знову
-openclaude remote-daemon &
+nnc remote-daemon &
 ```
 
 Перевірка:

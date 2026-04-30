@@ -63,7 +63,7 @@ export const PermissionsSchema = lazySchema(() =>
             : EXTERNAL_PERMISSION_MODES,
         )
         .optional()
-        .describe('Default permission mode when Neural Network needs access'),
+        .describe('Default permission mode when Neural Network Coder needs access'),
       disableBypassPermissionsMode: z
         .enum(['disable'])
         .optional()
@@ -264,7 +264,7 @@ export const SettingsSchema = lazySchema(() =>
       $schema: z
         .literal(CLAUDE_CODE_SETTINGS_SCHEMA_URL)
         .optional()
-        .describe('JSON Schema reference for Neural Network settings'),
+        .describe('JSON Schema reference for Neural Network Coder settings'),
       apiKeyHelper: z
         .string()
         .optional()
@@ -297,7 +297,7 @@ export const SettingsSchema = lazySchema(() =>
                   .describe('IdP issuer URL for OIDC discovery'),
                 clientId: z
                   .string()
-                  .describe("Neural Network's client_id registered at the IdP"),
+                  .describe("Neural Network Coder's client_id registered at the IdP"),
                 callbackPort: z
                   .number()
                   .int()
@@ -338,7 +338,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       env: EnvironmentVariablesSchema()
         .optional()
-        .describe('Environment variables to set for Neural Network sessions'),
+        .describe('Environment variables to set for Neural Network Coder sessions'),
       // Attribution for commits and PRs
       attribution: z
         .object({
@@ -360,7 +360,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Customize attribution text for commits and PRs. ' +
-            'Each field defaults to the standard Neural Network attribution if not set.',
+            'Each field defaults to the standard Neural Network Coder attribution if not set.',
         ),
       includeCoAuthoredBy: z
         .boolean()
@@ -381,7 +381,7 @@ export const SettingsSchema = lazySchema(() =>
       model: z
         .string()
         .optional()
-        .describe('Override the default model used by Neural Network'),
+        .describe('Override the default model used by Neural Network Coder'),
       // Enterprise allowlist of models
       availableModels: z
         .array(z.string())
@@ -632,7 +632,7 @@ export const SettingsSchema = lazySchema(() =>
             'these exact sources are blocked from being added as marketplaces. The check happens BEFORE ' +
             'downloading, so blocked sources never touch the filesystem.',
         ),
-      // Force a specific login method: 'claudeai' for Neural Network Pro/Max, 'console' for Console billing
+      // Force a specific login method: 'claudeai' for Neural Network Coder Pro/Max, 'console' for Console billing
       forceLoginMethod: z
         .enum(['claudeai', 'console'])
         .optional()

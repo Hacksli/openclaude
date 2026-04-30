@@ -7,7 +7,7 @@ const feedback = {
   aliases: ['bug'],
   type: 'local-jsx',
   name: 'feedback',
-  description: `Submit feedback about Neural Network`,
+  description: `Submit feedback about Neural Network Coder`,
   argumentHint: '[report]',
   isEnabled: () =>
     !(

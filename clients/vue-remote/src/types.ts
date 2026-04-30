@@ -1,11 +1,19 @@
 // Wire protocol types.
-// These MUST stay in sync with src/localRemote/types.ts in the Neural Network repo.
+// These MUST stay in sync with src/localRemote/types.ts in the Neural Network Coder repo.
 // They're duplicated here instead of cross-imported so this client can ship
 // and run independently.
 
 export type PermissionBehavior = 'allow' | 'deny'
 
-/** A content block as delivered by the Neural Network SDK message shape. */
+/** Image attachment sent from browser client */
+export interface ImageAttachment {
+  type: 'image'
+  media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+  data: string // base64
+  filename?: string
+}
+
+/** A content block as delivered by the Neural Network Coder SDK message shape. */
 export interface ContentBlock {
   type: string
   text?: string
@@ -68,7 +76,7 @@ export type ServerEvent =
   | { type: 'pong' }
 
 export type ClientEvent =
-  | { type: 'prompt'; text: string }
+  | { type: 'prompt'; text: string; attachments?: ImageAttachment[] }
   | {
       type: 'permission_response'
       requestId: string
@@ -79,6 +87,7 @@ export type ClientEvent =
   | { type: 'select_session'; sessionId: string }
   | { type: 'shutdown'; reason?: string }
   | { type: 'close_session'; sessionId: string; reason?: string }
+  | { type: 'cancel' }
   | { type: 'new_session' }
 
 export interface SessionSummary {

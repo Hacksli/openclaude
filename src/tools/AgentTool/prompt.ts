@@ -156,20 +156,20 @@ ${AGENT_TOOL_NAME}({
   const currentExamples = `Example usage:
 
 <example_agent_descriptions>
-"claude-code-guide": use this agent when the user asks how Neural Network works or how to use its features
-"statusline-setup": use this agent to configure the user's Neural Network status line setting
+"claude-code-guide": use this agent when the user asks how Neural Network Coder works or how to use its features
+"statusline-setup": use this agent to configure the user's Neural Network Coder status line setting
 </example_agent_descriptions>
 
 <example>
-user: "How do I configure Neural Network hooks?"
+user: "How do I configure Neural Network Coder hooks?"
 <commentary>
-This is a Neural Network usage question, so use the claude-code-guide agent
+This is a Neural Network Coder usage question, so use the claude-code-guide agent
 </commentary>
 assistant: Uses the ${AGENT_TOOL_NAME} tool to launch the claude-code-guide agent
 </example>
 
 <example>
-user: "Set up my Neural Network status line"
+user: "Set up my Neural Network Coder status line"
 <commentary>
 This matches the statusline-setup agent, so use it to configure the setting
 </commentary>

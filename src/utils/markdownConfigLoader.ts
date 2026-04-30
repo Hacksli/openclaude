@@ -24,7 +24,7 @@ import {
 import { getManagedFilePath } from './settings/managedPath.js'
 import { isRestrictedToPluginOnly } from './settings/pluginOnlyPolicy.js'
 
-// Neural Network configuration directory names
+// Neural Network Coder configuration directory names
 export const CLAUDE_CONFIG_DIRECTORIES = [
   'commands',
   'agents',

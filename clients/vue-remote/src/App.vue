@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
 import ConnectPanel from './components/ConnectPanel.vue'
@@ -12,9 +12,10 @@ import StatusBar from './components/StatusBar.vue'
 import { useRemoteSession } from './composables/useRemoteSession'
 import { useLocalStorage } from './composables/useStorage'
 import { t } from './i18n'
+import type { ImageAttachment } from './types'
 
-const LS_URL = 'openclaude.remote.url'
-const LS_TOKEN = 'openclaude.remote.token'
+const LS_URL = 'nnc.remote.url'
+const LS_TOKEN = 'nnc.remote.token'
 
 const storedUrl = useLocalStorage(LS_URL, window.location.origin)
 const storedToken = useLocalStorage(LS_TOKEN, '')
@@ -34,6 +35,9 @@ const {
   sessionInfo,
   sessions,
   selectedSessionId,
+  autoAllow,
+  setAutoAllow,
+  cancel,
 } = session
 
 // Роутер — єдине джерело істини для поточного екрану. Стан "showConnect/
@@ -43,6 +47,10 @@ const {
 const route = useRoute()
 const router = useRouter()
 const drawerOpen = ref(false)
+
+// Global collapse state: when true all tool-use / tool-result blocks are collapsed.
+const allCollapsed = ref(false)
+provide('allCollapsed', allCollapsed)
 
 const showConnect = computed(() => route.name === 'connect')
 const routeSessionId = computed(() => {
@@ -120,7 +128,7 @@ function handleCloseSession(sessionId: string) {
 // Вказує момент (epoch ms), від якого будь-яка новіша `startedAt` у
 // списку — це наш щойно спавнений worker. Використовується у watch-і
 // нижче, щоб авто-перемкнутись на неї. Таймаут — щоб не лишитись у
-// стані очікування назавжди, якщо щось пішло не так (openclaude не
+// стані очікування назавжди, якщо щось пішло не так (nnc не
 // стартував, спавн терміналу провалився).
 const awaitingNewSessionSince = ref<number | null>(null)
 let awaitingTimeout: number | null = null
@@ -162,18 +170,22 @@ watch(sessions, list => {
   router.push({ name: 'chat', params: { sessionId: newest.id } })
 })
 
-function onPromptSubmit(text: string) {
+function onPromptSubmit(text: string, attachments?: ImageAttachment[]) {
   if (isLoading.value) {
-    queue.value.push(text)
+    queue.value.push({ text, attachments })
     return
   }
-  const ok = session.sendPrompt(text)
+  const ok = session.sendPrompt(text, attachments)
   if (!ok) error.value = t.errors.notSent
 }
 
 function removeFromQueue(index: number) {
   const [removed] = queue.value.splice(index, 1)
-  if (removed !== undefined) composer.value?.setText(removed)
+  if (removed !== undefined) {
+    composer.value?.setText(removed.text)
+    // Note: attachments from queue can't be restored to composer easily
+    // without exposing more composer API — text is enough for now.
+  }
 }
 
 function onAllow(message?: string) {
@@ -205,13 +217,13 @@ const hasSession = computed(() => !!selectedSessionId.value && !!sessionInfo.val
 
 // ─── Message queue ────────────────────────────────────────────────────────
 
-const queue = ref<string[]>([])
+const queue = ref<{ text: string; attachments?: ImageAttachment[] }[]>([])
 const composer = ref<InstanceType<typeof PromptComposer> | null>(null)
 
 watch(isLoading, (loading, wasLoading) => {
   if (wasLoading && !loading && queue.value.length > 0) {
     const next = queue.value.shift()!
-    session.sendPrompt(next)
+    session.sendPrompt(next.text, next.attachments)
   }
 })
 
@@ -240,7 +252,11 @@ watch(selectedSessionId, () => {
         :connection-state="connectionState"
         :is-loading="isLoading"
         :session-cwd="shortCwd"
+        :auto-allow="autoAllow"
+        :all-collapsed="allCollapsed"
         @open-drawer="drawerOpen = true"
+        @toggle-auto-allow="setAutoAllow(!autoAllow)"
+        @toggle-collapse="allCollapsed = !allCollapsed"
       />
 
       <!-- Головний контент: або чат (якщо є сесія), або empty-state. -->
@@ -284,6 +300,7 @@ watch(selectedSessionId, () => {
             :disabled="composerDisabled"
             :is-loading="isLoading"
             @submit="onPromptSubmit"
+            @cancel="cancel"
           />
         </template>
 

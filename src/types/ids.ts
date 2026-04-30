@@ -4,7 +4,7 @@
  */
 
 /**
- * A session ID uniquely identifies a Neural Network session.
+ * A session ID uniquely identifies a Neural Network Coder session.
  * Returned by getSessionId().
  */
 export type SessionId = string & { readonly __brand: 'SessionId' }

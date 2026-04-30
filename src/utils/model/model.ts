@@ -474,7 +474,7 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
  * if the model is not recognized as a public model.
  */
 export function getPublicModelDisplayName(model: ModelName): string | null {
-  // For OpenAI/Gemini/Codex/GitHub providers, show the actual model name not a Neural Network alias
+  // For OpenAI/Gemini/Codex/GitHub providers, show the actual model name not a Neural Network Coder alias
   if (getAPIProvider() === 'openai' || getAPIProvider() === 'gemini' || getAPIProvider() === 'codex' || getAPIProvider() === 'github') {
     // Return display names for known GitHub Copilot models
     const copilotModelNames: Record<string, string> = {
@@ -580,18 +580,18 @@ export function renderModelName(model: ModelName): string {
 
 /**
  * Returns a safe author name for public display (e.g., in git commit trailers).
- * Returns "Neural Network {ModelName}" for publicly known models, or "Neural Network ({model})"
+ * Returns "Neural Network Coder {ModelName}" for publicly known models, or "Neural Network Coder ({model})"
  * for unknown/internal models so the exact model name is preserved.
  *
  * @param model The full model name
- * @returns "Neural Network {ModelName}" for public models, or "Neural Network ({model})" for non-public models
+ * @returns "Neural Network Coder {ModelName}" for public models, or "Neural Network Coder ({model})" for non-public models
  */
 export function getPublicModelName(model: ModelName): string {
   const publicName = getPublicModelDisplayName(model)
   if (publicName) {
-    return `Neural Network ${publicName}`
+    return `Neural Network Coder ${publicName}`
   }
-  return `Neural Network (${model})`
+  return `Neural Network Coder (${model})`
 }
 
 /**
@@ -645,7 +645,7 @@ export function parseUserSpecifiedModel(
   }
 
   // Opus 4/4.1 are no longer available on the first-party API (same as
-  // Neural Network.ai) — silently remap to the current Opus default. The 'opus'
+  // Neural Network Coder.ai) — silently remap to the current Opus default. The 'opus'
   // alias already resolves to 4.6, so the only users on these explicit
   // strings pinned them in settings/env/--model/SDK before 4.5 launched.
   // 3P providers may not yet have 4.6 capacity, so pass through unchanged.

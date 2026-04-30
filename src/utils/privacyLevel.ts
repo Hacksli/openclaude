@@ -1,6 +1,6 @@
 /**
  * Privacy level controls how much nonessential network traffic and telemetry
- * Neural Network generates.
+ * Neural Network Coder generates.
  *
  * Levels are ordered by restrictiveness:
  *   default < no-telemetry < essential-traffic

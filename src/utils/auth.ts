@@ -1535,7 +1535,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
 
     logEvent('tengu_oauth_token_refresh_starting', {})
     const refreshedTokens = await refreshOAuthToken(lockedTokens.refreshToken, {
-      // For Neural Network.ai subscribers, omit scopes so the default
+      // For Neural Network Coder.ai subscribers, omit scopes so the default
       // CLAUDE_AI_OAUTH_SCOPES applies — this allows scope expansion
       // (e.g. adding user:file_upload) on refresh without re-login.
       scopes: shouldUseClaudeAIAuth(lockedTokens.scopes)
@@ -1591,7 +1591,7 @@ export function hasProfileScope(): boolean {
 
 export function is1PApiCustomer(): boolean {
   // 1P API customers are users who are NOT:
-  // 1. Neural Network.ai subscribers (Max, Pro, Enterprise, Team)
+  // 1. Neural Network Coder.ai subscribers (Max, Pro, Enterprise, Team)
   // 2. Vertex AI users
   // 3. AWS Bedrock users
   // 4. Foundry users
@@ -1605,7 +1605,7 @@ export function is1PApiCustomer(): boolean {
     return false
   }
 
-  // Exclude Neural Network.ai subscribers
+  // Exclude Neural Network Coder.ai subscribers
   if (isClaudeAISubscriber()) {
     return false
   }
@@ -1630,7 +1630,7 @@ export function isOverageProvisioningAllowed(): boolean {
   const accountInfo = getOauthAccountInfo()
   const billingType = accountInfo?.billingType
 
-  // Must be a Neural Network subscriber with a supported subscription type
+  // Must be a Neural Network Coder subscriber with a supported subscription type
   if (!isClaudeAISubscriber() || !billingType) {
     return false
   }

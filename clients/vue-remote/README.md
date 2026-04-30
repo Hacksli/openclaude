@@ -1,8 +1,8 @@
-# @openclaude/vue-remote
+# @nnc/vue-remote
 
-A Vue 3 + Vite PWA client for openclaude's [`/remote`](../../docs/remote-session.md) bridge.
+A Vue 3 + Vite PWA client for nnc's [`/remote`](../../docs/remote-session.md) bridge.
 
-Bundled openclaude ships a minimal vanilla-JS client at `dist/client/`. This
+Bundled nnc ships a minimal vanilla-JS client at `dist/client/`. This
 project is a nicer, more feature-complete web client intended to be hosted
 separately (or served by any static host) and pointed at a running
 `/remote` server.
@@ -27,7 +27,7 @@ separately (or served by any static host) and pointed at a running
 ## Requirements
 
 - Node 20 or newer, or Bun.
-- A running openclaude session with `/remote on`.
+- A running nnc session with `/remote on`.
 
 ## Quick start
 
@@ -50,8 +50,8 @@ Deploy `dist/` to:
 
 - **GitHub Pages / Cloudflare Pages / Netlify / Vercel** — drop-in, no config.
 - **Your own reverse proxy** — any static file server works.
-- **Same host as openclaude** — if you want to skip CORS concerns, put
-  `dist/` behind a path on your reverse proxy next to the openclaude
+- **Same host as nnc** — if you want to skip CORS concerns, put
+  `dist/` behind a path on your reverse proxy next to the nnc
   `/remote` server.
 
 ## Configuration
@@ -60,8 +60,8 @@ There is no build-time config — URL and token are entered at runtime.
 
 Credentials are stored in `localStorage` under:
 
-- `openclaude.remote.url`
-- `openclaude.remote.token`
+- `nnc.remote.url`
+- `nnc.remote.token`
 
 Clearing browser storage (or the in-app Settings button) forgets them.
 
@@ -103,12 +103,12 @@ public/
 
 See the protocol reference in [docs/remote-session.md](../../docs/remote-session.md#wire-protocol).
 Types are duplicated in `src/types.ts` so this client can ship independently
-of the openclaude source tree.
+of the nnc source tree.
 
 ## Differences from the bundled PWA
 
 The vanilla-JS client in `dist/client/` (built from `src/localRemote/client/`)
-is shipped alongside openclaude so you can connect without deploying anything
+is shipped alongside nnc so you can connect without deploying anything
 extra. It is intentionally tiny (~10 KB).
 
 This Vue client is larger (~60 KB gzipped), adds:
